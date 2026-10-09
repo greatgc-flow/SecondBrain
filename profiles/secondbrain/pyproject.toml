@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "evidence-first-secondbrain"
+version = "0.0.0"
+description = "Evidence-first second brain — initial read-only object verification slice"
+requires-python = ">=3.11"
+dependencies = ["jsonschema>=4.23"]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8",
+  "pytest-timeout>=2.3",
+  "pytest-cov>=5",
+  "hypothesis>=6",
+  "jsonschema>=4.23",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"

@@ -4,6 +4,7 @@ import json
 import os
 import sys
 from brain_core.verify import IntegrityFailure, verify_object
+from brain_core.object import ObjectFailure, create_object, verify_object_link
 from brain_core.capture import CaptureFailure, capture_file, verify_capture
 from brain_core.writer import WriterFailure, configure_writer, publish_capture, verify_publication
 from brain_core.custody import CustodyFailure, commit_capture, verify_commit, verify_chain, _canon
@@ -19,6 +20,19 @@ def main(argv=None):
     verify.add_argument('object_id')
     verify.add_argument('--root', default=os.environ.get('SECOND_BRAIN_ROOT'))
     verify.add_argument('--json', action='store_true')
+
+    create_obj = object_commands.add_parser('create', help='Publish unsealed local metadata + per-capture custody linkage')
+    create_obj.add_argument('capture_id')
+    create_obj.add_argument('--device-id', required=True)
+    create_obj.add_argument('--writer-id', required=True)
+    create_obj.add_argument('--writer-epoch', default=os.environ.get('SECOND_BRAIN_WRITER_EPOCH'))
+    create_obj.add_argument('--root', default=os.environ.get('SECOND_BRAIN_ROOT'))
+    create_obj.add_argument('--json', action='store_true')
+    verify_link = object_commands.add_parser('verify-link', help='Read-only Capture/Vault/Observation/Custody linkage check')
+    verify_link.add_argument('capture_id')
+    verify_link.add_argument('--device-id', required=True)
+    verify_link.add_argument('--root', default=os.environ.get('SECOND_BRAIN_ROOT'))
+    verify_link.add_argument('--json', action='store_true')
 
     captures = commands.add_parser('capture', help='Capture-only landing (NOT sealed evidence)')
     capture_commands = captures.add_subparsers(dest='action', required=True)
@@ -85,12 +99,18 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if not args.root:
         result, exit_code = {'status': 'FAIL', 'error_code': 'ROOT_NOT_SET'}, 2
-    elif args.group in ('writer', 'custody') and args.action in ('publish', 'commit') and not args.writer_epoch:
+    elif ((args.group in ('writer', 'custody') and args.action in ('publish', 'commit')) or
+          (args.group == 'object' and args.action == 'create')) and not args.writer_epoch:
         result, exit_code = {'status': 'FAIL', 'error_code': 'WRITER_EPOCH_NOT_SET'}, 2
     else:
         try:
             if args.group == 'object':
-                result = verify_object(args.root, args.object_id)
+                if args.action == 'verify':
+                    result = verify_object(args.root, args.object_id)
+                elif args.action == 'verify-link':
+                    result = verify_object_link(args.root, args.device_id, args.capture_id)
+                else:
+                    result = create_object(args.root, args.device_id, args.capture_id, args.writer_id, args.writer_epoch)
             elif args.group == 'capture':
                 if args.action == 'file':
                     result = capture_file(args.root, args.source, args.device_id, args.collector,
@@ -114,7 +134,7 @@ def main(argv=None):
             else:
                 result = verify_publication(args.root, args.device_id, args.capture_id)
             exit_code = 0
-        except (IntegrityFailure, CaptureFailure, WriterFailure, CustodyFailure, CheckpointFailure) as exc:
+        except (IntegrityFailure, CaptureFailure, WriterFailure, CustodyFailure, CheckpointFailure, ObjectFailure) as exc:
             result, exit_code = {'status': 'FAIL', 'error_code': exc.code}, 3
     if args.json:
         if args.group == 'checkpoint' and args.action == 'export' and exit_code == 0:
@@ -122,8 +142,10 @@ def main(argv=None):
         else:
             print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     elif exit_code == 0:
-        if args.group == 'object':
+        if args.group == 'object' and args.action == 'verify':
             print(f"PASS {result['object_id']} | sha256={result['sha256']} | bytes={result['size_bytes']}")
+        elif args.group == 'object':
+            print(f"{result['status']} {result['capture_id']} | object={result['object_id']}")
         elif args.group == 'capture':
             print(f"READY (uncommitted capture) {result['capture_id']} | sha256={result['sha256']}")
         elif args.action == 'init':

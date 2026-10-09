@@ -1,16 +1,33 @@
-# SecondBrain — R7 (Development)
+# Evidence-First SecondBrain
 
-Evidence-first Second Brain project. The current implementation includes a read-only Evidence Object verifier and a local Capture-only pipeline. This is **not** a legally certified evidence preservation system, and Vault commit, custody chain, cloud restore, and release gates are not implemented.
+Private development repository for an evidence-first Second Brain. Current milestone: **R7, two narrow TDD product slices**.
 
-This repository is currently **public**. Personal evidence, archive ZIPs, secrets and private local files are intentionally excluded.
+## What's implemented
 
-## Scope
-- Python 3.11+ source-first development
-- Source-preserving Capture-only operations and explicit integrity validation
-- TDD tests using synthetic fixtures; no real personal evidence
-- Open issues: complete S1 (Vault publishing, custody, recovery), security review, supported-platform/live testing
+- Local copy-only Capture landing: `brain capture file` / `brain capture verify`
+- Read-only Evidence Object verification: `brain object verify`
+- Two JSON Schema v2 contracts and 40 synthetic pytest test cases
+- GitHub Actions to run tests against the pushed source
 
-## Development status
-R7; partial TDD slice only. **Not a production release.**
+**Important:** A READY capture is **not** a legally sealed evidence object. Writer, Custody, Legal Hold, cloud sync/restore, provenance certification and full system validation remain unimplemented or unverified.
 
-**Import status:** The public repository has been initialized with documentation and ignore rules. The R7 implementation and tests are **not yet pushed** because the prepared source bundle contains nested historical archives and the repository is public. A reviewed public-safe source import is required before using the code or CI.
+## Start
+
+```bash
+cd profiles/secondbrain
+python -m pip install 'pytest>=8,<10' 'jsonschema>=4,<5'
+python -m pytest -q tests/test_capture_tdd.py tests/test_object_verify_tdd.py
+python brain.py --help
+```
+
+For practical examples, see [R7 Quickstart](profiles/secondbrain/TDD_R7_QUICKSTART.md). For scope and release limitations, see [R7 Scope](profiles/secondbrain/R7_SCOPE.md).
+
+## Roadmap
+
+Next is S1 single-writer canonical commit: verify authority → stage source → publish Vault → Observation/Acquisition/Custody → recovery/commit receipt, with independently verified RFC 8785 canonicalization. A tested local capture does not authorize promotion to SEALED/COMMITTED.
+
+## Publishing policy
+
+No private evidence source files, copied personal data, secrets, generated archives or test caches should be committed. Existing archived R1–R7 ZIPs remain outside Git; publication of archival material requires separate review.
+
+Repository initialized after the owner's privacy change; prior README and ignore commits were preserved. This is a **development snapshot, not a formal release**.

@@ -30,7 +30,7 @@ class WriterFailure(Exception):
 
 def _root(path: str | Path) -> Path:
     root = Path(path).expanduser().absolute()
-    if not root.is_dir() or root.is_symlink():
+    if not root.is_dir() or root.is_symlink() or (hasattr(root, 'is_junction') and root.is_junction()):
         raise WriterFailure('INVALID_ROOT')
     return root
 

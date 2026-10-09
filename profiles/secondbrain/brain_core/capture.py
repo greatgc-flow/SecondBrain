@@ -71,7 +71,8 @@ def _ensure_parent(root: Path, directory: Path) -> None:
             except FileExistsError:
                 pass
             mode = curr.lstat().st_mode
-            if not stat.S_ISDIR(mode) or stat.S_ISLNK(mode):
+            if (not stat.S_ISDIR(mode) or stat.S_ISLNK(mode) or
+                    (hasattr(curr, 'is_junction') and curr.is_junction())):
                 raise CaptureFailure("UNSAFE_PATH")
     except OSError as exc:
         raise CaptureFailure("UNSAFE_PATH") from exc
@@ -84,7 +85,7 @@ def _source_fd(source: Path) -> int:
         for part in source.parts[1:]:
             path = path / part
             mode = path.lstat().st_mode
-            if stat.S_ISLNK(mode):
+            if stat.S_ISLNK(mode) or (hasattr(path, 'is_junction') and path.is_junction()):
                 raise CaptureFailure("UNSAFE_SOURCE")
             if path == source:
                 if not stat.S_ISREG(mode):

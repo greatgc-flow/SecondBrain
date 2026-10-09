@@ -123,14 +123,14 @@ def consume_fixture(transfer: str | Path) -> dict:
             raise DrillFailure("TRANSFER_TAMPERED")
         if (hashlib.sha256(checkpoint_path.read_bytes()).hexdigest() != proof["checkpoint_sha256"]):
             raise DrillFailure("TRANSFER_TAMPERED")
-        checked = verify_backup(snapshot)
+        checked = verify_backup(snapshot, expected_manifest_sha256=proof['manifest_sha256'])
         if (checked["manifest_sha256"] != proof["manifest_sha256"] or
             checked["capture_count"] != 3 or checked["object_count"] != 2 or
             checked["event_count"] != 6):
             raise DrillFailure("TRANSFER_TAMPERED")
         with tempfile.TemporaryDirectory(prefix="secondbrain-r13b-consumer-") as name:
             restore = Path(name) / "복구 한글 root"
-            restored = restore_backup(snapshot, restore)
+            restored = restore_backup(snapshot, restore, expected_manifest_sha256=proof['manifest_sha256'])
             if (restored["status"] != "LOCAL_RESTORE_VERIFIED_EXTERNAL_CUSTODY_UNVERIFIED" or
                 recovery_status(restore)["status"] != "RECOVERED_READ_ONLY"):
                 raise DrillFailure("RESTORE_INCOMPLETE")
@@ -161,7 +161,7 @@ def consume_fixture(transfer: str | Path) -> dict:
                     raise DrillFailure("RESTORE_INCOMPLETE") from exc
             else:
                 raise DrillFailure("RESTORE_INCOMPLETE")
-            if restore_backup(snapshot, restore)["status"] != "RESTORE_ALREADY_VALID_LOCAL":
+            if restore_backup(snapshot, restore, expected_manifest_sha256=proof['manifest_sha256'])["status"] != "RESTORE_ALREADY_VALID_LOCAL":
                 raise DrillFailure("RESTORE_INCOMPLETE")
         return {
             "status": "CI_CROSS_RUNNER_RESTORE_VERIFIED_NO_INDEPENDENT_CUSTODY",

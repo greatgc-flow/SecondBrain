@@ -132,3 +132,24 @@ def test_regular_content_dedup_is_not_mistaken_for_hardlink(tmp_path):
     assert all((folder / "data" / json.loads(
         (folder / "manifest.json").read_bytes())["files"][i]["path"]).stat().st_nlink == 1
         for i in range(3))
+
+
+def test_writer_publication_has_no_live_stage_link_at_final_verification(tmp_path, monkeypatch):
+    from brain_core import writer as mod
+    observed = {"vault": 0, "metadata": 0}
+    original_vault = mod._verify_vault
+    original_metadata = mod._verify_small_existing
+    def guard_vault(root, target, sha256, sha512, length):
+        observed["vault"] += 1
+        assert target.stat().st_nlink == 1
+        return original_vault(root, target, sha256, sha512, length)
+    def guard_metadata(root, path, expected):
+        observed["metadata"] += 1
+        assert path.stat().st_nlink == 1
+        return original_metadata(root, path, expected)
+    monkeypatch.setattr(mod, "_verify_vault", guard_vault)
+    monkeypatch.setattr(mod, "_verify_small_existing", guard_metadata)
+    root, cap = source_root(tmp_path)
+    assert observed["vault"] > 0 and observed["metadata"] > 0
+    assert not list(root.rglob(".stage-*"))
+    assert all(p.stat().st_nlink == 1 for p in root.rglob("*") if p.is_file())

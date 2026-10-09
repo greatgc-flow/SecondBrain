@@ -20,6 +20,7 @@ from brain_core.backup import BackupFailure, restore_backup, verify_backup
 
 
 def snapshot(tmp_path):
+    tmp_path.mkdir(parents=True, exist_ok=True)
     parent = tmp_path / "synthetic transfer"
     result = produce_fixture(parent)
     return parent / "snapshot", result["manifest_sha256"]

@@ -155,21 +155,24 @@ def verify_object_link(root: str | Path, device_id: str, capture_id: str) -> dic
     """Read-only check of local byte record, Capture, Observation and two custody events."""
     checked = _checked(root, device_id, capture_id)
     _, _, expected = _dependencies(checked, device_id, capture_id)
-    path = _link_path(checked, device_id, capture_id)
-    actual = _read_link(checked, path)
-    if actual != expected:
-        raise ObjectFailure("LINK_TAMPERED")
     try:
         obj = verify_object(checked, expected["object_id"])
         record = _strict_json(_object_path(checked, expected["object_id"]))
         if record.get("record_scope") != "LOCAL_UNSEALED_UNANCHORED" or "sealed_at" in record:
             raise ObjectFailure("OBJECT_RECORD_CONFLICT")
-        if _object_path(checked, expected["object_id"]).read_bytes() != _canon(record):
+        record_bytes = _object_path(checked, expected["object_id"]).read_bytes()
+        if record_bytes != _canon(record):
             raise ObjectFailure("OBJECT_RECORD_CONFLICT")
+        expected["object_record_sha256"] = hashlib.sha256(record_bytes).hexdigest()
     except IntegrityFailure as exc:
         raise ObjectFailure(exc.code) from exc
     except CustodyFailure as exc:
         raise ObjectFailure(exc.code) from exc
+    actual = _read_link(checked, _link_path(checked, device_id, capture_id))
+    if actual.get("object_record_sha256") != expected["object_record_sha256"]:
+        raise ObjectFailure("OBJECT_RECORD_CONFLICT")
+    if actual != expected:
+        raise ObjectFailure("LINK_TAMPERED")
     return {
         "status": "LOCAL_OBJECT_LINK_VERIFIED_UNANCHORED",
         "object_id": expected["object_id"], "device_id": device_id,
@@ -210,6 +213,7 @@ def create_object(root: str | Path, device_id: str, capture_id: str,
             else:
                 _publish_record(checked, obj_path, _canon(expected))
                 _validate_record(checked, obj_path, expected)
+            link["object_record_sha256"] = hashlib.sha256(obj_path.read_bytes()).hexdigest()
             link_path = _link_path(checked, device_id, capture_id)
             if link_path.exists() or link_path.is_symlink():
                 if _read_link(checked, link_path) != link:

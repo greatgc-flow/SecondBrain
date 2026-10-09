@@ -134,6 +134,21 @@ def test_open_fd_metadata_flags_are_rejected_before_digest_read(tmp_path, monkey
         _digest_fd(file)
 
 
+
+@pytest.mark.parametrize("attribute", list(BITS))
+def test_leaf_digest_rejects_known_placeholder_before_even_os_open(tmp_path, monkeypatch, attribute):
+    file = tmp_path / "source"
+    file.write_bytes(b"no hydration allowed")
+    original_open = os.open
+    def fail_if_hydrating(path, *args, **kwargs):
+        if os.fspath(path) == os.fspath(file):
+            raise AssertionError("os.open must not be called on flagged placeholder")
+        return original_open(path, *args, **kwargs)
+    monkeypatch.setattr(os, "open", fail_if_hydrating)
+    inject_lstat(monkeypatch, file, BITS[attribute])
+    with pytest.raises(IntegrityFailure, match="UNSAFE_PATH"):
+        _digest_fd(file)
+
 def test_conventional_local_files_still_work_on_both_os(tmp_path):
     snapshot = fixture_snapshot(tmp_path)
     assert verify_backup(snapshot)["capture_count"] == 3

@@ -25,9 +25,20 @@ release **NO-GO** (version 0.0.0).
   https://github.com/greatgc-flow/SecondBrain/actions/runs/37991767413
   **SUCCESS — 130 passed**, Python 3.12 and actual pinned
   `rfc8785==0.1.4`: prior R7–R11 106 plus R12 24 synthetic tests.
-- Final PR-tip CI and post-merge `main` SHA/CI **must** be verified and
-  recorded before declaring the source development gate closed.
-  Earlier successful CI is not proof of a later candidate.
+- **Final PR #9 tip** `8b5c43593b0001e29e3d7fde828ea7067e6f06df`:
+  https://github.com/greatgc-flow/SecondBrain/actions/runs/37991953845
+  **SUCCESS — 130 passed in 9.95s**, Python 3.12, real `rfc8785==0.1.4`.
+- **PR #9 squash-merged** to `main` commit
+  `9863a6974249701bf7c48ab4c731758a91a7eed3`:
+  https://github.com/greatgc-flow/SecondBrain/commit/9863a6974249701bf7c48ab4c731758a91a7eed3
+- **Exact post-merge main CI**:
+  https://github.com/greatgc-flow/SecondBrain/actions/runs/37992051401
+  **SUCCESS — 130 passed in 9.61s**, Python 3.12 with installed
+  `rfc8785==0.1.4`; run SHA exactly equals `9863a6974249701bf7c48ab4c731758a91a7eed3`.
+- **R12 synthetic source-development gate PASS**. **R12 independent
+  offsite/physical operational backup gate NOT TESTED / NO-GO**, and
+  product release remains NO-GO. The final documentation-only closure
+  does not revise the verified code tree.
 
 ## Implementation contract
 

@@ -17,6 +17,8 @@ from .custody import CustodyFailure, _canon, verify_chain
 from .object import ObjectFailure, verify_object_link
 from .verify import IntegrityFailure, _digest_fd, _safe_regular_file, _strict_json
 from .writer import WriterFailure, _writer_lock
+from .recovery import (RecoveryFailure, HOLD_REL, SENTINEL_REL, _payloads,
+                       validate_recovery_hold, recovery_hold_present)
 
 HEX64 = re.compile(r"[0-9a-f]{64}\Z")
 CAP = r"CAP-[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
@@ -110,8 +112,10 @@ def _expected_dirs(files: list[str]) -> set[str]:
     return result
 
 
-def _closure(root: Path, *, skip_writer_lock: bool = False) -> dict[str, Any]:
+def _closure(root: Path, *, skip_writer_lock: bool = False, recovery_hold: bool = False) -> dict[str, Any]:
     files, dirs = _walk_files(root, skip_writer_lock=skip_writer_lock)
+    if recovery_hold:
+        files = [p for p in files if p not in (HOLD_REL, SENTINEL_REL)]
     if (not files or set(dirs) != _expected_dirs(files) or
             any(not any(regex.fullmatch(p) for regex in EXPECTED) for p in files)):
         raise BackupFailure("SNAPSHOT_NOT_CLOSED")
@@ -275,9 +279,15 @@ def _validate_manifest(snapshot: Path) -> dict[str, Any]:
         raise BackupFailure("SNAPSHOT_TAMPERED") from exc
 
 
-def _compare_data(root: Path, manifest: dict[str, Any]) -> None:
+def _compare_data(root: Path, manifest: dict[str, Any], *, recovery_hold: bool = False) -> None:
     try:
+        if recovery_hold:
+            validate_recovery_hold(root, manifest['manifest_sha256'])
+        elif recovery_hold_present(root):
+            raise BackupFailure('SNAPSHOT_TAMPERED')
         actual_files, dirs = _walk_files(root)
+        if recovery_hold:
+            actual_files = [p for p in actual_files if p not in (HOLD_REL, SENTINEL_REL)]
         if (actual_files != [e["path"] for e in manifest["files"]] or
                 set(dirs) != _expected_dirs(actual_files)):
             raise BackupFailure("SNAPSHOT_TAMPERED")
@@ -287,11 +297,11 @@ def _compare_data(root: Path, manifest: dict[str, Any]) -> None:
             sha, _, size = _digest_fd(file)
             if (sha, size) != (e["sha256"], e["size_bytes"]):
                 raise BackupFailure("SNAPSHOT_TAMPERED")
-        closed = _closure(root)
+        closed = _closure(root, recovery_hold=recovery_hold)
         for field in ("capture_count", "object_count", "event_count", "tip_hash"):
             if closed[field] != manifest[field]:
                 raise BackupFailure("SNAPSHOT_TAMPERED")
-    except (IntegrityFailure, ObjectFailure, CustodyFailure, WriterFailure) as exc:
+    except (IntegrityFailure, ObjectFailure, CustodyFailure, WriterFailure, RecoveryFailure) as exc:
         raise BackupFailure("SNAPSHOT_TAMPERED") from exc
 
 
@@ -320,7 +330,9 @@ def create_backup(root: str | Path, destination: str | Path) -> dict[str, Any]:
                 raise BackupFailure("INCOMPLETE_SNAPSHOT") from exc
             return _snapshot_result(manifest, "LOCAL_SNAPSHOT_VERIFIED_EXTERNAL_CUSTODY_UNVERIFIED")
     except WriterFailure as exc:
-        raise BackupFailure("SOURCE_BUSY" if exc.code == "WRITER_BUSY" else "SOURCE_INVALID") from exc
+        code = ('SOURCE_BUSY' if exc.code == 'WRITER_BUSY' else
+                'RECOVERY_HOLD' if exc.code == 'RECOVERY_HOLD' else 'SOURCE_INVALID')
+        raise BackupFailure(code) from exc
 
 
 def verify_backup(snapshot: str | Path) -> dict[str, Any]:
@@ -342,7 +354,7 @@ def restore_backup(snapshot: str | Path, destination: str | Path) -> dict[str, A
         try:
             if not target.is_dir() or target.is_symlink():
                 raise BackupFailure("DESTINATION_CONFLICT")
-            _compare_data(_dir(target), manifest)
+            _compare_data(_dir(target), manifest, recovery_hold=True)
             return {**verified, "status": "RESTORE_ALREADY_VALID_LOCAL"}
         except BackupFailure as exc:
             raise BackupFailure("DESTINATION_CONFLICT") from exc
@@ -353,13 +365,20 @@ def restore_backup(snapshot: str | Path, destination: str | Path) -> dict[str, A
     except OSError as exc:
         raise BackupFailure("UNSAFE_DESTINATION") from exc
     try:
+        # Quarantine FIRST, before restoring an authority.json that could write.
+        hold_dir = target / '90_System' / 'writer'
+        hold_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
+        hold, sentinel = _payloads(manifest['manifest_sha256'])
+        _write_exclusive(target / HOLD_REL, _canon(hold))
+        _write_exclusive(target / SENTINEL_REL, _canon(sentinel))
+        _fsync_dir(hold_dir)
         for entry in manifest["files"]:
             p = entry["path"]
             sha, size = _copy_file(folder / "data" / p, target / p)
             if (sha, size) != (entry["sha256"], entry["size_bytes"]):
                 raise BackupFailure("INCOMPLETE_RESTORE")
-        _compare_data(target, manifest)
+        _compare_data(target, manifest, recovery_hold=True)
         _fsync_dir(target)
-    except (BackupFailure, CaptureFailure, OSError) as exc:
+    except (BackupFailure, CaptureFailure, RecoveryFailure, OSError) as exc:
         raise BackupFailure("INCOMPLETE_RESTORE") from exc
     return {**verified, "status": "LOCAL_RESTORE_VERIFIED_EXTERNAL_CUSTODY_UNVERIFIED"}

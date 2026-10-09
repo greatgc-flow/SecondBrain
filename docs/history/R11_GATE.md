@@ -24,8 +24,17 @@ current latest verdict.
   **SUCCESS: 106 passed in 4.40s**, including all 84 prior tests and
   22 R11 synthetic tests, on GitHub Python 3.12 with real
   `rfc8785==0.1.4`. The precise count refers to this commit.
-- Final PR tip CI and post-merge `main` CI require a fresh verification;
-  do **not** infer them from the successful intermediate implementation CI.
+- **Final PR tip** `f05fef28345b8c9ad21c64e7f9ac17b2288cd983`:
+  https://github.com/greatgc-flow/SecondBrain/actions/runs/37990279021
+  **SUCCESS, 106 passed in 4.51s** (R7–R11).
+- **Squash-merged PR #7** to `main` commit
+  `665c2b537b39e17c199a36fe6e5d12176cd7c0c2`:
+  https://github.com/greatgc-flow/SecondBrain/commit/665c2b537b39e17c199a36fe6e5d12176cd7c0c2
+- **Post-merge main CI:** https://github.com/greatgc-flow/SecondBrain/actions/runs/37990417740
+  **SUCCESS, 106 passed in 5.44s**, Python 3.12 and installed
+  `rfc8785==0.1.4`; run SHA exactly matches `665c2b537b39e17c199a36fe6e5d12176cd7c0c2`.
+- This documentation-only CI closure does not retroactively change the
+  verified product commit or assert any untested real-world environment.
 
 ## Implementation
 

@@ -18,7 +18,7 @@ from .capture import (
     CaptureFailure, _copy_source, _encode, _ensure_parent, _fsync_dir,
     _write_exclusive, verify_capture,
 )
-from .verify import IntegrityFailure, _digest_fd, _safe_regular_file, _strict_json
+from .verify import IntegrityFailure, _digest_fd, _safe_regular_file, _strict_json, _unsafe_windows_attributes
 from .recovery import recovery_hold_present
 
 
@@ -30,7 +30,8 @@ class WriterFailure(Exception):
 
 def _root(path: str | Path) -> Path:
     root = Path(path).expanduser().absolute()
-    if not root.is_dir() or root.is_symlink() or (hasattr(root, 'is_junction') and root.is_junction()):
+    if (not root.is_dir() or root.is_symlink() or _unsafe_windows_attributes(root.lstat()) or
+            (hasattr(root, 'is_junction') and root.is_junction())):
         raise WriterFailure('INVALID_ROOT')
     return root
 

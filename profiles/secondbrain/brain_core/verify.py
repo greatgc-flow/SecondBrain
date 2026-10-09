@@ -17,6 +17,16 @@ from jsonschema import Draft202012Validator, FormatChecker
 HEX64 = re.compile(r"[0-9a-f]{64}\Z")
 OBJECT_ID = re.compile(r"obj-sha256-([0-9a-f]{64})\Z")
 
+# WinNT.h: reparse point, offline, recall-on-open, recall-on-data-access.
+# Python exposes st_file_attributes on Windows; the latter two flags may
+# not be present in every metadata API. No flag != guaranteed hydration.
+_WINDOWS_UNSAFE_ATTRS = 0x00000400 | 0x00001000 | 0x00040000 | 0x00400000
+
+
+def _unsafe_windows_attributes(result: os.stat_result) -> bool:
+    return bool(getattr(result, "st_file_attributes", 0) & _WINDOWS_UNSAFE_ATTRS)
+
+
 class IntegrityFailure(Exception):
     def __init__(self, code: str):
         self.code = code
@@ -63,6 +73,8 @@ def _safe_regular_file(root: Path, file: Path, *, missing_code: str) -> None:
             cur = cur / part
             current_stat = cur.lstat()
             mode = current_stat.st_mode
+            if _unsafe_windows_attributes(current_stat):
+                raise IntegrityFailure("UNSAFE_PATH")
             if stat.S_ISLNK(mode) or (hasattr(cur, 'is_junction') and cur.is_junction()):
                 raise IntegrityFailure("UNSAFE_PATH")
             if cur == file:
@@ -81,11 +93,18 @@ def _digest_fd(file: Path) -> tuple[str, str, int]:
     sha256, sha512 = hashlib.sha256(), hashlib.sha512()
     flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0)
     try:
+        leaf = file.lstat()  # metadata-only: refuse cloud recall BEFORE open()
+        if (_unsafe_windows_attributes(leaf) or
+                not stat.S_ISREG(leaf.st_mode) or leaf.st_nlink != 1):
+            raise IntegrityFailure("UNSAFE_PATH")
         fd = os.open(file, flags)
         with os.fdopen(fd, "rb") as stream:
             first = os.fstat(stream.fileno())
-            if not stat.S_ISREG(first.st_mode) or first.st_nlink != 1:
+            if (_unsafe_windows_attributes(first) or
+                    not stat.S_ISREG(first.st_mode) or first.st_nlink != 1):
                 raise IntegrityFailure("UNSAFE_PATH")
+            if (first.st_dev, first.st_ino) != (leaf.st_dev, leaf.st_ino):
+                raise IntegrityFailure("SOURCE_CHANGED")
             total = 0
             for block in iter(lambda: stream.read(1024 * 1024), b""):
                 sha256.update(block)
@@ -94,7 +113,7 @@ def _digest_fd(file: Path) -> tuple[str, str, int]:
             last = os.fstat(stream.fileno())
         identity_first = (first.st_dev, first.st_ino, first.st_size, first.st_mtime_ns, first.st_ctime_ns)
         identity_last = (last.st_dev, last.st_ino, last.st_size, last.st_mtime_ns, last.st_ctime_ns)
-        if identity_first != identity_last or last.st_nlink != 1:
+        if identity_first != identity_last or last.st_nlink != 1 or _unsafe_windows_attributes(last):
             raise IntegrityFailure("SOURCE_CHANGED")
         return sha256.hexdigest(), sha512.hexdigest(), total
     except IntegrityFailure:
@@ -114,7 +133,7 @@ def verify_object(root: str | Path, object_id: str) -> dict[str, str | int]:
         raise IntegrityFailure("SCHEMA_INVALID")
     digest = match.group(1)
     root = Path(root).expanduser().absolute()
-    if not root.is_dir() or root.is_symlink():
+    if not root.is_dir() or root.is_symlink() or _unsafe_windows_attributes(root.lstat()):
         raise IntegrityFailure("UNSAFE_PATH")
     rp = root / "10_Evidence" / "Records" / "objects" / f"{object_id}.json"
     _safe_regular_file(root, rp, missing_code="INCOMPLETE_COMMIT")

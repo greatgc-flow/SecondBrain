@@ -45,6 +45,13 @@ Version 0.0.0 and **formal product release NO-GO** remain unchanged.
   inode and metadata identity. See [R13-E gate](../history/R13E_LEAF_DRIFT_GATE.md).
   This cannot guarantee safety against atomic parent-directory swaps.
 
+- **R13-F WINDOWS CLOUD FLAGS:** refuse file attributes REPARSE_POINT, OFFLINE,
+  RECALL_ON_OPEN or RECALL_ON_DATA_ACCESS where surfaced by Windows
+  stat/lstat/fstat before accepting or reading Capture, snapshots or
+  recovery markers. Tests inject exact bit values on both CI runners;
+  genuine cloud placeholders/online-offline states remain unverified.
+  See [R13-F gate](../history/R13F_WIN_CLOUD_ATTR_GATE.md).
+
 ## Next operational gate: remaining R13 — independent storage/recovery drill and platform matrix
 
 Runbook: [operator-observed independent restore and Windows/cloud matrix](../runbooks/R13_INDEPENDENT_RESTORE_DRILL.md). **Not performed by CI; no operational PASS assertion.**

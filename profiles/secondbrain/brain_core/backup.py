@@ -16,7 +16,7 @@ from typing import Any
 from .capture import CaptureFailure, _copy_source, _fsync_dir, _write_exclusive
 from .custody import CustodyFailure, _canon, verify_chain
 from .object import ObjectFailure, verify_object_link
-from .verify import IntegrityFailure, _digest_fd, _safe_regular_file, _strict_json
+from .verify import IntegrityFailure, _digest_fd, _safe_regular_file, _strict_json, _unsafe_windows_attributes
 from .writer import WriterFailure, _writer_lock
 from .recovery import (RecoveryFailure, HOLD_REL, SENTINEL_REL, _payloads,
                        validate_recovery_hold, recovery_hold_present)
@@ -50,7 +50,12 @@ class BackupFailure(Exception):
 def _no_symlink_ancestors(path: Path, code: str) -> None:
     for component in (path, *path.parents):
         try:
-            if component.is_symlink() or (hasattr(component, 'is_junction') and component.is_junction()):
+            try:
+                info = component.lstat()  # never follow a cloud or symlink target
+            except FileNotFoundError:
+                continue  # destination may not exist yet; inspect ancestors
+            if (_unsafe_windows_attributes(info) or stat.S_ISLNK(info.st_mode) or
+                    (hasattr(component, 'is_junction') and component.is_junction())):
                 raise BackupFailure(code)
         except OSError as exc:
             raise BackupFailure(code) from exc
@@ -88,6 +93,8 @@ def _walk_files(root: Path, *, skip_writer_lock: bool = False) -> tuple[list[str
                 if hasattr(child, 'is_junction') and child.is_junction():
                     raise BackupFailure('UNSAFE_PATH')
                 child_stat = child.lstat()
+                if _unsafe_windows_attributes(child_stat):
+                    raise BackupFailure('UNSAFE_PATH')
                 mode = child_stat.st_mode
                 if stat.S_ISDIR(mode):
                     if child.name.startswith(".stage-") or child.name == "__pycache__":
@@ -200,7 +207,8 @@ def _regular_leaf_identity(file: Path) -> tuple[int, ...]:
     """
     try:
         entry = file.lstat()
-        if not stat.S_ISREG(entry.st_mode) or entry.st_nlink != 1:
+        if (_unsafe_windows_attributes(entry) or
+                not stat.S_ISREG(entry.st_mode) or entry.st_nlink != 1):
             raise BackupFailure("UNSAFE_PATH")
         return (entry.st_dev, entry.st_ino, entry.st_size, entry.st_mtime_ns,
                 entry.st_ctime_ns, entry.st_nlink)

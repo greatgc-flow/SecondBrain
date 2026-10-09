@@ -9,7 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 import re
 
-from .verify import IntegrityFailure, _safe_regular_file, _strict_json
+from .verify import IntegrityFailure, _safe_regular_file, _strict_json, _unsafe_windows_attributes
 
 HOLD_REL = "90_System/writer/recovery-hold.json"
 SENTINEL_REL = "90_System/writer/recovery-sentinel.json"
@@ -76,7 +76,7 @@ def validate_recovery_hold(root: Path, expected_manifest_sha256: str | None = No
 
 def recovery_status(root: str | Path) -> dict:
     path = Path(root).expanduser().absolute()
-    if (not path.is_dir() or path.is_symlink() or
+    if (not path.is_dir() or path.is_symlink() or _unsafe_windows_attributes(path.lstat()) or
         (hasattr(path, 'is_junction') and path.is_junction())):
         raise RecoveryFailure("INVALID_ROOT")
     if not recovery_hold_present(path):

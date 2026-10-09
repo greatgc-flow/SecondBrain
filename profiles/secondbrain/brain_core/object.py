@@ -165,7 +165,8 @@ def verify_object_link(root: str | Path, device_id: str, capture_id: str) -> dic
             raise ObjectFailure("OBJECT_RECORD_CONFLICT")
         expected["object_record_sha256"] = hashlib.sha256(record_bytes).hexdigest()
     except IntegrityFailure as exc:
-        raise ObjectFailure(exc.code) from exc
+        code = "INCOMPLETE_OBJECT_LINK" if exc.code == "INCOMPLETE_COMMIT" else exc.code
+        raise ObjectFailure(code) from exc
     except CustodyFailure as exc:
         raise ObjectFailure(exc.code) from exc
     actual = _read_link(checked, _link_path(checked, device_id, capture_id))

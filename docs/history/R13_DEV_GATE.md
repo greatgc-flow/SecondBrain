@@ -27,6 +27,13 @@ acceptance remains **NO-GO** (issue #11); product release **NO-GO**.
   accompanied by explicit `is_junction()` rejection in R7 capture
   source/parent checks, R8 writer root, R11 object file verifier and
   R12 snapshot source/destination walk.
+- Candidate `4998c09dc3d319d3c3e26b701508454ea7be7b73`:
+  https://github.com/greatgc-flow/SecondBrain/actions/runs/37993107386
+  **SUCCESS:** Ubuntu `139 passed, 2 skipped` (the actual Windows-only
+  tests), Windows `141 passed`, Python 3.12 with real
+  `rfc8785==0.1.4`. Both Windows NTFS junction tests executed and passed,
+  not skipped. Prior CP1252 failures are resolved without modifying
+  application data serialization.
 - Final PR-tip SHA/Ubuntu+Windows CI and post-merge `main` SHA/CI:
   verify at time of merge and append by a documentation-only closure PR.
   Do not infer later results from early passing runs.

@@ -191,19 +191,34 @@ def _closure(root: Path, *, skip_writer_lock: bool = False, recovery_hold: bool 
     }
 
 
-def _copy_file(source: Path, dest: Path) -> tuple[str, int]:
-    # Recheck around copying: initial closure enumeration alone is not enough
-    # to notice stable aliases introduced after the first tree traversal.
+def _regular_leaf_identity(file: Path) -> tuple[int, ...]:
+    """Compare a file *name* before and after a read; not a parent-dir fence.
+
+    A stable opened file descriptor is insufficient: its directory entry
+    could have been exchanged for different, byte-identical regular file.
+    This best-effort check does not make an untrusted mutable path atomic.
+    """
     try:
-        before = source.lstat()
-        if not stat.S_ISREG(before.st_mode) or before.st_nlink != 1:
+        entry = file.lstat()
+        if not stat.S_ISREG(entry.st_mode) or entry.st_nlink != 1:
             raise BackupFailure("UNSAFE_PATH")
+        return (entry.st_dev, entry.st_ino, entry.st_size, entry.st_mtime_ns,
+                entry.st_ctime_ns, entry.st_nlink)
+    except OSError as exc:
+        raise BackupFailure("UNSAFE_PATH") from exc
+
+
+def _copy_file(source: Path, dest: Path) -> tuple[str, int]:
+    # File content stability is checked by _copy_source on its open FD.
+    # Additionally bind the pathname to the *same* leaf inode across copy.
+    before = _regular_leaf_identity(source)
+    try:
         dest.parent.mkdir(parents=True, exist_ok=True)
         _no_symlink_ancestors(dest.parent, "UNSAFE_DESTINATION")
         sha256, _, count = _copy_source(source, dest)
-        after = source.lstat()
-        if not stat.S_ISREG(after.st_mode) or after.st_nlink != 1:
-            raise BackupFailure("UNSAFE_PATH")
+        after = _regular_leaf_identity(source)
+        if before != after:
+            raise BackupFailure("SOURCE_CHANGED")
         _fsync_dir(dest.parent)
         return sha256, count
     except (OSError, ValueError) as exc:
@@ -313,7 +328,11 @@ def _compare_data(root: Path, manifest: dict[str, Any], *, recovery_hold: bool =
         for e in manifest["files"]:
             file = root.joinpath(*e["path"].split("/"))
             _safe_regular_file(root, file, missing_code="SNAPSHOT_TAMPERED")
+            before = _regular_leaf_identity(file)
             sha, _, size = _digest_fd(file)
+            after = _regular_leaf_identity(file)
+            if before != after:
+                raise BackupFailure("SNAPSHOT_TAMPERED")
             if (sha, size) != (e["sha256"], e["size_bytes"]):
                 raise BackupFailure("SNAPSHOT_TAMPERED")
         closed = _closure(root, recovery_hold=recovery_hold)

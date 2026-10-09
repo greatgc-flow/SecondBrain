@@ -42,10 +42,38 @@ byte-identical path substitution between hash calls.
   during **backup create** (no `.complete`), during **restore**
   (retains hold), after a **verify digest**, during **restore preflight**
   (no target directory), plus normal success regression.
-- Full Ubuntu and Windows synthetic suite and Ubuntu→Windows /
-  Windows→Ubuntu transfer+restore SIX-job run required before marking
-  source development PASS; final PR tip and post-merge main CI SHAs and
-  counts only added after GitHub records successful results.
+- **RED run**, commit `4be6c64e7c19c00db7b254bb952f530b5ba41045`:
+  https://github.com/greatgc-flow/SecondBrain/actions/runs/38002243214
+  FAILED as expected: **Windows 4 failed, 182 passed**; Ubuntu **4 failed,
+  180 passed, 2 Windows-only skipped**. Four intentional replacement
+  oracles exposed same-byte leaf substitution acceptance.
+- First **GREEN code candidate**, commit
+  `43b35941f04cc3e22cec3885f7ad1bedf61fc0b1`:
+  https://github.com/greatgc-flow/SecondBrain/actions/runs/38002279579
+  SUCCESS in all six jobs, Windows **186 passed**; Ubuntu **184 passed,
+  2 Windows-only skipped**; both opposite-OS producer/consumer transfer
+  and read-only restore workflows passed.
+- **Final PR #20 tip**, commit
+  `be25b44414a3f45a4298712d8291050886135c51`:
+  https://github.com/greatgc-flow/SecondBrain/actions/runs/38002397570
+  **SUCCESS ALL SIX JOBS**, Windows **186 passed in 107.08s**; Ubuntu
+  **184 passed, 2 Windows-only skipped in 25.32s**; both cross-OS
+  producer/consumer restore jobs succeeded with real pinned
+  `rfc8785==0.1.4` on Python 3.12.
+- **PR #20 squash merged to main**,
+  `e51f2acb480d2fa184ebdb9caf045d355171d3fa`:
+  https://github.com/greatgc-flow/SecondBrain/commit/e51f2acb480d2fa184ebdb9caf045d355171d3fa
+- **Exact post-merge main CI**:
+  https://github.com/greatgc-flow/SecondBrain/actions/runs/38002995890
+  **SUCCESS ALL SIX JOBS**, Windows **186 passed in 101.18s**;
+  Ubuntu **184 passed, 2 Windows-only skipped in 29.55s**, both
+  independent-job opposite-OS synthetic restores succeeded.
+  Exact run head SHA matches the above implementation main commit.
+- **R13-E synthetic source-development gate PASS**. The gate validates
+  sampled leaf pathname identity checks on Windows and Ubuntu,
+  **NOT** a hostile concurrent parent-directory security proof.
+  R13 full operational issue #11 OPEN/NO-GO; formal product release
+  remains NO-GO with version 0.0.0. This closure change is docs only.
 
 ## Residual risk (NO-GO)
 

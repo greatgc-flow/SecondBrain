@@ -2,7 +2,10 @@
 
 ## Run local synthetic tests
 
+Install the explicit date-time validator: without it, JSON Schema FormatChecker may silently skip invalid RFC3339 dates.
+
 ```bash
+python -m pip install 'pytest>=8,<10' 'jsonschema>=4,<5' 'rfc3339-validator>=0.1,<1'
 python -m pytest -q tests/test_capture_tdd.py tests/test_object_verify_tdd.py
 python brain.py capture file --help
 python brain.py capture verify --help

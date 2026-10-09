@@ -15,7 +15,7 @@ Private development repository for an evidence-first Second Brain. Current miles
 
 ```bash
 cd profiles/secondbrain
-python -m pip install 'pytest>=8,<10' 'jsonschema>=4,<5'
+python -m pip install 'pytest>=8,<10' 'jsonschema>=4,<5' 'rfc3339-validator>=0.1,<1'
 python -m pytest -q tests/test_capture_tdd.py tests/test_object_verify_tdd.py
 python brain.py --help
 ```
@@ -30,4 +30,4 @@ Next is S1 single-writer canonical commit: verify authority → stage source →
 
 No private evidence source files, copied personal data, secrets, generated archives or test caches should be committed. Existing archived R1–R7 ZIPs remain outside Git; publication of archival material requires separate review.
 
-Repository initialized after the owner's privacy change; prior README and ignore commits were preserved. This is a **development snapshot, not a formal release**.
+Repository initialized after the owner's privacy change; prior README and ignore commits were preserved. This Git tree contains the **R7 runtime core, schemas, test suite, quickstart and scope docs**. The full historical design corpus and archived R1–R7 ZIP bundles remain in the original local handoff ZIP, not in Git. Editable/wheel distribution packaging and install-from-wheel testing are not yet completed. This is a **development snapshot, not a formal release**.

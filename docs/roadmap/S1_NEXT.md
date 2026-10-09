@@ -28,6 +28,12 @@ Version 0.0.0 and **formal product release NO-GO** remain unchanged.
   results in [R13-B gate](../history/R13B_CROSS_RUNNER_GATE.md).
   Separate CI runner is not separately administered durable custody.
 
+- **R13-C OPTIONAL PIN:** require a previously known external SHA-256
+  of the R12 canonical manifest body as an optional verify/restore input.
+  Refuse mismatching, even internally valid, snapshots before creating
+  the recovery root. See [R13-C gate](../history/R13C_DETACHED_DIGEST_GATE.md).
+  A digest co-traveling with the backup is not independently authenticated.
+
 ## Next operational gate: remaining R13 — independent storage/recovery drill and platform matrix
 
 Runbook: [operator-observed independent restore and Windows/cloud matrix](../runbooks/R13_INDEPENDENT_RESTORE_DRILL.md). **Not performed by CI; no operational PASS assertion.**

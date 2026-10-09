@@ -1,4 +1,4 @@
-name: R9 synthetic source tests
+name: R10 synthetic source tests
 on:
   push:
     branches: [main]
@@ -17,6 +17,6 @@ jobs:
           python-version: '3.12'
       - name: Install source-only test dependencies (explicit date-time validator)
         run: python -m pip install 'pytest>=8,<10' 'jsonschema>=4.23,<5' 'rfc3339-validator>=0.1,<1' 'rfc8785==0.1.4'
-      - name: R9 local custody ledger plus R8/R7 regression (synthetic data)
+      - name: R10 checkpoint and complete R7-R9 synthetic regression
         working-directory: profiles/secondbrain
-        run: python -m pytest -q tests/test_custody_tdd.py tests/test_writer_tdd.py tests/test_capture_tdd.py tests/test_object_verify_tdd.py
+        run: python -m pytest -q tests/

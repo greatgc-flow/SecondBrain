@@ -6,7 +6,8 @@ import sys
 from brain_core.verify import IntegrityFailure, verify_object
 from brain_core.capture import CaptureFailure, capture_file, verify_capture
 from brain_core.writer import WriterFailure, configure_writer, publish_capture, verify_publication
-from brain_core.custody import CustodyFailure, commit_capture, verify_commit, verify_chain
+from brain_core.custody import CustodyFailure, commit_capture, verify_commit, verify_chain, _canon
+from brain_core.checkpoint import CheckpointFailure, create_checkpoint, verify_checkpoint
 
 
 def main(argv=None):
@@ -71,6 +72,16 @@ def main(argv=None):
     ledger.add_argument('--root', default=os.environ.get('SECOND_BRAIN_ROOT'))
     ledger.add_argument('--json', action='store_true')
 
+    checkpoints = commands.add_parser('checkpoint', help='R10 operator-managed external checkpoint (not notarization)')
+    checkpoint_commands = checkpoints.add_subparsers(dest='action', required=True)
+    export = checkpoint_commands.add_parser('export', help='Print checkpoint JSON; operator must store it outside root')
+    export.add_argument('--root', default=os.environ.get('SECOND_BRAIN_ROOT'))
+    export.add_argument('--json', action='store_true')
+    check_anchor = checkpoint_commands.add_parser('verify', help='Compare chain with operator-supplied independent checkpoint')
+    check_anchor.add_argument('checkpoint_path')
+    check_anchor.add_argument('--root', default=os.environ.get('SECOND_BRAIN_ROOT'))
+    check_anchor.add_argument('--json', action='store_true')
+
     args = parser.parse_args(argv)
     if not args.root:
         result, exit_code = {'status': 'FAIL', 'error_code': 'ROOT_NOT_SET'}, 2
@@ -86,6 +97,9 @@ def main(argv=None):
                                           capture_id=args.capture_id)
                 else:
                     result = verify_capture(args.root, args.device_id, args.capture_id)
+            elif args.group == 'checkpoint':
+                result = (create_checkpoint(args.root) if args.action == 'export'
+                          else verify_checkpoint(args.root, args.checkpoint_path))
             elif args.group == 'custody':
                 if args.action == 'chain':
                     result = verify_chain(args.root)
@@ -100,10 +114,13 @@ def main(argv=None):
             else:
                 result = verify_publication(args.root, args.device_id, args.capture_id)
             exit_code = 0
-        except (IntegrityFailure, CaptureFailure, WriterFailure, CustodyFailure) as exc:
+        except (IntegrityFailure, CaptureFailure, WriterFailure, CustodyFailure, CheckpointFailure) as exc:
             result, exit_code = {'status': 'FAIL', 'error_code': exc.code}, 3
     if args.json:
-        print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+        if args.group == 'checkpoint' and args.action == 'export' and exit_code == 0:
+            print(_canon(result).decode('utf-8'))
+        else:
+            print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     elif exit_code == 0:
         if args.group == 'object':
             print(f"PASS {result['object_id']} | sha256={result['sha256']} | bytes={result['size_bytes']}")
@@ -111,6 +128,8 @@ def main(argv=None):
             print(f"READY (uncommitted capture) {result['capture_id']} | sha256={result['sha256']}")
         elif args.action == 'init':
             print(f"WRITER CONFIGURED (policy only) epoch={result['writer_epoch']}")
+        elif args.group == 'checkpoint':
+            print(json.dumps(result, ensure_ascii=False, sort_keys=True, separators=(',', ':')))
         elif args.group == 'custody' and args.action == 'chain':
             print(f"{result['status']} events={result['event_count']}")
         else:

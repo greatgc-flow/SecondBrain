@@ -13,4 +13,4 @@ This repository is currently **public**. Personal evidence, archive ZIPs, secret
 ## Development status
 R7; partial TDD slice only. **Not a production release.**
 
-See `src/` and `tests/` for the initial implementation and tests.
+**Import status:** The public repository has been initialized with documentation and ignore rules. The R7 implementation and tests are **not yet pushed** because the prepared source bundle contains nested historical archives and the repository is public. A reviewed public-safe source import is required before using the code or CI.

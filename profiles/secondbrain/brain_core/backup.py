@@ -102,9 +102,18 @@ def _walk_files(root: Path, *, skip_writer_lock: bool = False) -> tuple[list[str
     return files, dirs
 
 
+def _expected_dirs(files: list[str]) -> set[str]:
+    result = set()
+    for path in files:
+        parts = path.split("/")
+        result.update("/".join(parts[:n]) for n in range(1, len(parts)))
+    return result
+
+
 def _closure(root: Path, *, skip_writer_lock: bool = False) -> dict[str, Any]:
     files, dirs = _walk_files(root, skip_writer_lock=skip_writer_lock)
-    if not files or any(not any(regex.fullmatch(p) for regex in EXPECTED) for p in files):
+    if (not files or set(dirs) != _expected_dirs(files) or
+            any(not any(regex.fullmatch(p) for regex in EXPECTED) for p in files)):
         raise BackupFailure("SNAPSHOT_NOT_CLOSED")
     links = set()
     objects = set()
@@ -251,24 +260,26 @@ def _validate_manifest(snapshot: Path) -> dict[str, Any]:
         _safe_regular_file(snapshot, marker, missing_code="INCOMPLETE_SNAPSHOT")
         if marker.read_bytes() != (manifest["manifest_sha256"] + "\n").encode("ascii"):
             raise BackupFailure("SNAPSHOT_TAMPERED")
-        listed, _ = _walk_files(snapshot)
-        if set(listed) != set(names) | {"manifest.json", ".complete"}:
-            # Snapshot data is under data/<root-relative-path>.
-            actual = set(listed)
-            wanted = {"manifest.json", ".complete"} | {"data/" + p for p in names}
-            if actual != wanted:
-                raise BackupFailure("SNAPSHOT_TAMPERED")
+        listed, dirs = _walk_files(snapshot)
+        wanted = {"manifest.json", ".complete"} | {"data/" + p for p in names}
+        if set(listed) != wanted or set(dirs) != _expected_dirs(sorted(wanted)):
+            raise BackupFailure("SNAPSHOT_TAMPERED")
         return manifest
     except BackupFailure:
         raise
-    except (IntegrityFailure, CustodyFailure, OSError, KeyError, TypeError, ValueError) as exc:
+    except IntegrityFailure as exc:
+        if exc.code == "INCOMPLETE_SNAPSHOT":
+            raise BackupFailure("INCOMPLETE_SNAPSHOT") from exc
+        raise BackupFailure("UNSAFE_PATH" if exc.code == "UNSAFE_PATH" else "SNAPSHOT_TAMPERED") from exc
+    except (CustodyFailure, OSError, KeyError, TypeError, ValueError) as exc:
         raise BackupFailure("SNAPSHOT_TAMPERED") from exc
 
 
 def _compare_data(root: Path, manifest: dict[str, Any]) -> None:
     try:
-        actual_files, _ = _walk_files(root)
-        if actual_files != [e["path"] for e in manifest["files"]]:
+        actual_files, dirs = _walk_files(root)
+        if (actual_files != [e["path"] for e in manifest["files"]] or
+                set(dirs) != _expected_dirs(actual_files)):
             raise BackupFailure("SNAPSHOT_TAMPERED")
         for e in manifest["files"]:
             file = root.joinpath(*e["path"].split("/"))
@@ -300,7 +311,7 @@ def create_backup(root: str | Path, destination: str | Path) -> dict[str, Any]:
                 raise BackupFailure("UNSAFE_DESTINATION") from exc
             manifest = _manifest_from_files(target / "data", source, data)
             try:
-                (target / "manifest.json").write_bytes(_canon(manifest))
+                _write_exclusive(target / "manifest.json", _canon(manifest))
                 _fsync_dir(target)
                 _compare_data(_dir(target / "data"), manifest)
                 _write_exclusive(target / ".complete", (manifest["manifest_sha256"] + "\n").encode("ascii"))

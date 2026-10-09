@@ -49,7 +49,7 @@ class BackupFailure(Exception):
 def _no_symlink_ancestors(path: Path, code: str) -> None:
     for component in (path, *path.parents):
         try:
-            if component.is_symlink():
+            if component.is_symlink() or (hasattr(component, 'is_junction') and component.is_junction()):
                 raise BackupFailure(code)
         except OSError as exc:
             raise BackupFailure(code) from exc
@@ -84,6 +84,8 @@ def _walk_files(root: Path, *, skip_writer_lock: bool = False) -> tuple[list[str
                 rel = child.relative_to(root).as_posix()
                 if skip_writer_lock and rel == "90_System/writer/.active":
                     continue
+                if hasattr(child, 'is_junction') and child.is_junction():
+                    raise BackupFailure('UNSAFE_PATH')
                 mode = child.lstat().st_mode
                 if stat.S_ISDIR(mode):
                     if child.name.startswith(".stage-") or child.name == "__pycache__":

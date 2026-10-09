@@ -225,3 +225,20 @@ def test_recovered_root_move_preserves_hold_and_read_only_links(tmp_path):
     assert restore_backup(snapshot, moved)["status"] == "RESTORE_ALREADY_VALID_LOCAL"
     with pytest.raises(CaptureFailure, match="RECOVERY_HOLD"):
         capture_file(moved, source, "pc_1", "synthetic")
+
+
+def test_restored_root_matches_separately_supplied_r10_checkpoint(tmp_path):
+    from brain_core.checkpoint import create_checkpoint, verify_checkpoint
+    from brain_core.custody import _canon
+    root, source, cap, auth = setup_pair(tmp_path)
+    checkpoint = tmp_path / "independently supplied only in synthetic test.json"
+    checkpoint.write_bytes(_canon(create_checkpoint(root)))
+    snapshot = tmp_path / "snapshot"
+    create_backup(root, snapshot)
+    original_unavailable = tmp_path / "disconnected source"
+    root.rename(original_unavailable)
+    restored = tmp_path / "restored Korean 한글"
+    restore_backup(snapshot, restored)
+    result = verify_checkpoint(restored, checkpoint)
+    assert result["status"] == "CHECKPOINT_EXACT_MATCH_EXTERNAL_CUSTODY_UNVERIFIED"
+    assert recovery_status(restored)["status"] == "RECOVERED_READ_ONLY"

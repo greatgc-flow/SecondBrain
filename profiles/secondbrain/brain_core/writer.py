@@ -128,8 +128,12 @@ def _publish_bytes_once(root: Path, path: Path, data: bytes) -> None:
         try:
             os.link(staged, path, follow_symlinks=False)
         except FileExistsError:
-            _verify_small_existing(root, path, data)
+            pass  # Verify after disposing of our staging name.
+        # An intentional temporary hardlink is not a valid *published*
+        # two-name state. Unlink it before the new R13-D alias check.
+        staged.unlink()
         _fsync_dir(path.parent)
+        _verify_small_existing(root, path, data)
     finally:
         try: staged.unlink(missing_ok=True)
         except OSError: pass
@@ -168,6 +172,9 @@ def _copy_vault_once(root: Path, source: Path, sha256: str, sha512: str, length:
             os.link(staged, target, follow_symlinks=False)
         except FileExistsError:
             pass  # A concurrent identical publisher is verified, never overwritten.
+        # Drop our staging hardlink before verifying the final inode's
+        # link count; do NOT bypass validation to permit permanent aliases.
+        staged.unlink()
         _fsync_dir(target.parent)
         _verify_vault(root, target, sha256, sha512, length)
     finally:

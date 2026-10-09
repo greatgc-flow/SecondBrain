@@ -49,8 +49,10 @@ network requests under hostile races or unsupported provider APIs.
   live placeholders or production evidence are used.
 - Test oracles: all four bits on Capture source, backup manifest,
   snapshot root, snapshot data directory, recovered hold marker
-  and open file-descriptor attributes; verify refusal occurs before
-  payload read or destination creation; local files still work.
+  and open file-descriptor attributes. Additional direct digest tests
+  inject all four flags into a leaf's `lstat` and fail the test if
+  `os.open` is called, proving known metadata flags are rejected **before
+  file open**; local files still work.
 - Implementation: `brain_core/verify.py` provides shared predicate;
   `capture.py`, `backup.py`, `writer.py`, `recovery.py`
   use it at their existing boundaries.

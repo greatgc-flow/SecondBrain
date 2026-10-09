@@ -214,6 +214,9 @@ def capture_file(root: str | Path, source: str | Path, device_id: str, collector
     Incomplete directories are retained for review; no automatic overwrite/cleanup.
     """
     root, cid = _arguments(root, device_id, capture_id)
+    from .recovery import recovery_hold_present
+    if recovery_hold_present(root):
+        raise CaptureFailure('RECOVERY_HOLD')
     if not collector or not isinstance(collector, str) or not source_type or not isinstance(source_type,str):
         raise CaptureFailure("INVALID_ARGUMENT")
     source = Path(source).expanduser().absolute()

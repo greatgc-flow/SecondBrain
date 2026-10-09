@@ -224,3 +224,71 @@ def test_no_network_for_create_and_verify(tmp_path, monkeypatch):
     monkeypatch.setattr(socket, "create_connection", lambda *a, **k: (_ for _ in ()).throw(AssertionError("network")))
     create(root, writer, cap)
     assert verify_object_link(root, "pc_1", cap["capture_id"])["status"] == "LOCAL_OBJECT_LINK_VERIFIED_UNANCHORED"
+
+
+def test_object_metadata_timestamp_mutation_breaks_link_digest(tmp_path):
+    import rfc8785
+    root, _, writer, cap = prepared(tmp_path)
+    commit(root, writer, cap)
+    out = create(root, writer, cap)
+    path = record_path(root, out["object_id"])
+    original_bytes = path.read_bytes()
+    linked = json.loads(link_path(root, cap).read_text("utf-8"))
+    assert linked["object_record_sha256"] == hashlib.sha256(original_bytes).hexdigest()
+    record = json.loads(original_bytes)
+    record["recorded_at"] = "2001-01-01T00:00:00+00:00"
+    path.write_bytes(rfc8785.dumps(record))
+    with pytest.raises(ObjectFailure, match="OBJECT_RECORD_CONFLICT"):
+        verify_object_link(root, "pc_1", cap["capture_id"])
+
+
+def test_corrupt_link_hash_and_valid_shaped_crosslink_rejected(tmp_path):
+    import rfc8785
+    root, _, writer, cap = prepared(tmp_path)
+    commit(root, writer, cap)
+    create(root, writer, cap)
+    path = link_path(root, cap)
+    doc = json.loads(path.read_bytes())
+    doc["acquisition_hash"] = "0" * 64
+    path.write_bytes(rfc8785.dumps(doc))
+    with pytest.raises(ObjectFailure, match="LINK_TAMPERED"):
+        verify_object_link(root, "pc_1", cap["capture_id"])
+
+
+def test_fsync_failure_during_link_publish_is_reported_and_retryable(tmp_path, monkeypatch):
+    from brain_core import object as mod
+    root, _, writer, cap = prepared(tmp_path)
+    commit(root, writer, cap)
+    real = mod._fsync_dir
+    def injected(path):
+        if path.name == "pc_1" and "links" in path.parts:
+            raise OSError("synthetic fsync failure")
+        return real(path)
+    monkeypatch.setattr(mod, "_fsync_dir", injected)
+    with pytest.raises(ObjectFailure, match="INCOMPLETE_OBJECT"):
+        create(root, writer, cap)
+    monkeypatch.setattr(mod, "_fsync_dir", real)
+    assert create(root, writer, cap)["status"] == "LOCAL_OBJECT_LINK_VERIFIED_UNANCHORED"
+
+
+def test_parent_directory_symlink_denied(tmp_path):
+    root, _, writer, cap = prepared(tmp_path)
+    commit(root, writer, cap)
+    create(root, writer, cap)
+    original = link_path(root, cap).parent
+    outside = tmp_path / "moved-outside"
+    original.rename(outside)
+    try:
+        original.symlink_to(outside, target_is_directory=True)
+    except (NotImplementedError, OSError):
+        pytest.skip("symlinks unavailable")
+    with pytest.raises(ObjectFailure, match="UNSAFE_PATH"):
+        verify_object_link(root, "pc_1", cap["capture_id"])
+
+
+def test_empty_payload_record_is_local_and_verifiable(tmp_path):
+    root, _, writer, cap = prepared(tmp_path, b"")
+    commit(root, writer, cap)
+    out = create(root, writer, cap)
+    assert verify_object(root, out["object_id"])["size_bytes"] == 0
+    assert verify_object_link(root, "pc_1", cap["capture_id"]) == out

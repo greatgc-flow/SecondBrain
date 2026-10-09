@@ -30,6 +30,14 @@ python brain.py backup verify '/outside-root/snapshot-001' --json
 python brain.py backup restore '/outside-root/snapshot-001' --to-root '/another/빈 복구 루트' --json
 ```
 
+**R13-C optional separately recorded snapshot pin:** Pass the `manifest_sha256`
+returned by `backup create --json` through an independently trusted
+operator-controlled channel, then run both `backup verify` and
+`backup restore` with `--expect-manifest-sha256 <DIGEST>`.
+A different but internally valid snapshot then fails **before creating
+the restore target**; a pin stored alongside the snapshot is not an
+independent authenticity witness. See [R13-C guide](R13C_DETACHED_DIGEST_QUICKSTART.md).
+
 The snapshot directory contains `data/` (exact relative root files),
 `manifest.json` (RFC 8785 canonical JSON with ordered path/hash/size
 entries and custody-tip summary) and `.complete` (last-published

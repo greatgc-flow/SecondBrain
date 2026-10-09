@@ -19,6 +19,7 @@ from .capture import (
     _write_exclusive, verify_capture,
 )
 from .verify import IntegrityFailure, _digest_fd, _safe_regular_file, _strict_json
+from .recovery import recovery_hold_present
 
 
 class WriterFailure(Exception):
@@ -67,6 +68,8 @@ def configure_writer(root: str | Path, writer_id: str) -> dict[str, Any]:
     Root filesystem O_EXCL is not a cross-device/cloud coordination service.
     """
     root = _root(root)
+    if recovery_hold_present(root):
+        raise WriterFailure('RECOVERY_HOLD')
     if not isinstance(writer_id, str) or not writer_id or len(writer_id) > 128 or '/' in writer_id or '\\' in writer_id:
         raise WriterFailure('INVALID_ARGUMENT')
     path = _authority_path(root)
@@ -174,6 +177,8 @@ def _copy_vault_once(root: Path, source: Path, sha256: str, sha512: str, length:
 
 @contextmanager
 def _writer_lock(root: Path) -> Iterator[None]:
+    if recovery_hold_present(root):
+        raise WriterFailure('RECOVERY_HOLD')
     path = root / '90_System' / 'writer' / '.active'
     _mkdir_safe(root, path.parent)
     try:
@@ -181,6 +186,8 @@ def _writer_lock(root: Path) -> Iterator[None]:
     except FileExistsError as exc:
         raise WriterFailure('WRITER_BUSY') from exc
     try:
+        if recovery_hold_present(root):
+            raise WriterFailure('RECOVERY_HOLD')
         yield
     finally:
         try:

@@ -65,8 +65,28 @@ both names. Hardlinks do not require symlink support.
   Writer metadata, snapshot payload/manifest/completion marker,
   restored root payload, R13 hold/sentinel, CLI error codes and
   successful valid R11 content dedup.
-- Candidate, final PR head and final merged-main 6-job Ubuntu↔Windows
-  evidence: append **only after observed real GitHub Actions results**.
+- **Final PR #18 tip**:
+  `9dbba5864c36f9866c84d5442eb574fe7b1c045c`.
+  https://github.com/greatgc-flow/SecondBrain/actions/runs/38000217312
+  **SUCCESS all 6 jobs**: Windows **181 passed in 81.03s**;
+  Ubuntu **179 passed, 2 Windows-only skipped in 22.74s**;
+  both synthetic producer and opposite-OS consumer jobs succeeded.
+  Actual pinned `rfc8785==0.1.4` on Python 3.12.
+- **Implementation PR #18 squash merged to main**:
+  `081aec31e0a55ef479cd3590df247036965f6144`.
+  https://github.com/greatgc-flow/SecondBrain/commit/081aec31e0a55ef479cd3590df247036965f6144
+- **Exact implementation post-merge main CI**:
+  https://github.com/greatgc-flow/SecondBrain/actions/runs/38000547175
+  **SUCCESS all 6 jobs**, Windows **181 passed in 59.80s**;
+  Ubuntu **179 passed, 2 Windows-only skipped in 26.54s**.
+  Both cross-OS transfer and recovery consumers passed. Run head SHA
+  exactly matches `081aec31e0a55ef479cd3590df247036965f6144`.
+  Both unit jobs installed pinned real RFC8785.
+- **R13-D synthetic static filesystem hardlink development gate PASS**.
+  This verifies real hardlinks on GitHub-hosted Linux and Windows runners,
+  not adversarial atomic race prevention or a production offsite DR drill.
+  R13 operational issue #11 remains OPEN/NO-GO and product 0.0.0
+  remains **NO-GO**. This documentation-only closure changes no code.
 
 ## Limitations / NO-GO
 

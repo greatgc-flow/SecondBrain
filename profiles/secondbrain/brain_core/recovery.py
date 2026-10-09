@@ -76,10 +76,11 @@ def validate_recovery_hold(root: Path, expected_manifest_sha256: str | None = No
 
 def recovery_status(root: str | Path) -> dict:
     path = Path(root).expanduser().absolute()
-    if not path.is_dir() or path.is_symlink():
+    if (not path.is_dir() or path.is_symlink() or
+        (hasattr(path, 'is_junction') and path.is_junction())):
         raise RecoveryFailure("INVALID_ROOT")
     if not recovery_hold_present(path):
         # This is a local policy observation, NOT verified exclusive authority.
-        return {"status": "LOCAL_WRITER_POLICY_ONLY", "writer_active": False,
+        return {"status": "LOCAL_WRITER_POLICY_ONLY", "writer_active": None,
                 "scope": "no_recovery_hold_observed_not_external_exclusivity"}
     return validate_recovery_hold(path)

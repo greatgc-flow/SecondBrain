@@ -6,10 +6,11 @@ import sys
 from brain_core.verify import IntegrityFailure, verify_object
 from brain_core.capture import CaptureFailure, capture_file, verify_capture
 from brain_core.writer import WriterFailure, configure_writer, publish_capture, verify_publication
+from brain_core.custody import CustodyFailure, commit_capture, verify_commit, verify_chain
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(prog='brain', description='Development only: source-preserving capture, uncommitted writer publication and read-only verification')
+    parser = argparse.ArgumentParser(prog='brain', description='Development only: Capture, local Vault, unanchored custody ledger (not certified)')
     commands = parser.add_subparsers(dest='group', required=True)
     objects = commands.add_parser('object', help='Content-addressed object operations')
     object_commands = objects.add_subparsers(dest='action', required=True)
@@ -52,10 +53,28 @@ def main(argv=None):
     inspect.add_argument('--root', default=os.environ.get('SECOND_BRAIN_ROOT'))
     inspect.add_argument('--json', action='store_true')
 
+    custody = commands.add_parser('custody', help='R9 local RFC8785 hash chain (NOT externally anchored)')
+    custody_cmd = custody.add_subparsers(dest='action', required=True)
+    commit = custody_cmd.add_parser('commit', help='Append Acquisition/Custody pair and local receipt')
+    commit.add_argument('capture_id')
+    commit.add_argument('--device-id', required=True)
+    commit.add_argument('--writer-id', required=True)
+    commit.add_argument('--writer-epoch', default=os.environ.get('SECOND_BRAIN_WRITER_EPOCH'))
+    commit.add_argument('--root', default=os.environ.get('SECOND_BRAIN_ROOT'))
+    commit.add_argument('--json', action='store_true')
+    check = custody_cmd.add_parser('verify', help='Verify local receipt and complete event chain')
+    check.add_argument('capture_id')
+    check.add_argument('--device-id', required=True)
+    check.add_argument('--root', default=os.environ.get('SECOND_BRAIN_ROOT'))
+    check.add_argument('--json', action='store_true')
+    ledger = custody_cmd.add_parser('chain', help='Read-only verify local event chain')
+    ledger.add_argument('--root', default=os.environ.get('SECOND_BRAIN_ROOT'))
+    ledger.add_argument('--json', action='store_true')
+
     args = parser.parse_args(argv)
     if not args.root:
         result, exit_code = {'status': 'FAIL', 'error_code': 'ROOT_NOT_SET'}, 2
-    elif args.group == 'writer' and args.action == 'publish' and not args.writer_epoch:
+    elif args.group in ('writer', 'custody') and args.action in ('publish', 'commit') and not args.writer_epoch:
         result, exit_code = {'status': 'FAIL', 'error_code': 'WRITER_EPOCH_NOT_SET'}, 2
     else:
         try:
@@ -67,6 +86,13 @@ def main(argv=None):
                                           capture_id=args.capture_id)
                 else:
                     result = verify_capture(args.root, args.device_id, args.capture_id)
+            elif args.group == 'custody':
+                if args.action == 'chain':
+                    result = verify_chain(args.root)
+                elif args.action == 'verify':
+                    result = verify_commit(args.root, args.device_id, args.capture_id)
+                else:
+                    result = commit_capture(args.root, args.device_id, args.capture_id, args.writer_id, args.writer_epoch)
             elif args.action == 'init':
                 result = configure_writer(args.root, args.writer_id)
             elif args.action == 'publish':
@@ -74,7 +100,7 @@ def main(argv=None):
             else:
                 result = verify_publication(args.root, args.device_id, args.capture_id)
             exit_code = 0
-        except (IntegrityFailure, CaptureFailure, WriterFailure) as exc:
+        except (IntegrityFailure, CaptureFailure, WriterFailure, CustodyFailure) as exc:
             result, exit_code = {'status': 'FAIL', 'error_code': exc.code}, 3
     if args.json:
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))
@@ -85,6 +111,8 @@ def main(argv=None):
             print(f"READY (uncommitted capture) {result['capture_id']} | sha256={result['sha256']}")
         elif args.action == 'init':
             print(f"WRITER CONFIGURED (policy only) epoch={result['writer_epoch']}")
+        elif args.group == 'custody' and args.action == 'chain':
+            print(f"{result['status']} events={result['event_count']}")
         else:
             print(f"{result['status']} {result['capture_id']} | sha256={result['sha256']}")
     else:

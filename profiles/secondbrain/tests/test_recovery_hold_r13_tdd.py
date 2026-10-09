@@ -167,3 +167,35 @@ def test_forged_link_or_directory_cannot_be_read_as_authorization(tmp_path):
         recovery_status(new)
     with pytest.raises(CaptureFailure, match="RECOVERY_HOLD"):
         capture_file(new, source, "pc_1", "synthetic")
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="real Windows NTFS junction case")
+def test_real_windows_junction_restore_destination_is_rejected(tmp_path):
+    root, source, cap, auth = setup_pair(tmp_path)
+    backup = tmp_path / "backup"
+    create_backup(root, backup)
+    actual = tmp_path / "real"; actual.mkdir()
+    alias = tmp_path / "junction-alias"
+    result = subprocess.run(["cmd", "/c", "mklink", "/J", str(alias), str(actual)],
+                            capture_output=True)
+    if result.returncode:
+        pytest.skip("junction creation unsupported on runner")
+    assert alias.is_junction()
+    with pytest.raises(BackupFailure, match="UNSAFE_DESTINATION"):
+        restore_backup(backup, alias / "root")
+    assert not (actual / "root").exists()
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="real Windows NTFS junction case")
+def test_real_windows_junction_inside_source_rejected(tmp_path):
+    root, source, cap, auth = setup_pair(tmp_path)
+    objects = root / "10_Evidence/Records/objects"
+    outside = tmp_path / "moved-objects"
+    objects.rename(outside)
+    result = subprocess.run(["cmd", "/c", "mklink", "/J", str(objects), str(outside)],
+                            capture_output=True)
+    if result.returncode:
+        pytest.skip("junction creation unsupported on runner")
+    assert objects.is_junction()
+    with pytest.raises(BackupFailure, match="UNSAFE_PATH"):
+        create_backup(root, tmp_path / "backup")

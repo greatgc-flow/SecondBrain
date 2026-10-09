@@ -47,6 +47,7 @@ def test_restored_root_is_quarantined_and_linked_to_manifest(tmp_path):
     assert recovery_status(new)["status"] == "RECOVERED_READ_ONLY"
     assert recovery_status(new)["writer_active"] is False
     assert recovery_status(root)["status"] == "LOCAL_WRITER_POLICY_ONLY"
+    assert recovery_status(root)["writer_active"] is None
     assert restored["status"] == "LOCAL_RESTORE_VERIFIED_EXTERNAL_CUSTODY_UNVERIFIED"
     assert restore_backup(snap, new)["status"] == "RESTORE_ALREADY_VALID_LOCAL"
     assert verify_backup(snap)["manifest_sha256"] == result["manifest_sha256"]

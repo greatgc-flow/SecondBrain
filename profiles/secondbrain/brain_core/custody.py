@@ -218,7 +218,7 @@ def commit_capture(root: str | Path, device_id: str, capture_id: str,
     except CustodyFailure:
         raise
     except WriterFailure as exc:
-        if exc.code in ('WRITER_BUSY', 'WRITER_NOT_AUTHORIZED', 'UNSAFE_PATH'):
+        if exc.code in ('WRITER_BUSY', 'WRITER_NOT_AUTHORIZED', 'UNSAFE_PATH', 'RECOVERY_HOLD'):
             raise CustodyFailure(exc.code) from exc
         label = 'INCOMPLETE_COMMIT' if len(_scan(root)) % 2 == 0 else 'INCOMPLETE_CHAIN'
         raise CustodyFailure(label) from exc

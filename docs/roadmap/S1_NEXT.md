@@ -1,44 +1,50 @@
-# S1 roadmap — GitHub SSOT
+# S1 roadmap — current GitHub main SSOT
 
-Implementation: `profiles/secondbrain/`. Historical specs: `docs/reference/`.
-Release version `0.0.0`; product **NO-GO**.
+Code: `profiles/secondbrain/`. Historical plans: `docs/reference/`.
+Version 0.0.0 and **formal product release NO-GO** remain unchanged.
 
-## Completed local development slices
+## Implemented development slices
 
-- **R7:** source-preserving local Capture receipt and READY marker.
-- **R8:** local single-writer Vault publication and capture-specific pending Observation.
-- **R9:** RFC 8785 canonical local Acquisition/Custody event pair and unanchored chain.
-- **R10:** operator-managed off-root checkpoint export/comparison (custody of that
-  checkpoint itself is not verified).
-- **R11:** [unsealed EvidenceObject creation and full per-Capture lineage](../../profiles/secondbrain/R11_SCOPE.md)
-  with immutable local metadata, capture-specific Observation/Acquisition/Custody
-  cross-links, retry, integrity and CLI. Verified synthetic PR tests and exact
-  limitations are tracked at [R11 gate](../history/R11_GATE.md). No external
-  anchor, legal seal, trusted time or cloud durability is inferred.
+- **R7:** synthetic source-preserving Capture landing.
+- **R8:** synthetic local Writer/Vault publication and Observation.
+- **R9:** RFC 8785 canonical, locally unanchored Acquisition/Custody chain.
+- **R10:** operator-supplied external checkpoint prefix comparison, not
+  trusted offsite custody or timestamp.
+- **R11:** one local unsealed EvidenceObject per payload digest, distinct
+  Capture linkage; see [R11 gate](../history/R11_GATE.md).
+- **R12 LOCAL ONLY:** strict, synthetic whole-R7–R11 closure snapshot,
+  canonical file inventory and local restore to a non-overwriting destination;
+  see [R12 gate](../history/R12_GATE.md). Development CI success does
+  **not** mean operational independent backup acceptance.
 
-## Next gate: R12 — independent backup and restore
+## Next gate: R13 — independent storage/recovery drill and platform matrix
 
-1. RED: deterministic backup manifest, copying of the verified *entire*
-   capture/Vault/Observation/ledger/object closure; reject missing or
-   inconsistent source records and placeholders; preserve exact bytes.
-2. Restore into a separate root without overwriting a populated or
-   untrusted destination. Fail closed on interrupt, partial snapshot,
-   conflicting path, symlink and digest mismatch. Prove all R7–R11
-   verifiers still agree and exercise repeated idempotent restore.
-3. Verify actual independently retained copies and documented restoration
-   with operator-observed results. Simulated local copies are not proof of
-   independent offsite retention.
-4. Add Windows (NTFS, junction/reparse) and OneDrive/Google Drive
-   offline/placeholder/conflict matrix on real endpoints after isolated
-   synthetic tests. Do not test with personal evidence.
+1. **Independent custody:** operator chooses a separately administered
+   physical medium or account, retains and authenticates a snapshot
+   independently of the source root. Record who/when/how with no
+   fabricated proof of trusted timestamp. Do not ingest production
+   evidence as a test fixture.
+2. **Loss of primary:** disconnect/disable original synthetic storage;
+   fetch independent snapshot to a fresh machine/root; run
+   `backup verify`, `backup restore`, and all R7–R12 verifiers.
+   Record observed source loss/recovery, RPO/RTO, digest equality,
+   recovery-only status and controlled writer handover.
+3. **Real filesystem tests:** NTFS/junction/reparse, permissions,
+   missing hydration, OneDrive and Google Drive offline files,
+   conflicts, restore and multi-device race matrix. Fail closed,
+   never silently repair sync conflicts or assert a distributed lock.
+4. **Hardening:** hostile concurrent directory-swap/TOCTOU review,
+   durable fsync/power-loss study, backup privacy/encryption/access
+   controls and multi-PC writer fencing. Use mature platform
+   facilities rather than bespoke cloud SDKs.
+5. **Acceptance:** reproducible fault logs → cause analysis →
+   failing regression → minimal fix → exact PR CI → operator-observed
+   drill → independent review → recorded go/no-go.
 
-## Deferred gates
+## Other deferred product gates
 
-External authentic time and checkpoint custody, cross-device/cloud writer
-fencing, hostile filesystem TOCTOU hardening, Legal Hold policy, legal export,
-AI/privacy and paid-provider tests, installer/wheel/winget review, independent
-security assessment and public product release.
-
-For all gates: RED → cause → minimal GREEN → full synthetic regression →
-candidate-bound GitHub CI → PR review → merge → fresh main CI. Maintain
-Very Simple, SSOT, no duplicate engines, no evidence/secrets/caches/ZIPs in Git.
+Trusted external signatures/timestamps, Legal Hold, legal export,
+cross-platform installer/wheel, PyPI/winget, AI privacy and paid
+provider quotas, production security audit and true acquisition
+provenance. Source and docs stay GitHub-only; **never** commit personal
+evidence, secrets, caches, archives/ZIPs or live snapshot output.

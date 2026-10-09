@@ -1,4 +1,4 @@
-name: R11 synthetic source tests
+name: R12 synthetic source tests
 on:
   push:
     branches: [main]
@@ -17,6 +17,6 @@ jobs:
           python-version: '3.12'
       - name: Install source-only test dependencies (explicit date-time validator)
         run: python -m pip install 'pytest>=8,<10' 'jsonschema>=4.23,<5' 'rfc3339-validator>=0.1,<1' 'rfc8785==0.1.4'
-      - name: R7-R11 complete synthetic regression
+      - name: R7-R12 complete synthetic regression
         working-directory: profiles/secondbrain
         run: python -m pytest -q tests/

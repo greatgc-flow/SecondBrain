@@ -200,3 +200,28 @@ def test_real_windows_junction_inside_source_rejected(tmp_path):
     assert objects.is_junction()
     with pytest.raises(BackupFailure, match="UNSAFE_PATH"):
         create_backup(root, tmp_path / "backup")
+
+
+def test_sentinel_tamper_blocks_validation_retry_and_mutations(tmp_path):
+    root, snapshot, new, source, cap, auth, *_ = restore_pair(tmp_path)
+    sentinel = new / "90_System/writer/recovery-sentinel.json"
+    data = json.loads(sentinel.read_bytes())
+    data["manifest_sha256"] = "0" * 64
+    sentinel.write_text(json.dumps(data, sort_keys=True), encoding="utf-8")
+    with pytest.raises(RecoveryFailure, match="RECOVERY_HOLD_INVALID"):
+        recovery_status(new)
+    with pytest.raises(BackupFailure, match="DESTINATION_CONFLICT"):
+        restore_backup(snapshot, new)
+    with pytest.raises(WriterFailure, match="RECOVERY_HOLD"):
+        configure_writer(new, "forged-writer")
+
+
+def test_recovered_root_move_preserves_hold_and_read_only_links(tmp_path):
+    root, snapshot, new, source, cap, auth, *_ = restore_pair(tmp_path)
+    moved = tmp_path / "이전 한글 # recovered path"
+    new.rename(moved)
+    assert recovery_status(moved)["status"] == "RECOVERED_READ_ONLY"
+    assert verify_object_link(moved, "pc_1", cap["capture_id"])["status"] == "LOCAL_OBJECT_LINK_VERIFIED_UNANCHORED"
+    assert restore_backup(snapshot, moved)["status"] == "RESTORE_ALREADY_VALID_LOCAL"
+    with pytest.raises(CaptureFailure, match="RECOVERY_HOLD"):
+        capture_file(moved, source, "pc_1", "synthetic")

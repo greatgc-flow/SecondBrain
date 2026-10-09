@@ -15,9 +15,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install project with strict date-time validation and pytest
-        working-directory: profiles/secondbrain
-        run: python -m pip install -e ".[dev]"
+      - name: Install source-only test dependencies, including date-time format validation
+        run: python -m pip install 'pytest>=8,<10' 'jsonschema>=4.23,<5' 'rfc3339-validator>=0.1,<1'
       - name: Test R7 source slice (synthetic only)
         working-directory: profiles/secondbrain
         run: python -m pytest -q tests/test_capture_tdd.py tests/test_object_verify_tdd.py

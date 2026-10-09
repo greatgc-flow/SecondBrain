@@ -1,60 +1,96 @@
-"""Development-only CLI: capture-only landing and read-only object byte verification."""
+"""Source-checkout development CLI. NOT a certified evidence preservation system."""
 import argparse
 import json
 import os
 import sys
 from brain_core.verify import IntegrityFailure, verify_object
 from brain_core.capture import CaptureFailure, capture_file, verify_capture
+from brain_core.writer import WriterFailure, configure_writer, publish_capture, verify_publication
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(prog="brain", description="Development prototype: uncommitted capture landing and read-only object verification")
-    commands = parser.add_subparsers(dest="group", required=True)
-    objects = commands.add_parser("object", help="Content-addressed object operations")
-    object_commands = objects.add_subparsers(dest="action", required=True)
-    verify = object_commands.add_parser("verify", help="Compare actual local bytes with v2 object record")
-    verify.add_argument("object_id")
-    verify.add_argument("--root", default=os.environ.get("SECOND_BRAIN_ROOT"))
-    verify.add_argument("--json", action="store_true")
-    captures = commands.add_parser("capture", help="Capture-only landing (NOT sealed evidence)")
-    capture_commands = captures.add_subparsers(dest="action", required=True)
-    capture = capture_commands.add_parser("file", help="Copy source to append-only Inbox capture, source never deleted")
-    capture.add_argument("source")
-    capture.add_argument("--root", default=os.environ.get("SECOND_BRAIN_ROOT"))
-    capture.add_argument("--device-id", required=True)
-    capture.add_argument("--collector", required=True)
-    capture.add_argument("--capture-id")
-    capture.add_argument("--json", action="store_true")
-    verify_capture_cmd = capture_commands.add_parser("verify", help="Verify Inbox capture bytes and receipt")
-    verify_capture_cmd.add_argument("capture_id")
-    verify_capture_cmd.add_argument("--root", default=os.environ.get("SECOND_BRAIN_ROOT"))
-    verify_capture_cmd.add_argument("--device-id", required=True)
-    verify_capture_cmd.add_argument("--json", action="store_true")
+    parser = argparse.ArgumentParser(prog='brain', description='Development only: source-preserving capture, uncommitted writer publication and read-only verification')
+    commands = parser.add_subparsers(dest='group', required=True)
+    objects = commands.add_parser('object', help='Content-addressed object operations')
+    object_commands = objects.add_subparsers(dest='action', required=True)
+    verify = object_commands.add_parser('verify', help='Compare local bytes with a v2 canonical object record')
+    verify.add_argument('object_id')
+    verify.add_argument('--root', default=os.environ.get('SECOND_BRAIN_ROOT'))
+    verify.add_argument('--json', action='store_true')
+
+    captures = commands.add_parser('capture', help='Capture-only landing (NOT sealed evidence)')
+    capture_commands = captures.add_subparsers(dest='action', required=True)
+    capture = capture_commands.add_parser('file', help='Copy source into Inbox without deleting source')
+    capture.add_argument('source')
+    capture.add_argument('--root', default=os.environ.get('SECOND_BRAIN_ROOT'))
+    capture.add_argument('--device-id', required=True)
+    capture.add_argument('--collector', required=True)
+    capture.add_argument('--capture-id')
+    capture.add_argument('--json', action='store_true')
+    check_capture = capture_commands.add_parser('verify', help='Verify Inbox capture and receipt')
+    check_capture.add_argument('capture_id')
+    check_capture.add_argument('--root', default=os.environ.get('SECOND_BRAIN_ROOT'))
+    check_capture.add_argument('--device-id', required=True)
+    check_capture.add_argument('--json', action='store_true')
+
+    writers = commands.add_parser('writer', help='S1 local writer policy + UNCOMMITTED Vault publication')
+    writer_commands = writers.add_subparsers(dest='action', required=True)
+    init = writer_commands.add_parser('init', help='One-time local writer policy registration (not a distributed lock)')
+    init.add_argument('--root', default=os.environ.get('SECOND_BRAIN_ROOT'))
+    init.add_argument('--writer-id', required=True)
+    init.add_argument('--json', action='store_true')
+    promote = writer_commands.add_parser('publish', help='Copy verified capture into Vault; NO custody or commit claim')
+    promote.add_argument('capture_id')
+    promote.add_argument('--device-id', required=True)
+    promote.add_argument('--writer-id', required=True)
+    promote.add_argument('--writer-epoch', default=os.environ.get('SECOND_BRAIN_WRITER_EPOCH'), required=False)
+    promote.add_argument('--root', default=os.environ.get('SECOND_BRAIN_ROOT'))
+    promote.add_argument('--json', action='store_true')
+    inspect = writer_commands.add_parser('verify', help='Read-only check of uncommitted local Vault publication')
+    inspect.add_argument('capture_id')
+    inspect.add_argument('--device-id', required=True)
+    inspect.add_argument('--root', default=os.environ.get('SECOND_BRAIN_ROOT'))
+    inspect.add_argument('--json', action='store_true')
+
     args = parser.parse_args(argv)
     if not args.root:
-        result, exit_code = {"status": "FAIL", "error_code": "ROOT_NOT_SET"}, 2
+        result, exit_code = {'status': 'FAIL', 'error_code': 'ROOT_NOT_SET'}, 2
+    elif args.group == 'writer' and args.action == 'publish' and not args.writer_epoch:
+        result, exit_code = {'status': 'FAIL', 'error_code': 'WRITER_EPOCH_NOT_SET'}, 2
     else:
         try:
-            if args.group == "object":
+            if args.group == 'object':
                 result = verify_object(args.root, args.object_id)
-            elif args.action == "file":
-                result = capture_file(args.root, args.source, args.device_id, args.collector,
-                                      capture_id=args.capture_id)
+            elif args.group == 'capture':
+                if args.action == 'file':
+                    result = capture_file(args.root, args.source, args.device_id, args.collector,
+                                          capture_id=args.capture_id)
+                else:
+                    result = verify_capture(args.root, args.device_id, args.capture_id)
+            elif args.action == 'init':
+                result = configure_writer(args.root, args.writer_id)
+            elif args.action == 'publish':
+                result = publish_capture(args.root, args.device_id, args.capture_id, args.writer_id, args.writer_epoch)
             else:
-                result = verify_capture(args.root, args.device_id, args.capture_id)
+                result = verify_publication(args.root, args.device_id, args.capture_id)
             exit_code = 0
-        except (IntegrityFailure, CaptureFailure) as exc:
-            result, exit_code = {"status": "FAIL", "error_code": exc.code}, 3
+        except (IntegrityFailure, CaptureFailure, WriterFailure) as exc:
+            result, exit_code = {'status': 'FAIL', 'error_code': exc.code}, 3
     if args.json:
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     elif exit_code == 0:
-        if args.group == "object":
+        if args.group == 'object':
             print(f"PASS {result['object_id']} | sha256={result['sha256']} | bytes={result['size_bytes']}")
+        elif args.group == 'capture':
+            print(f"READY (uncommitted capture) {result['capture_id']} | sha256={result['sha256']}")
+        elif args.action == 'init':
+            print(f"WRITER CONFIGURED (policy only) epoch={result['writer_epoch']}")
         else:
-            print(f"READY (uncommitted) {result['capture_id']} | sha256={result['sha256']} | bytes={result['size_bytes']}")
+            print(f"{result['status']} {result['capture_id']} | sha256={result['sha256']}")
     else:
-        print("FAIL " + result["error_code"], file=sys.stderr)
+        print('FAIL ' + result['error_code'], file=sys.stderr)
     return exit_code
 
-if __name__ == "__main__":
+
+if __name__ == '__main__':
     raise SystemExit(main())

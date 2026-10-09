@@ -1,0 +1,28 @@
+{
+  "audit_date": "2026-10-09",
+  "phase": "PRE_TDD",
+  "source_zip": "SecondBrain_EvidenceFirst_R1_PreTDD.zip",
+  "results": {
+    "v2_schema_count": 14,
+    "v1_schema_count": 8,
+    "structural_fixture_pairs": 14,
+    "toml": "PASS",
+    "requirement_count": 134,
+    "requirement_ids_unique": true,
+    "r2_requirement_count": 62,
+    "r1_requirement_count": 72,
+    "adr_count": 20,
+    "executable_impl_files": 0,
+    "executable_test_files": 0,
+    "semantic_validation": "NOT_EXECUTED_PRE_TDD",
+    "cloud_integration": "NOT_EXECUTED_PRE_TDD",
+    "runtime_tests": "NOT_EXECUTED_PRE_TDD",
+    "source_R1_sha256": "64385e99a1b9d97a78a8d0a23b4d4cca03ae5988b9aae9f81dc71f3545f81176"
+  },
+  "failures": [],
+  "notes": [
+    "Structural fixture validity does not prove semantic/journal/custody hash or evidence authenticity",
+    "No running TDD or provider integration tests",
+    "Independent second pass: snapshot consistency, backup failure domain, MCP 2026-07-28 updated"
+  ]
+}

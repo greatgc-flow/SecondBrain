@@ -1,0 +1,70 @@
+{
+  "audit_date": "2026-10-09",
+  "stage": "PRE_TDD_DESIGN_ONLY",
+  "invariant_evaluation": {
+    "unique_requirement_ids": true,
+    "requirement_count": 188,
+    "legacy_requirements_preserved": true,
+    "new_requirements": 54,
+    "all_requirement_design_references_exist": true,
+    "all_lifecycle_scenarios_mapped": true,
+    "scenario_count": 30,
+    "gate_count": 8,
+    "quality_cross_dimensions": 10,
+    "product_tests_run": 0,
+    "production_deployments_run": 0,
+    "cloud_physical_restore_run": 0
+  },
+  "open_design_and_runtime_gaps": [
+    {
+      "id": "GAP-001",
+      "item": "Executable tests (TDD RED/GREEN) not written",
+      "stage": "G1-G2",
+      "owner": "test owner"
+    },
+    {
+      "id": "GAP-002",
+      "item": "Windows/OneDrive/Google Drive sync and restore not empirically tested",
+      "stage": "G3-G4/G6",
+      "owner": "operator"
+    },
+    {
+      "id": "GAP-003",
+      "item": "Independently verifiable chain anchors and signatures not established",
+      "stage": "G4-G5",
+      "owner": "operator"
+    },
+    {
+      "id": "GAP-004",
+      "item": "Independent user retention/privacy/legal review not performed",
+      "stage": "G4/G6",
+      "owner": "data steward"
+    },
+    {
+      "id": "GAP-005",
+      "item": "Release candidate/SBOM/attestation not built",
+      "stage": "G5",
+      "owner": "release reviewer"
+    },
+    {
+      "id": "GAP-006",
+      "item": "Real post-deployment SLO and effect windows not measured",
+      "stage": "G7",
+      "owner": "operator"
+    },
+    {
+      "id": "GAP-007",
+      "item": "PeerHub/Engram/MCP live integration under actual installation not verified",
+      "stage": "G3",
+      "owner": "maintainer"
+    }
+  ],
+  "notes": [
+    "R3 closes feedback loop as a design contract, not as a deployed working system.",
+    "R2 evidence schema v2 remains authoritative; governance schema v1 is separate.",
+    "Static schema fixtures prove only a structural subset of contract validity.",
+    "Root-cause review and operational effect measurement must be performed after TDD."
+  ],
+  "broken_internal_link_candidates": {},
+  "errors": []
+}

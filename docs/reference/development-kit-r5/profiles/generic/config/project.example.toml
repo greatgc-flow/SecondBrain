@@ -1,0 +1,37 @@
+[project]
+name = "REPLACE_ME"
+owner = "REPLACE_ME"
+product_type = "cli" # cli|library|service|desktop|data-pipeline|agent-extension
+status = "pre_tdd"
+source_repo = "REPLACE_ME"
+license_decision = "pending"
+
+[applicability]
+cli_public = true
+networked = false
+stateful = false
+cloud_sync = false
+ai_enabled = false
+
+[architecture]
+core_contract = "contracts/v1"
+extensions_enabled = false
+
+[security]
+data_classification = "internal" # public|internal|confidential|restricted
+default_external_egress = "deny"
+secrets_in_repo = false
+
+[quality]
+strict_gates = true
+required_negative_scenarios = true
+candidate_binding = true
+
+[operational]
+slo_required = false
+backup_required = false
+
+[integrations]
+peerhub = "disabled" # disabled|optional
+engram = "disabled" # disabled|optional
+mcp = "disabled" # disabled|optional

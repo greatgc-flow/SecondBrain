@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "observation_id": "compat-001",
+  "integration": "peerhub",
+  "version": "v0.12.4",
+  "candidate_id": "candidate-001",
+  "status": "NOT_RUN",
+  "checked_at": "2026-10-09T12:00:00+09:00",
+  "contract_test_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+}

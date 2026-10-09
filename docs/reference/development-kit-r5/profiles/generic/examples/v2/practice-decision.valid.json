@@ -1,0 +1,9 @@
+{
+  "practice_id": "SPEC-DRIVEN",
+  "decision": "ADOPT",
+  "applicability": "ALL",
+  "source_url": "https://github.com/github/spec-kit",
+  "rationale": "Versioned spec to convergence",
+  "decision_owner": "PROJECT_OWNER",
+  "revisit_trigger": "Contract drift detected"
+}

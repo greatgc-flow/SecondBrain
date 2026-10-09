@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/secondbrain/schemas/v1/custody-event.schema.json",
+  "title": "Custody Event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "event_id",
+    "evidence_id",
+    "event_type",
+    "actor",
+    "event_at",
+    "previous_event_hash"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "event_id": {
+      "type": "string",
+      "minLength": 3
+    },
+    "evidence_id": {
+      "type": "string",
+      "minLength": 3
+    },
+    "event_type": {
+      "enum": [
+        "INGESTED",
+        "HASHED",
+        "SEALED",
+        "VERIFIED",
+        "COPIED_TO_BACKUP",
+        "EXPORTED",
+        "PRODUCTION_CREATED",
+        "HOLD_ADDED",
+        "HOLD_RELEASED",
+        "DESTROYED"
+      ]
+    },
+    "actor": {
+      "type": "string",
+      "minLength": 1
+    },
+    "event_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "reason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "previous_event_hash": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "event_hash": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "related_uri": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

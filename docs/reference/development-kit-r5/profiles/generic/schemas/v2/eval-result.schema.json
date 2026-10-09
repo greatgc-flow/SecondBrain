@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/generic-dev/schemas/v2/eval-result.schema.json",
+  "title": "eval-result",
+  "type": "object",
+  "properties": {
+    "result_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "case_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "candidate_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "model_binding": {
+      "type": "string",
+      "minLength": 1
+    },
+    "grader_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "env_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "trials": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "successes": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "failures": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "status": {
+      "enum": [
+        "NOT_RUN",
+        "PASS",
+        "FAIL",
+        "BLOCKED",
+        "STALE"
+      ]
+    },
+    "recorded_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "result_id",
+    "case_id",
+    "candidate_id",
+    "model_binding",
+    "grader_version",
+    "env_digest",
+    "trials",
+    "successes",
+    "failures",
+    "status",
+    "recorded_at"
+  ],
+  "additionalProperties": false
+}

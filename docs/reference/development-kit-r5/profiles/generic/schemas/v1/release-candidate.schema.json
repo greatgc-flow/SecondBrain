@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/generic-dev/schemas/v1/release-candidate.schema.json",
+  "title": "release-candidate",
+  "type": "object",
+  "properties": {
+    "candidate_id": {
+      "type": "string",
+      "pattern": "^RC-[0-9]{3}$"
+    },
+    "source_commit": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tree_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "config_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "deps_lock_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "test_catalog_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "schema_revision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "toolchain": {
+      "type": "string",
+      "minLength": 1
+    },
+    "target_env": {
+      "type": "string",
+      "minLength": 1
+    },
+    "artifact_digest": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "gate_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "release_status": {
+      "enum": [
+        "DRAFT",
+        "CANDIDATE",
+        "VERIFIED",
+        "RELEASED"
+      ]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "candidate_id",
+    "source_commit",
+    "tree_digest",
+    "config_digest",
+    "deps_lock_digest",
+    "test_catalog_digest",
+    "schema_revision",
+    "toolchain",
+    "target_env",
+    "artifact_digest",
+    "gate_refs",
+    "release_status",
+    "created_at"
+  ],
+  "additionalProperties": false
+}

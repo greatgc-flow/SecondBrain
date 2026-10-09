@@ -1,0 +1,12 @@
+# FB-### 개선 항목
+- 입력/문제/분류/우선순위:
+- 연관 INC-ID/CHG-ID/GD-ID:
+- 상태 및 append-only 상태 전이 refs:
+- 수정 전 지표/분모/기간:
+- 기대 효과:
+- RED / GREEN / 후보 / 배포 evidence:
+- 수정 후 지표/분모/기간:
+- 재발 여부 및 개선 부작용:
+- 배운 교훈이 반영된 위치:
+- CLOSED 승인 및 증빙:
+- BLOCKED / WONT_FIX의 다음 검토 트리거:

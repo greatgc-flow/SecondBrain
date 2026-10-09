@@ -1,0 +1,13 @@
+{
+  "result_id": "ER-001",
+  "case_id": "EVAL-001",
+  "candidate_id": "RC-001",
+  "model_binding": "test-fake",
+  "grader_version": "g1",
+  "env_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "trials": -1,
+  "successes": 3,
+  "failures": 0,
+  "status": "PASS",
+  "recorded_at": "nope"
+}

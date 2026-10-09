@@ -1,0 +1,10 @@
+{
+  "description": "샘플 입력 손상",
+  "trigger": "외부 입력 오류",
+  "impact": "MEDIUM",
+  "likelihood": "LOW",
+  "mitigation": "validation",
+  "owner": "team",
+  "status": "OPEN",
+  "next_review": "2026-12-01"
+}

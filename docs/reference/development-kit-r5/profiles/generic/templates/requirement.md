@@ -1,0 +1,12 @@
+# GD-### 요구사항
+- 상태: DRAFT
+- MUST/SHOULD/MAY:
+- 적용 조건: ALL/STATEFUL/NETWORKED/CLI_PUBLIC/CLOUD_SYNC/AI_ENABLED
+- 동작/행위자:
+- 수락 기준(측정 가능):
+- 실패·경계 시나리오:
+- 참조 ADR/API/Schema:
+- 테스트 ID:
+- 게이트:
+- 오너/승인자:
+- 제외 사유/N/A 승인:

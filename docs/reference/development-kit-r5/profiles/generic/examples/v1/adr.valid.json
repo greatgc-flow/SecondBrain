@@ -1,0 +1,12 @@
+{
+  "adr_id": "ADR-0001",
+  "status": "PROPOSED",
+  "decision": "Core 최소화",
+  "alternatives": [
+    "모놀리식",
+    "서비스 분리"
+  ],
+  "consequences": "추상화 유지보수",
+  "supersedes": null,
+  "approved_by": null
+}

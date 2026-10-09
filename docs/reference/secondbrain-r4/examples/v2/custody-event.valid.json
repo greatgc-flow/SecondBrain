@@ -1,0 +1,15 @@
+{
+  "schema_version": 2,
+  "event_id": "CU-018fa2b3-12cd-7abc-8abc-0123456789ab",
+  "stream_id": "stream-example",
+  "sequence": 1,
+  "target_uri": "brain://evidence/EV-018fa2b3-12cd-7abc-8abc-0123456789ab",
+  "event_type": "SEALED",
+  "actor": "human:fixture",
+  "event_at": "2026-10-09T20:43:00+09:00",
+  "previous_event_hash": null,
+  "event_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+  "details": {
+    "fixture_only": true
+  }
+}

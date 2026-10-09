@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:secondbrain:schema:v2:evidence-record",
+  "title": "Evidence Record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "evidence_id",
+    "object_id",
+    "title",
+    "classification",
+    "created_at",
+    "matter_ids"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 2
+    },
+    "evidence_id": {
+      "type": "string",
+      "pattern": "^[A-Z]{2,5}-[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "object_id": {
+      "type": "string",
+      "pattern": "^obj-sha256-[0-9a-f]{64}$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "classification": {
+      "type": "string",
+      "enum": [
+        "public",
+        "internal",
+        "private",
+        "restricted"
+      ]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "(Z|[+-][0-9]{2}:[0-9]{2})$"
+    },
+    "matter_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "claim_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "status": {
+      "enum": [
+        "ACTIVE",
+        "ARCHIVED",
+        "DESTROYED"
+      ]
+    },
+    "target_erl": {
+      "enum": [
+        "ERL-0",
+        "ERL-1",
+        "ERL-2",
+        "ERL-3",
+        "ERL-4",
+        "ERL-5"
+      ]
+    }
+  }
+}

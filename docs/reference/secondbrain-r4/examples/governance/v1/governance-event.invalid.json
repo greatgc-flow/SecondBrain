@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "event_id": "gov-001",
+  "stream_id": "fb-001",
+  "sequence": 0,
+  "previous_event_hash": null,
+  "event_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "event_type": "CREATED",
+  "actor": "maintainer",
+  "event_at": "2026-10-09T12:00:00+09:00",
+  "payload_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "target_ref": "fb-001"
+}

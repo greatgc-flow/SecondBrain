@@ -1,0 +1,22 @@
+{
+  "schema_version": 2,
+  "hold_id": "LH-018fa2b3-12cd-7abc-8abc-0123456789ab",
+  "matter_ids": [
+    "example-only"
+  ],
+  "status": "ACTIVE",
+  "created_at": "2026-10-09T20:43:00+09:00",
+  "created_by": "human:fixture",
+  "policy": {
+    "block_evidence_destroy": true,
+    "propagate_to_new_evidence": true
+  },
+  "scope": {
+    "evidence_ids": [
+      "EV-018fa2b3-12cd-7abc-8abc-0123456789ab"
+    ],
+    "matter_ids": [
+      "example-only"
+    ]
+  }
+}

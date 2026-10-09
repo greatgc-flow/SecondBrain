@@ -1,0 +1,11 @@
+# 수락 체크리스트
+- [ ] 요구사항 ID 중복/누락 없음
+- [ ] 프로파일의 필수 적용성 검토
+- [ ] 각 MUST는 양성/부정 수락 오라클
+- [ ] Core/Extension 경계 일관
+- [ ] 입력/출력/오류/인증/버전 I/F
+- [ ] 실데이터 외부 반출/secret 제한
+- [ ] 실제 RED→GREEN / 이후 Gate 결과
+- [ ] 후보 지문=배포 artifact 검증
+- [ ] 운영 관측 후 feedback CLOSED
+- [ ] 미해결 위험 owner/next review

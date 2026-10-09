@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/generic-dev/schemas/v1/interface-contract.schema.json",
+  "title": "interface-contract",
+  "type": "object",
+  "properties": {
+    "contract_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "owner": {
+      "type": "string",
+      "minLength": 1
+    },
+    "operation": {
+      "type": "string",
+      "minLength": 1
+    },
+    "input_schema_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "output_schema_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "error_codes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "auth_policy": {
+      "type": "string",
+      "minLength": 1
+    },
+    "timeout_policy": {
+      "type": "string",
+      "minLength": 1
+    },
+    "idempotency": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "required": [
+    "contract_id",
+    "version",
+    "owner",
+    "operation",
+    "input_schema_ref",
+    "output_schema_ref",
+    "error_codes",
+    "auth_policy",
+    "timeout_policy",
+    "idempotency"
+  ],
+  "additionalProperties": false
+}

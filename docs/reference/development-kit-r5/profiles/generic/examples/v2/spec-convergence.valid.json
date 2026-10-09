@@ -1,0 +1,13 @@
+{
+  "change_id": "CH-002",
+  "spec_revision": "spec-r2",
+  "source_commit": "abcde123",
+  "required_task_ids": [
+    "TASK-1"
+  ],
+  "satisfied_task_ids": [
+    "TASK-1"
+  ],
+  "unresolved_must": [],
+  "status": "PASS"
+}

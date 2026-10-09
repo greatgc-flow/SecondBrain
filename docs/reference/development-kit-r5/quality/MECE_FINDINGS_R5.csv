@@ -1,0 +1,19 @@
+axis,component,observed_gap,decision,resolution,status,proof_or_next_test
+vertical,requirements,hardcoded 288/40,remove literal counts,derive from canonical CSV and reject duplicate IDs,RESOLVED,kit verify
+vertical,tests,generic testcase IDs not directly crosschecked,add exact crosscheck,verify requirement to test mapping,RESOLVED,kit verify
+vertical,history,progress and error not appendable,NOTED event,feedback note/show/verify,RESOLVED,kit unit test
+vertical,closure,documents said 6 states CLI has 3,one SSOT state machine,OPEN/CLOSE_REQUESTED/CLOSED and stage notes,RESOLVED,standards/04_FEEDBACK_LOOP.md
+horizontal,concurrency,local JSONL might race,O_EXCL lock,fail closed on preexisting lock,RESOLVED,kit unit test
+horizontal,integrity,editable journal line undetected,chain hash and verify,local tamper detection; not authentication,PARTIAL,kit unit + external anchor pending
+horizontal,cloud,OneDrive/Drive multiwriter,retain single-authority,cloud sync no CAS guarantee,OPEN,T3 Cloud collision test
+horizontal,security,actor reviewer not authenticated,explicit claim only,human attestation; no identity provider,OPEN,integration security requirements
+horizontal,git,DevKit zip no git repository,archive parent bytes,retain exact historic package and public repo sampling,PARTIAL,repository needed for authoritative commit history
+recursive,all profiles,feature statuses could be mistaken for implementation,explicit statuses,NOT_IMPLEMENTED/NOT_RUN all,RESOLVED,kit catalog summary
+recursive,schemas,field formats do not imply semantic consistency,semantic validators in product TDD,maintain 28 R4 negative oracles,OPEN,secondbrain quality/R4_SEMANTIC_TEST_ORACLES.csv
+recursive,paths,CLI may break after root rename,use Path(__file__),test relocated Korean/space root,RESOLVED,kit unit relocation test
+recursive,external tools,Node/PowerShell/agent CLI portability,prefer warning,do not assume support without T3,OPEN,T3 path matrix
+recursive,release,product not implemented,no publication,NO-GO until candidate and external evidence,OPEN,standards/06_RELEASE_AND_HISTORY.md
+horizontal,AI,token/cost measurements lack runtime sample,live tier T4,explicit opt-in budget+dataset+digest,OPEN,standards/13_LIVE_TEST_PROCEDURE.md
+horizontal,backups,cloud sync not disaster recovery,independent snapshot and full restore,real hashes and hold policy must pass,OPEN,T3 cloud restore
+recursive,very simple,multiple normative documents and stale revisions,one canonical map,only root quickstart plus owner docs for new work,RESOLVED,standards/00_CANONICAL_MAP.md
+recursive,SSOT,derived inventory may drift,exact row comparison,verify generated view vs source requirements,RESOLVED,kit verify

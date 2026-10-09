@@ -1,0 +1,10 @@
+{
+  "schema_version": 2,
+  "text": "Synthetic claim, not a fact",
+  "epistemic_tier": "ASSERTED",
+  "recorded_at": "2026-10-09T20:43:00+09:00",
+  "actor": "human:fixture",
+  "evidence_refs": [
+    "brain://evidence/EV-018fa2b3-12cd-7abc-8abc-0123456789ab"
+  ]
+}

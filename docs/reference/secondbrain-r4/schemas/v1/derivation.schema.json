@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/secondbrain/schemas/v1/derivation.schema.json",
+  "title": "Derivation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "derivation_id",
+    "parent_uri",
+    "output_uri",
+    "transform_type",
+    "created_at",
+    "tool"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "derivation_id": {
+      "type": "string",
+      "minLength": 3
+    },
+    "parent_uri": {
+      "type": "string",
+      "pattern": "^brain://"
+    },
+    "output_uri": {
+      "type": "string",
+      "pattern": "^brain://"
+    },
+    "transform_type": {
+      "type": "string",
+      "minLength": 1
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "output_sha256": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "tool": {
+      "type": "object",
+      "required": [
+        "name",
+        "version"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "parameters_digest": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "actor": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

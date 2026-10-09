@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:secondbrain:schema:v2:snapshot",
+  "title": "Snapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "snapshot_id",
+    "brain_id",
+    "created_at",
+    "status",
+    "file_count",
+    "total_bytes",
+    "manifest_sha256",
+    "verification_report_sha256",
+    "source_consistency"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 2
+    },
+    "snapshot_id": {
+      "type": "string",
+      "pattern": "^[A-Z]{2,5}-[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "brain_id": {
+      "type": "string",
+      "pattern": "^[A-Z]{2,5}-[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "(Z|[+-][0-9]{2}:[0-9]{2})$"
+    },
+    "status": {
+      "enum": [
+        "BUILDING",
+        "VERIFYING",
+        "COMPLETE",
+        "FAILED"
+      ]
+    },
+    "file_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "total_bytes": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "manifest_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "verification_report_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "sync_state": {
+      "enum": [
+        "unverified",
+        "pending",
+        "confirmed",
+        "not_applicable"
+      ]
+    },
+    "storage_location_class": {
+      "enum": [
+        "local_secondary",
+        "offsite",
+        "offline"
+      ]
+    },
+    "source_consistency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "source_manifest_sha256",
+        "rechecked_at"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "quiesced_rehash",
+            "filesystem_snapshot"
+          ]
+        },
+        "source_manifest_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "rechecked_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,103 @@
+schema_version = 1
+
+[brain]
+brain_id = "BR-REPLACE-ME"
+root = "C:/Users/<user>/OneDrive/SecondBrain"
+local_state = "C:/Users/<user>/AppData/Local/SecondBrain/BR-REPLACE-ME"
+
+[storage]
+provider_aware = false
+require_local_bytes_for_evidence = true
+
+[inbox]
+drop = "00_Inbox/Drop"
+pending = "00_Inbox/Pending"
+quarantine = "00_Inbox/Quarantine"
+rejected = "00_Inbox/Rejected"
+
+[inbox.stabilization]
+poll_seconds = 5
+stable_samples = 3
+max_wait_minutes = 60
+
+[evidence]
+vault = "10_Evidence/Vault"
+records = "10_Evidence/Records"
+working = "10_Evidence/Working"
+production = "10_Evidence/Production"
+legal_hold = "10_Evidence/LegalHold"
+primary_hash = "sha256"
+secondary_hash = "sha512"
+target_erl = "ERL-3"
+initial_erl = "ERL-0"
+
+[ingest]
+mode = "copy_then_preserve_drop"
+fail_closed = true
+allow_symlinks = false
+
+[snapshot]
+enabled = true
+secondary_root = "D:/Google Drive/My Drive/SecondBrain_Backup"
+verify_before_success = true
+format = "directory"
+
+[index]
+backend = "sqlite"
+sync_to_cloud = false
+rebuildable = true
+
+[memory]
+canonical_root = "50_Memory"
+derived_index_in_local_state = true
+
+[security]
+log_payload_content = false
+destructive_operations_dry_run_default = true
+
+[timestamp]
+enabled = false
+mode = "rfc3161"
+
+[bagit]
+enabled_for_export = true
+payload_hashes = ["sha256", "sha512"]
+
+[integration.engram]
+enabled = true
+
+[integration.peerhub]
+enabled = false
+mode = "extension-reference-only"
+
+[integration.obsidian]
+enabled = true
+treat_evidence_vault_as_read_only = true
+
+[integration.mcp]
+enabled = false
+raw_original_requires_explicit_policy = true
+
+[writer]
+mode = "single-writer"
+writer_device_id = "DEV-REPLACE-ME"
+writer_epoch = 1
+automatic_failover = false
+
+[capture]
+other_devices_mode = "capture-only"
+idempotency_key = "device_id+capture_id"
+source_drop_deletion = false
+
+[events]
+canonical_serialization = "RFC8785-JCS"
+append_only = true
+verify_anchor_at_restore = true
+
+[security.egress]
+default_deny_private_restricted = true
+external_models_require_explicit_consent = true
+
+[backup]
+secondary_cloud_sync_completion_is_separate = true
+restore_preserves_old_root = true

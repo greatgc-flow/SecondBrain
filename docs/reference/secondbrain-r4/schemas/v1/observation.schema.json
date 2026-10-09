@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/secondbrain/schemas/v1/observation.schema.json",
+  "title": "Evidence Observation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "observation_id",
+    "object_id",
+    "observed_at",
+    "ingest_channel",
+    "source_type"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "observation_id": {
+      "type": "string",
+      "minLength": 3
+    },
+    "object_id": {
+      "type": "string",
+      "minLength": 3
+    },
+    "observed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "ingest_channel": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_type": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_uri": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "source_path": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "source_actor": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "notes": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

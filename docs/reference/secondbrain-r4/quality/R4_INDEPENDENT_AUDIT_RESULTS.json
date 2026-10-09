@@ -1,0 +1,52 @@
+{
+  "scope": "R4 DESIGN-ONLY; no runtime implementation",
+  "requirements": 188,
+  "semantic_oracles": 28,
+  "probes": [
+    {
+      "id": "P1-object-id",
+      "accepted_by_structural_schema": true,
+      "expected": true
+    },
+    {
+      "id": "P2-vault-path",
+      "accepted_by_structural_schema": true,
+      "expected": true
+    },
+    {
+      "id": "P3-backup-inconsistent",
+      "accepted_by_structural_schema": true,
+      "expected": true
+    },
+    {
+      "id": "P4-custody-gap",
+      "accepted_by_structural_schema": true,
+      "expected": true
+    },
+    {
+      "id": "P5-false-event-hash",
+      "accepted_by_structural_schema": true,
+      "expected": true
+    },
+    {
+      "id": "P6-hold-release",
+      "accepted_by_structural_schema": true,
+      "expected": true
+    },
+    {
+      "id": "P7-snapshot-zero",
+      "accepted_by_structural_schema": true,
+      "expected": true
+    },
+    {
+      "id": "P8-production-crossref",
+      "accepted_by_structural_schema": true,
+      "expected": true
+    }
+  ],
+  "active_adr_count": 23,
+  "historical_r3_zip_crc": "PASS",
+  "product_implementation": "NOT RUN",
+  "semantic_domain_validator": "NOT IMPLEMENTED",
+  "failures": []
+}

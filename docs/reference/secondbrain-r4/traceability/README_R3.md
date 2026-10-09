@@ -1,0 +1,2 @@
+# Requirements→Tests→Release→Observation→Feedback closure
+`requirements_to_tests.csv` holds R1/R2 and newly appended R3 unique normative identifiers. R3 `quality/lifecycle_scenarios.csv` contains domain-level negative tests; it complements individual `TC-REQ-*`. Planned test IDs do not mean tests exist. For each implemented MUST: actual test path/node ID, candidate hash, status, evidence digest, gate, alert/feedback linkage. For manual evidence: signer, evidence ref, approval date, validity window. In the absence of real implementation, all remain PLANNED.

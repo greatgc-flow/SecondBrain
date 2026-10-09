@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:secondbrain:schema:v2:legal-hold",
+  "title": "Legal Hold",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "hold_id",
+    "matter_ids",
+    "status",
+    "created_at",
+    "created_by",
+    "policy",
+    "scope"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 2
+    },
+    "hold_id": {
+      "type": "string",
+      "pattern": "^[A-Z]{2,5}-[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "matter_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "status": {
+      "enum": [
+        "DRAFT",
+        "ACTIVE",
+        "RELEASED"
+      ]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "(Z|[+-][0-9]{2}:[0-9]{2})$"
+    },
+    "created_by": {
+      "type": "string",
+      "minLength": 1
+    },
+    "released_at": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(Z|[+-][0-9]{2}:[0-9]{2})$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "released_by": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "block_evidence_destroy",
+        "propagate_to_new_evidence"
+      ],
+      "properties": {
+        "block_evidence_destroy": {
+          "type": "boolean"
+        },
+        "propagate_to_new_evidence": {
+          "type": "boolean"
+        },
+        "block_prod_destroy": {
+          "type": "boolean"
+        }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_ids"
+      ],
+      "properties": {
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Z]{2,5}-[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "uniqueItems": true
+        },
+        "matter_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "context_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Z]{2,5}-[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+          },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}

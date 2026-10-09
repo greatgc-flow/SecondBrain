@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/generic-dev/schemas/v2/agent-execution.schema.json",
+  "title": "agent-execution",
+  "type": "object",
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "task_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "permission_level": {
+      "enum": [
+        "A0",
+        "A1",
+        "A2",
+        "A3"
+      ]
+    },
+    "allowed_tools": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "network_egress": {
+      "enum": [
+        "deny",
+        "approved_scoped"
+      ]
+    },
+    "budget_units": {
+      "type": "number",
+      "minimum": 0
+    },
+    "spent_units": {
+      "type": "number",
+      "minimum": 0
+    },
+    "approved_action": {
+      "type": "boolean"
+    },
+    "status": {
+      "enum": [
+        "PLANNED",
+        "RUNNING",
+        "HALTED",
+        "FAILED",
+        "VERIFIED"
+      ]
+    }
+  },
+  "required": [
+    "run_id",
+    "task_id",
+    "permission_level",
+    "allowed_tools",
+    "network_egress",
+    "budget_units",
+    "spent_units",
+    "approved_action",
+    "status"
+  ],
+  "additionalProperties": false
+}

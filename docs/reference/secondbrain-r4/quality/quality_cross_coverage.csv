@@ -1,0 +1,11 @@
+﻿quality_facet,domain,example_requirement,negative_example,gate
+Correctness,"intake, custody, claims",REQ-QAL-004,invalid schema/no proof,G2
+Security,policy+egress,REQ-SUP-002,unauthorized request,G4
+Safety,Evidence/hold,REQ-OBS-003,destructive data action,G4
+Reliability,restore/failure,REQ-DRL-001,partial metadata restoration,G4
+Maintainability,schema/versions,REQ-CHG-001,irreversible migration,G3
+Portability,drive-independent,REQ-CHG-003,provider absent,G3
+Performance,ingest/query metrics,REQ-OBS-001,p95 throughput regression,G7
+Observability,unknown handling,REQ-OBS-002,missing samples reported green,G7
+User Experience,simple capture/review,REQ-GOV-005,manual burden uncontrolled,G7
+Privacy,RAG+logs,REQ-EVA-004,leaked raw content,G4

@@ -1,0 +1,14 @@
+{
+  "version": "1.0.0",
+  "owner": "app",
+  "operation": "search",
+  "input_schema_ref": "schemas/search.in.json",
+  "output_schema_ref": "schemas/search.out.json",
+  "error_codes": [
+    "BAD_INPUT",
+    "DENIED"
+  ],
+  "auth_policy": "deny unless explicit",
+  "timeout_policy": "5s, no automatic duplicate side effects",
+  "idempotency": "request-id with payload digest"
+}

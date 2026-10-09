@@ -1,0 +1,70 @@
+{
+  "date": "2026-10-09",
+  "purpose": "Demonstrate schema is structural not semantic using synthetic fixtures only",
+  "probes": [
+    {
+      "probe": "P1-object-id",
+      "schema": "evidence-object",
+      "synthetic_mutation": "object_id uses independent valid but false digest",
+      "schema_accepts": true,
+      "product_semantic_validator_expected": "REJECT",
+      "product_test_run": "NOT_RUN"
+    },
+    {
+      "probe": "P2-vault-path",
+      "schema": "evidence-object",
+      "synthetic_mutation": "vault path is syntactically valid but points to different SHA",
+      "schema_accepts": true,
+      "product_semantic_validator_expected": "REJECT",
+      "product_test_run": "NOT_RUN"
+    },
+    {
+      "probe": "P3-backup-inconsistent",
+      "schema": "backup-verification",
+      "synthetic_mutation": "verification PASS when target manifest differs and files_checked=0",
+      "schema_accepts": true,
+      "product_semantic_validator_expected": "REJECT",
+      "product_test_run": "NOT_RUN"
+    },
+    {
+      "probe": "P4-custody-gap",
+      "schema": "custody-event",
+      "synthetic_mutation": "second sequence has no previous hash",
+      "schema_accepts": true,
+      "product_semantic_validator_expected": "REJECT",
+      "product_test_run": "NOT_RUN"
+    },
+    {
+      "probe": "P5-false-event-hash",
+      "schema": "custody-event",
+      "synthetic_mutation": "structural fixture contains all-zero fake event hash",
+      "schema_accepts": true,
+      "product_semantic_validator_expected": "REJECT",
+      "product_test_run": "NOT_RUN"
+    },
+    {
+      "probe": "P6-hold-release",
+      "schema": "legal-hold",
+      "synthetic_mutation": "RELEASED without released_at/by and no release authorization",
+      "schema_accepts": true,
+      "product_semantic_validator_expected": "REJECT",
+      "product_test_run": "NOT_RUN"
+    },
+    {
+      "probe": "P7-snapshot-zero",
+      "schema": "snapshot",
+      "synthetic_mutation": "snapshot COMPLETE but zero source files and bytes",
+      "schema_accepts": true,
+      "product_semantic_validator_expected": "REJECT",
+      "product_test_run": "NOT_RUN"
+    },
+    {
+      "probe": "P8-production-crossref",
+      "schema": "production",
+      "synthetic_mutation": "source object digest syntactically valid but not referenced real Evidence object",
+      "schema_accepts": true,
+      "product_semantic_validator_expected": "REJECT",
+      "product_test_run": "NOT_RUN"
+    }
+  ]
+}

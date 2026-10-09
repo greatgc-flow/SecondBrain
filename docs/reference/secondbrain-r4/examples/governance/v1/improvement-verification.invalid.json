@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "verification_id": "verify-001",
+  "feedback_id": "fb-001",
+  "candidate_id": "candidate-001",
+  "baseline_metric": 10.0,
+  "after_metric": 8.0,
+  "population": "synthetic-corpus-001",
+  "observation_start": "2026-10-09T12:00:00+09:00",
+  "observation_end": "2026-10-10T12:00:00+09:00",
+  "decision": "INCONCLUSIVE",
+  "reviewer": "INVALID_DATA"
+}

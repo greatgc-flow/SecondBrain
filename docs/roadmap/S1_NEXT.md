@@ -24,6 +24,8 @@ Version 0.0.0 and **formal product release NO-GO** remain unchanged.
 
 ## Next operational gate: remaining R13 — independent storage/recovery drill and platform matrix
 
+Runbook: [operator-observed independent restore and Windows/cloud matrix](../runbooks/R13_INDEPENDENT_RESTORE_DRILL.md). **Not performed by CI; no operational PASS assertion.**
+
 1. **Independent custody:** operator chooses a separately administered
    physical medium or account, retains and authenticates a snapshot
    independently of the source root. Record who/when/how with no

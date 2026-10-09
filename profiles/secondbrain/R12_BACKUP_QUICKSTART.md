@@ -54,12 +54,18 @@ destination automatically. Quarantine/inspect it manually and use a
 new backup/restore path. A retry at an existing restored path returns
 `RESTORE_ALREADY_VALID_LOCAL` only after verifying all files and links.
 
-**Restore safety:** The recovered writer authority preserves the original
-writer ID and epoch. Never run the original and restored roots as active
-concurrent writers, especially when cloud sync is involved. An operator
-must explicitly designate a single active root and preserve the other as
-an offline historical copy. This implementation does not implement
-multi-device fencing or disaster-recovery leadership transfer.
+**R13-A restore safety:** A newly restored root keeps original R7–R11 bytes and
+writer ID/epoch, but adds two local advisory recovery markers **before**
+copying writer authority. Capture/Writer/Custody/Object writes are denied
+with `RECOVERY_HOLD`; read-only verification remains usable. Run
+`python brain.py recovery status --root '<restored root>' --json` to inspect.
+A repeat restore verifies both markers, all original bytes and the
+linked records. Never treat these removable files as secure fencing:
+an administrator with writable root access can remove both; no global
+multi-device writer handover is implemented. Older R12 restored roots
+are not automatically quarantined; re-restore from a verified snapshot
+into a **new** root if quarantine is required.
+See [R13 scope](R13_RECOVERY_SCOPE.md) and [R13 gate](../../docs/history/R13_DEV_GATE.md).
 
 ## Gate exclusions
 

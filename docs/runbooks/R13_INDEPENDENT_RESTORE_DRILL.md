@@ -20,7 +20,7 @@
 
 ## Windows / cloud matrix (separate runs)
 
-Run isolated synthetic drills on supported Windows NTFS including junctions/reparse, file permissions, Unicode paths, cross-volume behavior and abrupt interruption. For OneDrive and Google Drive use **test accounts/data only**, repeat with placeholders/unhydrated files, offline availability, simultaneous clients, conflict renames, delayed sync and deletion/reappearance. Record whether errors are reliably fail-closed; do not modify any user's actual synced evidence. The GitHub Windows runner only validates conventional Windows filesystem + junction conditions, not these live providers.
+Run isolated synthetic drills on supported Windows NTFS including junctions/reparse, real hardlink aliases to paths outside the snapshot (reject despite matching hashes), file permissions, Unicode paths, cross-volume behavior and abrupt interruption. For OneDrive and Google Drive use **test accounts/data only**, repeat with placeholders/unhydrated files, offline availability, simultaneous clients, conflict renames, delayed sync and deletion/reappearance. Record whether errors are reliably fail-closed; do not modify any user's actual synced evidence. The GitHub Windows runner only validates conventional Windows filesystem + junction conditions, not these live providers.
 
 ## Required evidence log (store sanitized technical results in GitHub)
 

@@ -1,9 +1,6 @@
 # R13-A development gate — recovered-root quarantine and Windows CI
 
-**Date:** 2026-10-10 KST. **Status:** implementation candidate;
-this document must be supplemented with final PR-tip and merged-main CI
-results before declaring the source gate complete. Full R13 operational
-acceptance remains **NO-GO** (issue #11); product release **NO-GO**.
+**Date:** 2026-10-10 KST. **Status:** R13-A synthetic development gate **PASS** on GitHub-hosted Ubuntu and Windows. Full R13 operational acceptance remains **NO-GO** ([issue #11](https://github.com/greatgc-flow/SecondBrain/issues/11)); formal product release **NO-GO**.
 
 ## Problem → RED → GREEN
 
@@ -34,9 +31,27 @@ acceptance remains **NO-GO** (issue #11); product release **NO-GO**.
   `rfc8785==0.1.4`. Both Windows NTFS junction tests executed and passed,
   not skipped. Prior CP1252 failures are resolved without modifying
   application data serialization.
-- Final PR-tip SHA/Ubuntu+Windows CI and post-merge `main` SHA/CI:
-  verify at time of merge and append by a documentation-only closure PR.
-  Do not infer later results from early passing runs.
+- **Final PR #12 tip** `4b09c8257683ee686841240ccf47c2941e6c7edf`:
+  https://github.com/greatgc-flow/SecondBrain/actions/runs/37993668529
+  **SUCCESS:** Windows **144 passed in 41.41s**; Ubuntu
+  **142 passed, 2 Windows-only skipped in 11.91s**; real
+  `rfc8785==0.1.4` on both Python 3.12 runners.
+- **PR #12 squash merged to main**:
+  `d5ed6ee9a0a4e508c0aa1d610450b0bfb53ee511`
+  https://github.com/greatgc-flow/SecondBrain/commit/d5ed6ee9a0a4e508c0aa1d610450b0bfb53ee511
+- **Exact implementation post-merge main CI**:
+  https://github.com/greatgc-flow/SecondBrain/actions/runs/37993847201
+  **SUCCESS:** Windows **144 passed in 42.41s**; Ubuntu
+  **142 passed, 2 skipped in 11.32s**. Both runners installed the
+  actual pinned RFC 8785 dependency and the run head SHA exactly
+  matches `d5ed6ee9a0a4e508c0aa1d610450b0bfb53ee511`.
+- Verified cross-links include restored-root R10 externally supplied
+  checkpoint comparison. This validates only the supplied checkpoint's
+  match, not its independence, authenticity or timestamp.
+- R13-A local source gate **PASS**. R13 issue #11 remains **OPEN / NO-GO**
+  for actual independent offsite recovery and secure writer handover.
+  The final documentation-only gate closure does not alter the verified
+  code commit.
 
 ## R13-A software scope
 

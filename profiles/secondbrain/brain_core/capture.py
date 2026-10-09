@@ -22,7 +22,7 @@ from typing import Any
 
 from jsonschema import Draft202012Validator, FormatChecker
 
-from .verify import IntegrityFailure, _strict_json, _safe_regular_file
+from .verify import IntegrityFailure, _strict_json, _safe_regular_file, _unsafe_windows_attributes
 
 _DEVICE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{0,63}\Z")
 _CAPTURE = re.compile(r"CAP-[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\Z")
@@ -55,7 +55,7 @@ def _arguments(root: str | Path, device_id: str, capture_id: str | None) -> tupl
     if not isinstance(cid, str) or not _CAPTURE.fullmatch(cid):
         raise CaptureFailure("INVALID_ARGUMENT")
     p = Path(root).expanduser().absolute()
-    if not p.is_dir() or p.is_symlink():
+    if not p.is_dir() or p.is_symlink() or _unsafe_windows_attributes(p.lstat()):
         raise CaptureFailure("INVALID_ROOT")
     return p, cid
 
@@ -70,8 +70,9 @@ def _ensure_parent(root: Path, directory: Path) -> None:
                 curr.mkdir()
             except FileExistsError:
                 pass
-            mode = curr.lstat().st_mode
-            if (not stat.S_ISDIR(mode) or stat.S_ISLNK(mode) or
+            directory_stat = curr.lstat()
+            mode = directory_stat.st_mode
+            if (_unsafe_windows_attributes(directory_stat) or not stat.S_ISDIR(mode) or stat.S_ISLNK(mode) or
                     (hasattr(curr, 'is_junction') and curr.is_junction())):
                 raise CaptureFailure("UNSAFE_PATH")
     except OSError as exc:
@@ -84,7 +85,10 @@ def _source_fd(source: Path) -> int:
         path = Path(source.anchor)
         for part in source.parts[1:]:
             path = path / part
-            mode = path.lstat().st_mode
+            source_stat = path.lstat()
+            mode = source_stat.st_mode
+            if _unsafe_windows_attributes(source_stat):
+                raise CaptureFailure("UNSAFE_SOURCE")
             if stat.S_ISLNK(mode) or (hasattr(path, 'is_junction') and path.is_junction()):
                 raise CaptureFailure("UNSAFE_SOURCE")
             if path == source:
@@ -94,7 +98,8 @@ def _source_fd(source: Path) -> int:
                 raise CaptureFailure("UNSAFE_SOURCE")
         flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0)
         fd = os.open(source, flags)
-        if not stat.S_ISREG(os.fstat(fd).st_mode):
+        opened = os.fstat(fd)
+        if not stat.S_ISREG(opened.st_mode) or _unsafe_windows_attributes(opened):
             os.close(fd)
             raise CaptureFailure("UNSAFE_SOURCE")
         return fd

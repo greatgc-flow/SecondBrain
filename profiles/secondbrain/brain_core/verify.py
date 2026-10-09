@@ -62,7 +62,7 @@ def _safe_regular_file(root: Path, file: Path, *, missing_code: str) -> None:
         for part in rel.parts:
             cur = cur / part
             mode = cur.lstat().st_mode
-            if stat.S_ISLNK(mode):
+            if stat.S_ISLNK(mode) or (hasattr(cur, 'is_junction') and cur.is_junction()):
                 raise IntegrityFailure("UNSAFE_PATH")
             if cur == file:
                 if not stat.S_ISREG(mode):

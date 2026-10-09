@@ -20,7 +20,7 @@ both names. Hardlinks do not require symlink support.
   `st_nlink != 1` before accepting a source, snapshot or restored tree.
   This applies to immutable R7–R11 data, R12 `manifest.json` and
   `.complete`, and R13 `recovery-hold.json` /
-  `recovery-sentinel.json`.
+  `recovery-sentinel.json` (after temporary Writer staging aliases are dropped).
 - Existing `brain_core/verify.py:_safe_regular_file` and `_digest_fd`
   also refuse a hardlink, including read-only inspection of R13 hold
   markers. A hardlinked marker must never be reported as a safe hold.
@@ -39,8 +39,27 @@ both names. Hardlinks do not require symlink support.
 - RED tests commit `4b104f98ced9fdc61d273df65b250ac838db7493`.
   Run (verify exact outcome from Actions):
   https://github.com/greatgc-flow/SecondBrain/actions/runs/37999820093
-- Implementation: `profiles/secondbrain/brain_core/backup.py` and
-  `brain_core/verify.py`.
+- RED result:
+  https://github.com/greatgc-flow/SecondBrain/actions/runs/37999820093
+  Ubuntu **9 failed, 169 passed, 2 Windows-only skipped**. The
+  aliases had matching hashes yet passed original R12 verification.
+- Initial cross-cutting verifier change on
+  https://github.com/greatgc-flow/SecondBrain/actions/runs/37999869275
+  also caused an important **legitimate regression**:
+  R8 Writer intentionally publishes via a *temporary staging hardlink*,
+  then historically verified before removing that temporary name. The
+  new verifier correctly rejected `st_nlink == 2` but thus blocked
+  valid ordinary Writer publication (over 130 failures, both OS).
+  **Not a spurious test:** actual Writer publication sequence needed
+  a minimal fix before enabling the new rule.
+- Writer code now unlinks only its own staging name after atomic
+  create-if-absent publication, fsyncs the directory and THEN verifies
+  the published file. It retains `finally` cleanup and never permits
+  permanent two-name aliases. A new explicit test asserts the link
+  count is exactly 1 at final Vault and metadata verification.
+- Implementation: `profiles/secondbrain/brain_core/backup.py`,
+  `brain_core/verify.py`, and the minimal
+  `brain_core/writer.py` staging cleanup reorder.
 - Tests: `profiles/secondbrain/tests/test_hardlink_faults_r13d_tdd.py`.
   Real `os.link` attempts with unchanged hashes on source Capture,
   Writer metadata, snapshot payload/manifest/completion marker,

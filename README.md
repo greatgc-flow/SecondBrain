@@ -9,6 +9,8 @@
 - **R9 Local custody ledger:** `brain custody commit|verify|chain` stores two RFC8785-canonicalized hash-linked events (Acquisition and Custody) per capture and a local receipt. Retry is idempotent and partial writes fail closed.
 - **R10 manual external checkpoint:** `brain checkpoint export|verify` produces an RFC 8785 snapshot and checks a *supplied* off-root copy against the chain, distinguishing rolled-back or fully rewritten history from a later unanchored suffix. Independent retention remains an operator responsibility.\n- **Read-only object verifier:** `brain object verify` validates already-created object metadata and bytes. R9 still does **not** generate a sealed EvidenceObject record.
 
+**New-chat continuation:** [R10 → R11 handoff](docs/handoff/2026-10-10_R10_TO_R11_HANDOFF.md) · [R11 start prompt](docs/handoff/START_NEW_CHAT_R11.md). These are dated handoff notes, not a substitute for current code/CI.
+
 ## Quick start (synthetic samples only)
 
 ```bash

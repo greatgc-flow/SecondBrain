@@ -93,12 +93,18 @@ def _digest_fd(file: Path) -> tuple[str, str, int]:
     sha256, sha512 = hashlib.sha256(), hashlib.sha512()
     flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0)
     try:
+        leaf = file.lstat()  # metadata-only: refuse cloud recall BEFORE open()
+        if (_unsafe_windows_attributes(leaf) or
+                not stat.S_ISREG(leaf.st_mode) or leaf.st_nlink != 1):
+            raise IntegrityFailure("UNSAFE_PATH")
         fd = os.open(file, flags)
         with os.fdopen(fd, "rb") as stream:
             first = os.fstat(stream.fileno())
             if (_unsafe_windows_attributes(first) or
                     not stat.S_ISREG(first.st_mode) or first.st_nlink != 1):
                 raise IntegrityFailure("UNSAFE_PATH")
+            if (first.st_dev, first.st_ino) != (leaf.st_dev, leaf.st_ino):
+                raise IntegrityFailure("SOURCE_CHANGED")
             total = 0
             for block in iter(lambda: stream.read(1024 * 1024), b""):
                 sha256.update(block)

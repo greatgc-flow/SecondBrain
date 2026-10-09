@@ -40,6 +40,11 @@ Version 0.0.0 and **formal product release NO-GO** remain unchanged.
   allowed. See [R13-D gate](../history/R13D_HARDLINK_GATE.md).
   **Not** protection against concurrent hostile filesystem path swaps.
 
+- **R13-E LEAF IDENTITY DRIFT:** reject byte-identical ordinary files substituted at
+  the source path between backup copy or digest checks; compare pre/post
+  inode and metadata identity. See [R13-E gate](../history/R13E_LEAF_DRIFT_GATE.md).
+  This cannot guarantee safety against atomic parent-directory swaps.
+
 ## Next operational gate: remaining R13 — independent storage/recovery drill and platform matrix
 
 Runbook: [operator-observed independent restore and Windows/cloud matrix](../runbooks/R13_INDEPENDENT_RESTORE_DRILL.md). **Not performed by CI; no operational PASS assertion.**

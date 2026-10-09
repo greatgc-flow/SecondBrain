@@ -12,7 +12,7 @@
 - **R12 synthetic local backup/restore:** `brain backup create|verify|restore` snapshots only complete R7–R11 local roots, uses an exact canonical manifest and last completion marker, and verifies all bytes/links on an isolated restore. **Independent offsite custody, Windows/cloud recovery and actual power-loss durability are not verified.**
 - **R13-A local recovery quarantine:** a restored root receives two canonical advisory hold/sentinel files **before** copying writer authority. Writes fail with `RECOVERY_HOLD`; read-only verifiers continue. `brain recovery status` reports local hold state. **Neither marker is secure distributed fencing, and Windows CI is not a cloud recovery drill.**
 
-**New-chat continuation:** [R10 → R11 handoff](docs/handoff/2026-10-10_R10_TO_R11_HANDOFF.md) · [R11 start prompt](docs/handoff/START_NEW_CHAT_R11.md). These are dated handoff notes, not a substitute for current code/CI.
+**Continue development from current GitHub `main`:** check the latest commit/PR/Actions first, then [current docs index](docs/README.md), [R13 development gate](docs/history/R13_DEV_GATE.md), [current roadmap](docs/roadmap/S1_NEXT.md) and [open R13 operational gate](https://github.com/greatgc-flow/SecondBrain/issues/11). Older R10→R11 handoffs are archived history and must **not** roll back the active code/tests.
 
 ## Quick start (synthetic samples only)
 

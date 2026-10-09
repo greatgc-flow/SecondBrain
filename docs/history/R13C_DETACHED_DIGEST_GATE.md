@@ -33,8 +33,38 @@ independently retained the pin; the caller must authenticate it.
   Matching pin, mismatch before restore creation, two distinct
   valid snapshots, bad input types, CLI JSON codes, backward
   compatibility and preexisting restored target refusal.
-- Final PR-tip and post-merge exact SHA + Ubuntu/Windows 6-job CI
-  results must be added after observation, **never assumed**.
+- RED implementation baseline:
+  https://github.com/greatgc-flow/SecondBrain/actions/runs/37996704658
+  **FAIL (expected)**. API was missing the optional argument/CLI flag.
+- First code+CLI test candidates:
+  https://github.com/greatgc-flow/SecondBrain/actions/runs/37996720731
+  and
+  https://github.com/greatgc-flow/SecondBrain/actions/runs/37996734673
+  **FAIL** on a test-only fixture-parent setup omission; the latter
+  showed Ubuntu **167 passed, 2 skipped, 1 failed** and Windows
+  **169 passed, 1 failed**. This was fixed with an explicit fixture
+  parent `mkdir`, no behavior relaxation or production workaround.
+- **Final PR #16 candidate**
+  `3811cfd20afc12c1b3d8a9f0d2ba20d39031a5d8`:
+  https://github.com/greatgc-flow/SecondBrain/actions/runs/37996984565
+  **SUCCESS — all 6 jobs**, Windows **170 passed in 96.12s**,
+  Ubuntu **168 passed, 2 Windows-only skipped in 21.12s**,
+  BOTH Ubuntu→Windows and Windows→Ubuntu snapshot producer/consumer
+  pairs successful. Python 3.12; real pinned `rfc8785==0.1.4`.
+- **PR #16 squash-merged main code**
+  `a570138ef333c22abab1ea9975f03fbadfd5fc78`:
+  https://github.com/greatgc-flow/SecondBrain/commit/a570138ef333c22abab1ea9975f03fbadfd5fc78
+- **Exact post-merge main CI**:
+  https://github.com/greatgc-flow/SecondBrain/actions/runs/37997365594
+  **SUCCESS — all 6 jobs**, Windows **170 passed in 79.96s**;
+  Ubuntu **168 passed, 2 skipped in 23.29s**; both cross-OS
+  producer/consumer restore jobs successful; pinned actual RFC8785.
+  Run head SHA exactly `a570138ef333c22abab1ea9975f03fbadfd5fc78`.
+- **R13-C synthetic software source gate PASS**. This verifies the
+  caller-provided digest comparison API on two systems, NOT external
+  authenticity of that digest; issue #11 remains OPEN/NO-GO and
+  formal product release NO-GO. The closure PR is documentation-only
+  and does not change the tested implementation.
 
 ## Security and operational limitations
 

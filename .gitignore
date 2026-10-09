@@ -1,0 +1,28 @@
+# Secrets and personal evidence (never commit)
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.pfx
+*.key
+*.sqlite
+*.db
+00_Inbox/
+10_Evidence/
+**/Vault/
+**/.kit_state/
+**/__pycache__/
+**/.pytest_cache/
+**/*.pyc
+**/.coverage
+**/.venv/
+**/venv/
+**/dist/
+**/build/
+# Historical archives remain local; publish only reviewed release artifacts
+history/
+*.zip
+*.7z
+*.tar
+*.gz

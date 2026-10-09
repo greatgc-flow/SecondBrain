@@ -61,11 +61,13 @@ def _safe_regular_file(root: Path, file: Path, *, missing_code: str) -> None:
         cur = root
         for part in rel.parts:
             cur = cur / part
-            mode = cur.lstat().st_mode
+            current_stat = cur.lstat()
+            mode = current_stat.st_mode
             if stat.S_ISLNK(mode) or (hasattr(cur, 'is_junction') and cur.is_junction()):
                 raise IntegrityFailure("UNSAFE_PATH")
             if cur == file:
-                if not stat.S_ISREG(mode):
+                if not stat.S_ISREG(mode) or current_stat.st_nlink != 1:
+                    # A hardlink can alias data outside the validated tree.
                     raise IntegrityFailure("UNSAFE_PATH")
             elif not stat.S_ISDIR(mode):
                 raise IntegrityFailure("UNSAFE_PATH")
@@ -82,7 +84,7 @@ def _digest_fd(file: Path) -> tuple[str, str, int]:
         fd = os.open(file, flags)
         with os.fdopen(fd, "rb") as stream:
             first = os.fstat(stream.fileno())
-            if not stat.S_ISREG(first.st_mode):
+            if not stat.S_ISREG(first.st_mode) or first.st_nlink != 1:
                 raise IntegrityFailure("UNSAFE_PATH")
             total = 0
             for block in iter(lambda: stream.read(1024 * 1024), b""):
@@ -92,7 +94,7 @@ def _digest_fd(file: Path) -> tuple[str, str, int]:
             last = os.fstat(stream.fileno())
         identity_first = (first.st_dev, first.st_ino, first.st_size, first.st_mtime_ns, first.st_ctime_ns)
         identity_last = (last.st_dev, last.st_ino, last.st_size, last.st_mtime_ns, last.st_ctime_ns)
-        if identity_first != identity_last:
+        if identity_first != identity_last or last.st_nlink != 1:
             raise IntegrityFailure("SOURCE_CHANGED")
         return sha256.hexdigest(), sha512.hexdigest(), total
     except IntegrityFailure:

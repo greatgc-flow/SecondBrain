@@ -24,6 +24,10 @@ Run isolated synthetic drills on supported Windows NTFS including junctions/repa
 
 ## Required evidence log (store sanitized technical results in GitHub)
 
+Use the [blank R13 operator acceptance record](R13_OPERATOR_EVIDENCE_RECORD_TEMPLATE.md)
+for the actual independently observed tests. Its defaults are NOT_RUN and
+NO-GO; CI cannot set them to PASS.
+
 For each run record: test ID, code commit SHA, OS/build, Python/dependency versions, filesystem/provider and device, custody location and independent custodian (abstract role, no identifying secrets), snapshot manifest hash, source hash and verified capture IDs (synthetic), clocks and RPO/RTO, exact CLI commands/exit codes, each negative result, failure/root cause/correction/retest, reviewer and **observed** outcome. Only synthetic redacted logs/screenshots may be committed. Mark tests not performed **UNVERIFIED**.
 
 **Hard stop:** Do not mark R13 operational PASS, enable multiple writers, or release PyPI/winget until independent custody, restore drill and cloud/Windows fault matrix have actually been observed and reviewed. No ZIP handoffs.

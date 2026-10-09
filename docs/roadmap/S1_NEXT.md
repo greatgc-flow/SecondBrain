@@ -22,6 +22,12 @@ Version 0.0.0 and **formal product release NO-GO** remain unchanged.
   development code/test results in [R13 gate](../history/R13_DEV_GATE.md).
   This is **not** external writer fencing or independent recovery proof.
 
+- **R13-B CI TRANSPORT:** short-lived synthetic artifact between independent
+  GitHub jobs, Ubuntu→Windows and Windows→Ubuntu. Checks byte-exact
+  R7–R13 recovery and R10 checkpoint without producer root; development
+  results in [R13-B gate](../history/R13B_CROSS_RUNNER_GATE.md).
+  Separate CI runner is not separately administered durable custody.
+
 ## Next operational gate: remaining R13 — independent storage/recovery drill and platform matrix
 
 Runbook: [operator-observed independent restore and Windows/cloud matrix](../runbooks/R13_INDEPENDENT_RESTORE_DRILL.md). **Not performed by CI; no operational PASS assertion.**

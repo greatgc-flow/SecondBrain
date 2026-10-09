@@ -4,7 +4,7 @@
 
 1. **Current implementation:** `profiles/secondbrain/brain.py`, `brain_core/`, `schemas/`, `tests/`.
 2. **Current user guide:** `profiles/secondbrain/R13_RECOVERY_SCOPE.md` (recovery quarantine), then `R12_BACKUP_QUICKSTART.md` / `R12_SCOPE.md`, R11 and earlier guides.
-3. **Current release facts:** `docs/history/R13_DEV_GATE.md` (local safety + Windows CI) and `R12_GATE.md` (prior snapshot gate). Live run/SHA verification is authoritative. Operational R13 #11 is **still open**.
+3. **Current release facts:** `docs/history/R13B_CROSS_RUNNER_GATE.md` (synthetic cross-OS transfer) and `R13_DEV_GATE.md` (local quarantine), then `R12_GATE.md`. Live run/SHA verification is authoritative. Operational R13 #11 is **still open**.
 4. **Next action:** `docs/roadmap/S1_NEXT.md`: independently controlled restore drill, external writer fencing, and real platform/cloud fault tests.
 5. **Archived design and generic kit:** `docs/reference/README.md` and `docs/reference/SOURCE_INVENTORY.json` (read-only historical references, not code generation instructions and not an alternate normative spec).
 

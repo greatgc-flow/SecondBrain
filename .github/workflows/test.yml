@@ -1,4 +1,4 @@
-name: R13 synthetic Linux-Windows tests
+name: R13-B synthetic cross-runner portability
 on:
   push:
     branches: [main]
@@ -21,6 +21,63 @@ jobs:
           python-version: '3.12'
       - name: Install source-only test dependencies (explicit date-time validator)
         run: python -m pip install 'pytest>=8,<10' 'jsonschema>=4.23,<5' 'rfc3339-validator>=0.1,<1' 'rfc8785==0.1.4'
-      - name: R7-R13 complete synthetic regression
+      - name: R7-R13-B complete synthetic regression
         working-directory: profiles/secondbrain
         run: python -m pytest -q tests/
+
+  synthetic-producer:
+    name: synthetic source ${{ matrix.os }} to isolated artifact
+    needs: synthetic-tests
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned source-only dependencies
+        run: python -m pip install 'jsonschema>=4.23,<5' 'rfc3339-validator>=0.1,<1' 'rfc8785==0.1.4'
+      - name: Produce synthetic captures and snapshot; never upload source root
+        working-directory: profiles/secondbrain
+        run: python ci_cross_runner_drill.py produce ../../ci-artifacts
+      - name: Upload ONLY short-lived synthetic fixture, including .ready/.complete
+        uses: actions/upload-artifact@v4
+        with:
+          name: r13b-synthetic-${{ matrix.os }}
+          path: ci-artifacts/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 1
+
+  synthetic-consumer:
+    name: ${{ matrix.origin }} artifact restored on ${{ matrix.os }}
+    needs: synthetic-producer
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            origin: ubuntu-latest
+          - os: ubuntu-latest
+            origin: windows-latest
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned source-only dependencies
+        run: python -m pip install 'jsonschema>=4.23,<5' 'rfc3339-validator>=0.1,<1' 'rfc8785==0.1.4'
+      - name: Download other-OS snapshot from distinct GitHub runner job
+        uses: actions/download-artifact@v4
+        with:
+          name: r13b-synthetic-${{ matrix.origin }}
+          path: ci-artifacts
+      - name: Verify downloaded snapshot and restore WITHOUT producer source
+        working-directory: profiles/secondbrain
+        run: python ci_cross_runner_drill.py consume ../../ci-artifacts

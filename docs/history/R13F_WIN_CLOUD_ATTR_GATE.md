@@ -56,8 +56,42 @@ network requests under hostile races or unsupported provider APIs.
 - Implementation: `brain_core/verify.py` provides shared predicate;
   `capture.py`, `backup.py`, `writer.py`, `recovery.py`
   use it at their existing boundaries.
-- Record failing baseline, exact green PR head, post-merge main SHAs
-  and 6-job cross-runner CI **only after observed success**.
+- **RED baseline**:
+  https://github.com/greatgc-flow/SecondBrain/actions/runs/38004392695
+  SHA `3b46ccd637a8b1e06313d4792de142d0ca750168`.
+  Expected FAIL: **Windows 24 failed/187 passed**; Ubuntu
+  **24 failed/185 passed, 2 Windows-only skipped**. Baseline incorrectly
+  read/opened flagged file and accepted metadata with intact byte hashes.
+- **Additional RED pre-open test**, commit
+  `4cd473d2a734d90be0e26157e6344b79f64c973c`:
+  https://github.com/greatgc-flow/SecondBrain/actions/runs/38004901405
+  Expected FAIL: **Windows 4 failed/211 passed**; Ubuntu
+  **4 failed/209 passed, 2 Windows-only skipped**. Direct leaf
+  digest was still calling `os.open` before checking cloud attribute
+  metadata. Implementation fixed by inspecting `Path.lstat` first.
+- **Final PR #22 tip**,
+  `542b3689b24562f8cee5cd160667f37f2c6f51da`:
+  https://github.com/greatgc-flow/SecondBrain/actions/runs/38004939328
+  **SUCCESS all 6 jobs**: Windows **215 passed in 145.66s**;
+  Ubuntu **213 passed/2 Windows-only skipped in 32.45s**;
+  both independent GitHub jobs consumed and restored the opposite-OS
+  synthetic snapshot. Python 3.12 and actual pinned `rfc8785==0.1.4`.
+- **PR #22 implementation squash merged to main**:
+  SHA `05651eb4bcd94e60fb4d4c36b08578ff0fd5d372`,
+  https://github.com/greatgc-flow/SecondBrain/commit/05651eb4bcd94e60fb4d4c36b08578ff0fd5d372
+- **Exact post-implementation-merge main CI**:
+  https://github.com/greatgc-flow/SecondBrain/actions/runs/38005318554
+  **SUCCESS all 6 jobs**, Windows **215 passed in 216.10s**;
+  Ubuntu **213 passed, 2 Windows-only skipped in 30.91s**;
+  both opposite-OS transfer/restore consumers passed. The run head
+  SHA equals `05651eb4bcd94e60fb4d4c36b08578ff0fd5d372`.
+- **R13-F synthetic Win32 attribute-software gate PASS** for detectable
+  bits in test doubles on Windows and Linux. This is NOT validation
+  of real OneDrive/Google Drive placeholders or avoiding cloud hydration
+  under every provider, parent-dir swap, or race.
+  The R13 operational issue #11 remains **OPEN/NO-GO** and formal
+  product release 0.0.0 remains **NO-GO**. This record closure is
+  documentation only and does not modify the tested implementation.
 
 ## Unresolved operational acceptance
 

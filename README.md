@@ -15,8 +15,8 @@ Private development repository; **R8 S1 local Writer pre-commit**, not a product
 
 ```bash
 cd profiles/secondbrain
-python -m pip install 'pytest>=8,<10' 'jsonschema>=4.23,<5' 'rfc3339-validator>=0.1,<1'
-python -m pytest -q tests/test_writer_tdd.py tests/test_capture_tdd.py tests/test_object_verify_tdd.py
+python -m pip install 'pytest>=8,<10' 'jsonschema>=4.23,<5' 'rfc3339-validator>=0.1,<1' 'rfc8785==0.1.4'
+python -m pytest -q tests/test_writer_tdd.py tests/test_capture_tdd.py tests/test_object_verify_tdd.py tests/test_writer_tdd.py tests/test_custody_tdd.py
 python brain.py --help
 ```
 

@@ -106,10 +106,12 @@ def main(argv=None):
     snapshot.add_argument('--json', action='store_true')
     verify_snap = backup_actions.add_parser('verify', help='Verify snapshot bytes and entire local closure, read-only')
     verify_snap.add_argument('snapshot')
+    verify_snap.add_argument('--expect-manifest-sha256', help='Operator-supplied 64-lowercase-hex digest retained separately; NOT independently authenticated by CLI')
     verify_snap.add_argument('--json', action='store_true')
     restore = backup_actions.add_parser('restore', help='Restore to a NEW root without overwrite')
     restore.add_argument('snapshot')
     restore.add_argument('--to-root', required=True)
+    restore.add_argument('--expect-manifest-sha256', help='Refuse restoration unless supplied manifest fingerprint matches')
     restore.add_argument('--json', action='store_true')
 
     recovery = commands.add_parser('recovery', help='R13 restored-root local quarantine, NOT distributed fencing')
@@ -132,9 +134,9 @@ def main(argv=None):
                 if args.action == 'create':
                     result = create_backup(args.root, args.to)
                 elif args.action == 'verify':
-                    result = verify_backup(args.snapshot)
+                    result = verify_backup(args.snapshot, expected_manifest_sha256=args.expect_manifest_sha256)
                 else:
-                    result = restore_backup(args.snapshot, args.to_root)
+                    result = restore_backup(args.snapshot, args.to_root, expected_manifest_sha256=args.expect_manifest_sha256)
             elif args.group == 'object':
                 if args.action == 'verify':
                     result = verify_object(args.root, args.object_id)

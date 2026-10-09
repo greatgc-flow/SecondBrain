@@ -62,7 +62,7 @@ def test_tampered_payload_and_receipt_rejected(tmp_path):
     with pytest.raises(CaptureFailure, match="INTEGRITY_MISMATCH"):
         verify_capture(root, "d1", result["capture_id"])
     (location/"payload").write_bytes(source.read_bytes())
-    receipt = json.loads((location/"capture.receipt.json").read_text())
+    receipt = json.loads((location/"capture.receipt.json").read_text(encoding='utf-8'))
     receipt["collector"] = "forged"
     (location/"capture.receipt.json").write_text(json.dumps(receipt), encoding="utf-8")
     with pytest.raises(CaptureFailure, match="RECEIPT_TAMPERED"):
@@ -155,7 +155,7 @@ def test_receipt_schema_fails_if_required_field_missing(tmp_path):
     result=capture_file(root,source,'d1','tester')
     location=root/'00_Inbox/Drop/d1'/result['capture_id']
     rp=location/'capture.receipt.json'
-    record=json.loads(rp.read_text());del record['sha256']
+    record=json.loads(rp.read_text(encoding='utf-8'));del record['sha256']
     rp.write_text(json.dumps(record),encoding='utf-8')
     with pytest.raises(CaptureFailure, match='RECEIPT_TAMPERED|SCHEMA_INVALID'):
         verify_capture(root,'d1',result['capture_id'])

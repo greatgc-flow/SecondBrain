@@ -1,0 +1,9 @@
+﻿gate,phase,requirements,verification,required_evidence,hard_stop
+G0,Architecture/requirements,REQ-GOV-002;REQ-QAL-002,static+manual,candidate baseline+tracked requirements,"no orphan, no P0 contradiction"
+G1,TDD RED,REQ-QAL-001,automated,failing test stdout and node ids,behavioral fix must reproduce failure
+G2,"Unit, schema, property",REQ-QAL-003;REQ-QAL-004,automated,candidate bound test junit+typecheck,all P0 and applicable MUST green
+G3,Contract/integration,REQ-CHG-003;REQ-EVA-003,automated+manual,integration matrix and compat digest,no broken contract
+G4,Security/recovery,REQ-SUP-005;REQ-DRL-001,automated+manual,fault run + integrity + restore evidence,no bypass or lost original
+G5,Candidate attestation,REQ-RLS-001;REQ-SUP-001,automated+manual,artifact hash/SBOM/provenance/review signoff,exact candidate test trace
+G6,Deployment/canary,REQ-RLS-004;REQ-RLS-005,manual,cutover checklist/rollback/test-root proof,operator authorized safe release
+G7,Outcome/learning,REQ-LIF-003;REQ-FBK-003,manual+automated,SLI longitudinal + postmortem + efficacy,effect observed before CLOSED

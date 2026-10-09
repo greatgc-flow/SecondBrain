@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "incident_id": "inc-001",
+  "severity": "P1",
+  "detected_at": "2026-10-09T12:00:00+09:00",
+  "owner": "operator",
+  "state": "DETECTED",
+  "affected_uris": [
+    "synthetic://test-case/1"
+  ],
+  "containment_action": "disable test writer"
+}

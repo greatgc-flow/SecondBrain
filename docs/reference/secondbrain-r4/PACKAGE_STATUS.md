@@ -1,0 +1,12 @@
+# PACKAGE STATUS — R4
+- Date: 2026-10-09 (KST)
+- Scope: **Independent semantic/structural/architecture audit + design correction**
+- Normative requirements: **188** (R3 ID/value preserved)
+- Schema counts: Evidence v1 8, Evidence v2 14, Governance v1 8; bytes unchanged in R4.
+- Semantic negative oracles: **28** (PLANNED_NOT_RUN).
+- Synthetic limitation probes: **8** (JSON Schema only; no product test).
+- Active ADRs: **23 unique** (`0010` older moved to superseded/)
+- Product Python and executable pytest files: **0**.
+- Latest reference observed in this audit: Engram v3.7.0, PeerHub v0.12.4 (2026-10-09); interface live probes NOT RUN.
+- Status: TDD CONDITIONAL GO; production/legal evidence certification NO-GO.
+- Run `python tools/static_design_audit.py` and `python tools/r4_independent_audit.py`.

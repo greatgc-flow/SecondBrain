@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/generic-dev/schemas/v1/requirement.schema.json",
+  "title": "requirement",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^GD-[0-9]{3}$"
+    },
+    "statement": {
+      "type": "string",
+      "minLength": 1
+    },
+    "level": {
+      "enum": [
+        "MUST",
+        "SHOULD",
+        "MAY"
+      ]
+    },
+    "applicability": {
+      "enum": [
+        "ALL",
+        "CLI_PUBLIC",
+        "NETWORKED",
+        "STATEFUL",
+        "CLOUD_SYNC",
+        "AI_ENABLED"
+      ]
+    },
+    "acceptance": {
+      "type": "string",
+      "minLength": 1
+    },
+    "negative": {
+      "type": "string",
+      "minLength": 1
+    },
+    "test_id": {
+      "type": "string",
+      "pattern": "^TEST-[0-9]{3}$"
+    },
+    "gate": {
+      "type": "string",
+      "enum": [
+        "G0",
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6",
+        "G7"
+      ]
+    },
+    "status": {
+      "enum": [
+        "PLANNED_NOT_RUN",
+        "APPROVED_DESIGN",
+        "IMPLEMENTED",
+        "VERIFIED"
+      ]
+    }
+  },
+  "required": [
+    "id",
+    "statement",
+    "level",
+    "applicability",
+    "acceptance",
+    "negative",
+    "test_id",
+    "gate",
+    "status"
+  ],
+  "additionalProperties": false
+}

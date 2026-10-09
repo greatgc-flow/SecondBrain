@@ -1,0 +1,11 @@
+# RC-### 릴리스 후보 점검표
+- Source commit/tree digest:
+- Config digest/deps lock/test catalog:
+- Build artifact digest & provenance:
+- OS/target environment/toolchain:
+- Gate G0~G7 results와 refs:
+- 보안/라이선스/의존성 검토:
+- 공개 계약/이전/롤백:
+- 독립 검토 승인:
+- 배포 후 관측/rollout/rollback plan:
+- 상태: CANDIDATE_ONLY (검증 전)

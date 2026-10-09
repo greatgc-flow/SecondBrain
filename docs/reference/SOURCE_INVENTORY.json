@@ -1,0 +1,1436 @@
+{
+  "secondbrain_r4_zip_sha256": "afd401a0323c274c86ce0c43d032b81957fb2dd38b0371563886bbfacd1394bc",
+  "development_kit_r5_zip_sha256": "e13a5764b7d1009fc31da44a1f107668bf0bbbb2556129baccba9a310476e3cc",
+  "included_count": 340,
+  "entries": [
+    {
+      "path": "docs/reference/development-kit-r5/00_START_HERE.md",
+      "sha256": "847a2d0f4e10863a55c7085d682d1e23647a4a2a6b7f4a92e94db6a439a17d54"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/PACKAGE_STATUS.md",
+      "sha256": "e3ada9f2e097902a9b8f39585befe4da561671ff9c1314036e1843a5fd5aecd8"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/README.md",
+      "sha256": "4c8058f620cf00c7198616f86a184e792f7dce3495306c7b80db6583b8a9e943"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/START_NEXT_CHAT_PROMPT.md",
+      "sha256": "86ff3a51677b022a719f0bb257c86a5090e45a0d042294e4f246dc40397eddd9"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/catalog/COMPATIBILITY_NOTES.md",
+      "sha256": "34380764293cb8da81b507c7f6a5ff58ea9c575f099c23d717529bc3e95ceae8"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/catalog/FEATURE_INVENTORY.csv",
+      "sha256": "634b1f5fbbae2ea911157d315c51b1ab7f45d09524fdfc84cdbfced0df32b5df"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/catalog/GIT_HISTORY_REVIEW.csv",
+      "sha256": "1f7cb543dcc441516d364a312900803de1899182c6253238a500d9452d35f269"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/catalog/SCENARIOS.csv",
+      "sha256": "e3dc4b37e78f456ebe09e2125d055b8b6535de505f624812dc4ed566e2a7e218"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/kit.py",
+      "sha256": "ede1fb6c59197eefd1c706fc2f3840a8dabda575822b8645bb113391e8c37266"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/00_START_HERE.md",
+      "sha256": "3ee6d9d87927afbd02fa5e7525ddebeea89272a3fc3b2045d90a30c0c8a80e7b"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/CHANGELOG.md",
+      "sha256": "c56f1e2c193f2366eeeb5a97f9ed0850ab398c09d016c40859373e6a67bbcf5a"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/PACKAGE_STATUS.md",
+      "sha256": "407c285ad59da36bc14935bce5e15b9a8f8d519b8a4835e68eb4296319d727e6"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/README.md",
+      "sha256": "049265ac3a3822862ea2f62a79e52df12c8ae0d989a43ed1ad328a4b54c8aeed"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/START_NEW_CHAT_PROMPT.md",
+      "sha256": "a6ad79b238c1245e755211b136394cfb46e3d6803cdf2b3bb129a23b250c126d"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/config/project.example.toml",
+      "sha256": "c34308c8b431eadefb00a708720d44de720f154d220d13a9809bff86eb62db50"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/00_NORMATIVE_AND_PRIORITY.md",
+      "sha256": "1c9eff33a67e210a5038cc77109dd153721f7e95e770d6cfa7736fc418e598f2"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/01_SCOPE_PROFILES.md",
+      "sha256": "f83c91837a6fc423ae56c428af87ef0e94c98f4528e99ce75851df796605eab1"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/02_REQUIREMENTS.md",
+      "sha256": "963b963564d18a570bf99dd8612e65b5cdd47402dc18e078b4a624300ceda0c7"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/03_MECE_AND_TRACEABILITY.md",
+      "sha256": "113822e82a2916aa8ab010088d01dffd162d815fe3c29966658b2f960ef53c5d"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/04_ARCHITECTURE.md",
+      "sha256": "78786f8b379e26b978da6e6fcc1c5a57496baa9c2faad6e9ee71fe457fcfd1d0"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/05_INTERFACES_CLI.md",
+      "sha256": "a0d7fbe84b9041b95fa72a2499446478da7e31fabb0eb3eb7d07a48c2751e1b1"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/06_CONFIG_SECURITY.md",
+      "sha256": "3974ef9313949f1178e70434d63a899161b52e672b141887244be5c3fd5eb193"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/07_DATA_AND_MIGRATION.md",
+      "sha256": "ee37034ecad362128e495da6c5e27b0d88a8e4c145774c39040988f015006804"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/08_FAILURE_RECOVERY.md",
+      "sha256": "b33dca6819a2acdcaaaa00a8998c8b73404c93ae7e3b3bd87d84a991a3804711"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/09_TDD_TEST_STRATEGY.md",
+      "sha256": "db600fb926a07d769157cc212c9033e96e46fbc61cf9fa0c7f0a88a03f45caff"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/10_GATES_RELEASE.md",
+      "sha256": "9bccb7767ab36006ef2d04a82b07ce6d51e7def86e98879cbd1773ce43c6404b"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/11_SUPPLY_CHAIN.md",
+      "sha256": "bc91720ec8580ce2de7ec5316a802619e187d5a4029cfba8f0f9c6ad1cc95380"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/12_FEEDBACK_LOOP.md",
+      "sha256": "42e6063eb8dc63b7a5d23d9d1258157cf5a66dcd4b6657f0379c08096fbfbe1b"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/13_RISK_REGISTER.md",
+      "sha256": "e38e8f966af1bbd2e6719233b6edd287fa98bdd5afabe6da7a2cb1a9a9166490"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/14_METRICS_AND_OPERATIONS.md",
+      "sha256": "cd2b3e61abf2d075ae16542832fbf8c75a291cee0fe168fa9ea3aa7e54da93aa"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/15_ADAPTERS_AND_INTEGRATIONS.md",
+      "sha256": "dbd47f9d43cb6d86a6deb195db192b1840dae880b91ad35b7f65f72bc7399b0b"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/16_TDD_KICKOFF.md",
+      "sha256": "c890c9ead5330d6c1a4a9a942db5597fe9be5bd01cda4dd3e227789ac829bd92"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/17_POST_TDD_ROADMAP.md",
+      "sha256": "3049b6b8b714b8caa0435a16ae9e7337c954517005d0a1ae2eab2e31570889d0"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/18_STANDARDS_AND_RESEARCH.md",
+      "sha256": "68794626fb0ed36e23e507f347b016b1afe814e32e573120a0f29527996a94c9"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/19_DECISIONS_AND_AUDIT.md",
+      "sha256": "c63191dd3a2d7cd45ae9c97828d43d9427d3729bd1d9691533ca6691f9741793"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/20_INTERFACE_STANDARD_MATRIX.md",
+      "sha256": "5e11a024f87da2f173c92e9befbbf00652ced2cebf2315ba5eb350d8f7774f4c"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/21_COMPLETION_VERDICT.md",
+      "sha256": "ca4eb546b2174dd8e1b67f5a5a31b6a126370b954f83c601da56b1e6e0107f46"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/22_2026_METHOD_ADOPTION.md",
+      "sha256": "9bf30058614c449e49a954a1b9288edf31f33a5290bfd45934e6cbcaa648e568"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/23_SDD_CONVERGENCE_PROTOCOL.md",
+      "sha256": "41df091dc59e7d6601fe35bfc09f309b992af9f1bbb9536ef55754b2d6fc0a08"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/24_AI_AGENT_HARNESS.md",
+      "sha256": "d615cc22896321b688b290f03fbec03d3470304cf9d145e682e98a9b3b5952f1"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/25_EVAL_DRIVEN_DEVELOPMENT.md",
+      "sha256": "8f507e0a01689ac3520ace7762b7576f70009bf54cde42f46c249c99b9caaf34"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/26_AGENT_SECURITY_AND_APPROVAL.md",
+      "sha256": "9ddfabf44b02789bdf51355197903a2a836fda9d2f7ea7cdf1009938cb797afe"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/27_SUPPLY_CHAIN_AND_DELIVERY.md",
+      "sha256": "34d2ca237940d6c3d712d69d24f8a52c0c779ace53084e642f0f86e9de6b6c50"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/28_GOLDEN_PATH_AND_TELEMETRY.md",
+      "sha256": "50f37452386527ae6ff5177dbf197571df81ee95b3e31d484eee78ccbddcccea"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/29_MECE_RECURSIVE_AUDIT_2026.md",
+      "sha256": "99d7fbd2aae36749ed95018b60c6f5efcd3db979ce1becea5d47980997118b9c"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/30_TOOL_COMPATIBILITY_2026.md",
+      "sha256": "2f3dbe6bf0264fb887f948a39c7a0ef249be06e58be6216b7be38e9efd2b0dda"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/31_RESEARCH_PROVENANCE_AND_CAUTION.md",
+      "sha256": "91a64e9a6d3f9f3d8088fe0d9ba35d9b6a906d7056ada27ad37bf010e3f56208"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/adr/0001.md",
+      "sha256": "c8254a1f19c8b7de1aeaa41cd007c2ea88cb8cc1b235e62395f88f8ca053c020"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/adr/0002.md",
+      "sha256": "9829b344d01c6e13253b438d623585ee397c0e87d836e6d5b9cd47da40dadf7d"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/adr/0003.md",
+      "sha256": "b8513e7d5ec6320e66195cb11dac53ec7d9dcf45c84c6ca06e3091cbc2baff95"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/adr/0004.md",
+      "sha256": "c8ec4392fadafaf4b87ac67e1c24f8ab7f92c5b32758e13e8f5d8fc34b37b7f5"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/adr/0005.md",
+      "sha256": "4327ab83995516c112b5306414032f3db00c43fbf7c37c450f97d6c141295108"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/adr/0006.md",
+      "sha256": "56e87e382f742d404d3f606fa333e3596bd57e655799b0385e3d26c96eba7d63"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/adr/0007.md",
+      "sha256": "abd1b2fc9634b6e6f759f0bbc54a64b0f789a61ba3298365ce4965ce707d8dff"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/adr/0008.md",
+      "sha256": "4fd92c7d01283cb14e1b2f7070b1c515ee54fef13c8b17c9d06d4780a28de14c"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/adr/0009.md",
+      "sha256": "e1592e6625d762945d2ac25e008d8d3196e8bd17a7519492fb95c578ed8ca0fb"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/adr/0010.md",
+      "sha256": "65e12cb9f4e913d47e5cefe40391720f023bc048f9071734a87443c0d7f02776"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/adr/0011.md",
+      "sha256": "bf24dd07e27e2a4cfd8ad5032b95f37e3e725dc9185a4ae0443a203b38aa0b64"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/adr/0012.md",
+      "sha256": "f0b3eabbe31e7f0ef73476185ccf9e9fe789551e760ec5eeaa27adab3e6b014d"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/adr/0013.md",
+      "sha256": "ddfab81f5f92d579f6d14512cd6d388d448f6f168c01d73b0365d620ca45fbf7"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/adr/0014.md",
+      "sha256": "3a9a8d30a0ae26298877639a5bb4dd64ebf0994fb76f3dcb09520b2552db1759"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/adr/0015.md",
+      "sha256": "6cd46c31fb23c8c95bc638860657b048cac3c1dbdc324cf8f0ead8a8c10270e8"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/adr/0016.md",
+      "sha256": "d0a3ac1939f18ca8b54f59e38521c4400cda0ffd39c31773ff3ebbaefe1d0f8f"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/adr/0017.md",
+      "sha256": "b3fa4cbb7fe1b93eecafa934948a876c8966c0ab15b5a87e50b4b76a8d8eb85a"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/docs/adr/0018.md",
+      "sha256": "2ca31cdc57c03113a98a5a470e82d5679ec0af268818d972a5b0b445580bd207"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/examples/README.md",
+      "sha256": "5a95ecde6164634835e6520a0206f718bca3b74d8ebc4e4ccab880dd269d842b"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/examples/v1/adr.invalid.json",
+      "sha256": "07f5f06fe29025a8088b1ef24b67d5f5624d50f6e72ba44a2ea63b5cd4f3899b"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/examples/v1/adr.valid.json",
+      "sha256": "2dc89d91168f83c13ccea0ebbf62e535f605e5f12afbb99ed57d9a7109f3bfe3"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/examples/v1/change-card.invalid.json",
+      "sha256": "2618e3a94a046ecbc45872e113b591190ad64d24b68e411aa68ea5cf849104e0"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/examples/v1/change-card.valid.json",
+      "sha256": "6246e09a1891e46ac4e110da76607c031b67618a9615000fa1492f771a4b0a62"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/examples/v1/feedback.invalid.json",
+      "sha256": "b3089806820ca490d844cb7b4e20c7af3497aa10e43bc1f037122b5509d6ddb2"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/examples/v1/feedback.valid.json",
+      "sha256": "e57f96448e2b5ea689750b03110700001dc8422062877207323cdb82288f01ea"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/examples/v1/gate-result.invalid.json",
+      "sha256": "d3575a84cfe6cc8ac207cc0aa1d30e94cf87d8ccef3cdb7de9b834dee8167524"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/examples/v1/gate-result.valid.json",
+      "sha256": "a80fd6011e412b362d6fbf651508b2a57ec938d69795bf4d051441abff4fb293"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/examples/v1/interface-contract.invalid.json",
+      "sha256": "ed3af89415be472b55582817402fcb318d5bfa78d6ecb51f00b6ec3b6d0991c5"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/examples/v1/interface-contract.valid.json",
+      "sha256": "c17f8bfbbd58d3d3894e3aff587dc4ebfb3c64171d3e35313f0cd2727c47b6e8"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/examples/v1/release-candidate.invalid.json",
+      "sha256": "7105d27909f746faae8f13a0a530c975ef7e0ae7d21155eef34b10bb622829af"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/examples/v1/release-candidate.valid.json",
+      "sha256": "cee61c6900f42f240a8752dea17667a189e58b0a846ac01896077b4ed209d7e5"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/examples/v1/requirement.invalid.json",
+      "sha256": "90029d090b642e9917cf9438c6ab754d4d05dd4dff2e67302a971297e9bffd0e"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/examples/v1/requirement.valid.json",
+      "sha256": "0b627a58b2bc03591546d92a81b6d400ce6e0448513b1d0b96a4c35e913b8fe6"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/examples/v1/risk.invalid.json",
+      "sha256": "40809210b35c9b2b110f654d5e24f7f46fb5ba325d5a34e58b7dd11f912d25f6"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/examples/v1/risk.valid.json",
+      "sha256": "d6cf211dfa2e551f0275548a7eceba19f2babed686f0f5784cbb95c4200d22b5"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/examples/v2/agent-execution.invalid.json",
+      "sha256": "9d7dd4a2fa09845a06b0e6809ab5a0502e0960bd58a1967a0eaba42aa5b7d38a"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/examples/v2/agent-execution.valid.json",
+      "sha256": "3fa3a3f9725e83a62e12cae7a7e41fdec4d375ffb154f0a96e69ccf13f4413ef"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/examples/v2/agent-handoff.invalid.json",
+      "sha256": "0be06ea6d17f825e667d8f5afeb80dcc6bea25353a616f6d836e9734ca346c78"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/examples/v2/agent-handoff.valid.json",
+      "sha256": "a01897bb39d46607b12d575118a7ad143ed22cbbb86e6b9873bc21e30fcd2333"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/examples/v2/eval-case.invalid.json",
+      "sha256": "3d2b84ccce8ca7ab92175c62083a6f41f52d521b29e9c1a40095904c43e9e6c0"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/examples/v2/eval-case.valid.json",
+      "sha256": "bedb47bf87ad22fae5098e7e0a6ac54f330d731ac27edbce0e709e12c36d8d5e"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/examples/v2/eval-result.invalid.json",
+      "sha256": "7c23710d8f9c4af767b85413b556bb7ccb147bab04e1ff0f1863d79e8407cb46"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/examples/v2/eval-result.valid.json",
+      "sha256": "484c4a293ce3cd6a28a32755c234bfbeeaaae893a5f95ca60fdd8113c0737be5"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/examples/v2/practice-decision.invalid.json",
+      "sha256": "0f8eaf2d1ba4c12a9627ba66288dbb894400de41512d959ae6727b93077f41e1"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/examples/v2/practice-decision.valid.json",
+      "sha256": "c93a6811e2c882312826e328f93399f5891c32cb621612a62f71c0be423ffe4c"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/examples/v2/spec-convergence.invalid.json",
+      "sha256": "821ebfb10882ef998349204a85e5e7011674530763e1ec0f831beba1ee91027b"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/examples/v2/spec-convergence.valid.json",
+      "sha256": "c752e6fcbb89eb7ce8764d9db623eaa5edd4c0066969469755c28f9074c70f06"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/quality/README.md",
+      "sha256": "14c3f8357830416920817228454077af91aae367bc40adf087c89308b18e8a8c"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/quality/cross_boundary_scenarios.csv",
+      "sha256": "f5f7a7cf490c83ff1c25446e3d450de0aab67b28e7006eb51c7042f620a0e418"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/quality/requirements.csv",
+      "sha256": "007a4f747d4612d909b97fd02b76c6373954598b962baa9e249e745cf921d1d0"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/quality/research_decisions_20261010.csv",
+      "sha256": "9070b11a368473c8326021bc4462e487c2bae287b55a45cd31b4b57b85bdd9db"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/quality/test_catalog.csv",
+      "sha256": "ac7e784d7cf5ef22a8945475634de64a711fbfdbd5a3506d73bc6d1aef351dd1"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/quality/v2_semantic_oracles.md",
+      "sha256": "6c0cf2135f7acb450ca5b5f52f12a3fd2f3db88d2c22bc4bdf74f7788c65378f"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/schemas/v1/adr.schema.json",
+      "sha256": "009c5ea092e1ce518a1d77187407bc73034742a728a02d1dc71ef33de216d9b8"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/schemas/v1/change-card.schema.json",
+      "sha256": "70d70a15d069e4b41c1bdfe481a21af5fc651824b08803624a8064d7e11487f9"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/schemas/v1/feedback.schema.json",
+      "sha256": "fb17b9ebc7517b1df0ba59ffd54791389201afa2139d1757cb0b554832bcdd3d"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/schemas/v1/gate-result.schema.json",
+      "sha256": "99d3b6da572c02f529988c23c7d618bdfc1e003370593e949fd16806757828ad"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/schemas/v1/interface-contract.schema.json",
+      "sha256": "0f7de4f8ccaf2778307c364d619f3cfc1ffab915d00fb6e34bc950162cd50bde"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/schemas/v1/release-candidate.schema.json",
+      "sha256": "c0a878c150e65c2ab1a8a9c3b89631114fdbb1dedb943fad17b03db9cf90d7ed"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/schemas/v1/requirement.schema.json",
+      "sha256": "c1250438d8f2481ce98a74931e4f859db9452469f67051587dde37daf82e47b1"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/schemas/v1/risk.schema.json",
+      "sha256": "1c056444fc7f2f0618b7141e61ea7d0a8b323d07ce7ed10f1bd7f7f8ca6fc00f"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/schemas/v2/agent-execution.schema.json",
+      "sha256": "32e36f0134d9c848148b12c7d2ab24ab27b5819157b4a6f07395cf155ab26418"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/schemas/v2/agent-handoff.schema.json",
+      "sha256": "3bf0a783a5a37a505353d6319aef070da0bd7ad22865703f2a370a63eddf7039"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/schemas/v2/eval-case.schema.json",
+      "sha256": "674b321952bab759c0f9da549cdfed21a33c55c63a9d93279d06968fba4e18e4"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/schemas/v2/eval-result.schema.json",
+      "sha256": "3131564df90984f7b2162801ddd4626e53e185f672bdba12f1f4718a316bd57d"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/schemas/v2/practice-decision.schema.json",
+      "sha256": "9fd8fc193125d438351f13d7e24caef08b5dbbe16d425b0c08c2253b23f3cf1d"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/schemas/v2/spec-convergence.schema.json",
+      "sha256": "c80f2c9cd222842003a4496d4057206829ad2f4bfd83938ad24fb9ac7a776328"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/templates/acceptance_checklist.md",
+      "sha256": "299930d9ad1745c8f8fa29a48dad820ea24ca86bea59d49b6480afe4d959d123"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/templates/adr.md",
+      "sha256": "b9d2470462b7b0a6ec59a7bdaeeedb3ae2de0a36572ad992c5bf31e4e2c0fe22"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/templates/agent_run_and_handoff.md",
+      "sha256": "93b85b35c40ac5605a74cea66276d85e10d62addfed601adb3b12d75539d9e28"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/templates/change_card.md",
+      "sha256": "2b99e7cbfd48fab167b289d24d2824926c761a2ece757de6cabd308e9a46435e"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/templates/evaluation_case.md",
+      "sha256": "3277db24b61f57d50a8138b21f7bb15ac7838dd00a6ec11b8405f4a360945c53"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/templates/feedback_record.md",
+      "sha256": "e60e482e344d6274a0b8fb3f46932c5710f0b1cf29b63915bdbf91559857822d"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/templates/incident_postmortem.md",
+      "sha256": "31b404a0b32c479d049963d81a3806c103332cc82b3291c3acf6246088a3ceb4"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/templates/independent_change_review.md",
+      "sha256": "aa341d84468b3f7b4241b8aa9364f9c35dad61e0e1a3a33f7a53a874b4c83639"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/templates/interface_contract.md",
+      "sha256": "e13e73742d47bddd3e6d021c860a2c400ac2c300d59494f4d8042995aadf37f9"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/templates/operation_runbook.md",
+      "sha256": "14256d02f215e2cd32a9ec18abbadaf144a7de8ec8fddb88a8d9cc0aabeea22c"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/templates/practice_adoption_review.md",
+      "sha256": "9f0cddb5c184c27f35dfeaf90c634e5cf439a73d5d7cf5348680a4516ef153ad"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/templates/project_charter.md",
+      "sha256": "1d946b834289e7cfd7c81f3eedc62ec15d83468f358d9ac6d2a143646c190733"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/templates/release_candidate.md",
+      "sha256": "1211ac68da8cd423c3789f4b110b2393d5b02131f263fefd74fc6ac9243f0e58"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/templates/requirement.md",
+      "sha256": "ce01fe03024848b8d2d9858146be3196926221f9051ded6681301b882b45fda9"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/templates/spec_and_convergence.md",
+      "sha256": "7002f55ef8a2d465a95ad528f702a6755a824e4a144e09479bf370adf1ced48e"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/generic/tools/design_lint.py",
+      "sha256": "ad2374b5855f15c223b77d862c28dd31b6033037157e02826436f2f5cff621b3"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/secondbrain-methods/00_START_HERE.md",
+      "sha256": "5643524b1e97003c966399ac73db4ebfc62a8aa68b9da3c79dd9d529e7ccdb46"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/secondbrain-methods/01_METHOD_MAPPING.md",
+      "sha256": "f7fd2f7fca83700ed6de03aa95cd622cce12dfe07295082b9a829faa79f27704"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/secondbrain-methods/02_AI_EVAL_DATASET_PLAN.md",
+      "sha256": "18c097cec40a49a633c6faccc6e0cbf3af55519a537b77b5c9b8c7a58a485a71"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/secondbrain-methods/03_HARNESS_AND_TRUST_BOUNDARY.md",
+      "sha256": "ea521ac7f361f5c0172211365771e3cdb46986dd37f6d746d5b0c888965e36ba"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/secondbrain-methods/04_POST_TDD_FEEDBACK_AND_COST.md",
+      "sha256": "c18e7b9fdc280809a8dcdad9ec4660ed25bf006c0a59b0508c52150e2a19dbc1"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/profiles/secondbrain-methods/05_RESIDUAL_RISK_REGISTER.md",
+      "sha256": "5c0767c5df2b590fe5d647eae2903ffb83adb3ad992c49043147c475a66f94bc"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/quality/AUDIT_REPORT.json",
+      "sha256": "259e7db6a7e9b24aa035a86cdb61043e30f68eee25e2e5060ea8258132f8d48e"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/quality/CHANGELOG_R5.md",
+      "sha256": "b0f1548a78ace986a999d499b3e82944c8cc49040a8b65c7f2e8c31dab9046e9"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/quality/MECE_FINDINGS_R5.csv",
+      "sha256": "e87075be23ec249e3ae9583dbb3adfa64f6aabe4096525a7b5c3053265f3917f"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/quality/RESEARCH_AND_GIT_R5.md",
+      "sha256": "be75bc88e346ebba990fa77de4d5185c3a4ba94a21cb81662128f2a5636c1a01"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/quality/TRACEABILITY_AUDIT.md",
+      "sha256": "c51a28519565462fa016b600e641e720213e3bb1bd50c891037521ad658e0629"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/standards/00_CANONICAL_MAP.md",
+      "sha256": "f581ef51046e09eb6103a2375ebcb86b268ce9a7c2cc3d346095a2d70f71fa38"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/standards/01_SINGLE_SOURCE.md",
+      "sha256": "c53fe98c85d958214fba907d1ac5a390ea4fb3e8adc210706ecf9bb63824641c"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/standards/02_GOLDEN_PATH.md",
+      "sha256": "11fb83681defdb5f4dbd9bb5a8b1ff52f17d7ea0b91ed2e05c3af87cbc1c65f5"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/standards/03_CLI_HELP.md",
+      "sha256": "a07ad2263559b7d901a9422ec57948f66b9061027c1e56ee599409ac1297034e"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/standards/04_FEEDBACK_LOOP.md",
+      "sha256": "edb24dddb6a07d0b581fa7ecf37222a4b836f1541137c541ddf4a559a92b5781"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/standards/05_TEST_MATRIX.md",
+      "sha256": "b3a488dfb1ffbc49645fc2a5cca947e505bbda7a1169db533fdbf9ad2c5fbde1"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/standards/06_RELEASE_AND_HISTORY.md",
+      "sha256": "1b48ecdcd528c5c669883ea35176606437227ef4ca35541b80774f8c8f24706a"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/standards/07_RISKS_5WHYS_DECISIONS.md",
+      "sha256": "1608040e53554a72e992820a029cb9520a92d7eb326b057bdb5e303a8c2ad102"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/standards/08_BOUNDARIES_AND_PATHS.md",
+      "sha256": "ea3256f8d83498f891de9a353490ca3dfcd5e155d06369060cbccf388903a945"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/standards/09_AUDIT_LIMITATIONS.md",
+      "sha256": "fa2dbb15cce4ea16ae9e952901cf163d0130acb88137e17bbadfe403105b246c"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/standards/10_DECISIONS_FOR_OWNER.md",
+      "sha256": "8b8cf05d347c69d2d4f803d68af4f057e12685d823579a1062f36bc3608ce03f"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/standards/11_AUDIT_ORACLE_MECE.md",
+      "sha256": "42a8066c2ca2afaec180757cee15024bf8f822e7d4f8edce78801b04202476ee"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/standards/12_EXTERNAL_MODULES.md",
+      "sha256": "399b973b32f01b3c36394a58d41243f59deef2b6070931e443c9e047da6a849a"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/standards/13_LIVE_TEST_PROCEDURE.md",
+      "sha256": "eef1b528a29dca5cbc4020a07c9a5b5af3b8deef8d980de6aad472ed76d2d883"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/standards/14_RECURSIVE_AUDIT.md",
+      "sha256": "64dc59d202ce34be3336bb0495f1e4e61a78d61c99c444d64689428ba1c16142"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/tests/test_kit.py",
+      "sha256": "18cca77b11c9ae557a7feb101a0c87a2aa3cdda3b89c7c200e5c0402f5f0b993"
+    },
+    {
+      "path": "docs/reference/development-kit-r5/tools/update_manifest.py",
+      "sha256": "886b5b3ded6c1aae7db701c09c5411e38110b4525a7b9922f533f9549baee8fc"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/00_START_HERE.md",
+      "sha256": "d344c080e3332db8d0913e80642957d7bab716a1e2e7aa8c917c8acadae6913f"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/CHANGELOG_R2.md",
+      "sha256": "edb39737621639c34c3b662401606307ecdc7d5b29f454694531ae7827937b6d"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/CHANGELOG_R3.md",
+      "sha256": "411b46f59e6ea1fb90db597237a3ebae60a66d34f0558ec98fd3c53d20232610"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/CHANGELOG_R4.md",
+      "sha256": "be8487bf12aa38b0b78591a799303bf50c8771e2c4f37677d4c862d4f17220f6"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/PACKAGE_STATUS.md",
+      "sha256": "47a704b085a8ada78e0aa305cc0a5ef7c50b8402621adec66ae13f69286d0440"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/README.md",
+      "sha256": "de5809571caaea7d6509bffe3f48d6b8260f8970372aacd8a2b21e832877d42d"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/START_TDD_NEXT_CHAT.md",
+      "sha256": "b83ae6274460bbab69863134d1b8160e7af12c26d9a59ffbafde5b77beafc912"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/config/brain.example.toml",
+      "sha256": "74979000f3bfa4770e2b8f440e07c9872dd7c51cd3164bec95024ec20a1b2d05"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/01_REQUIREMENTS.md",
+      "sha256": "d3f0849be9920353ee169ed0a43ed63baec1704d7fc02b93fdfd78f5f670c21f"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/02_ARCHITECTURE.md",
+      "sha256": "4eb61538bcac8162d165fb8c4f3d6434d8d2154da693b60c94bf526ff62e647a"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/03_EVIDENCE_MODEL.md",
+      "sha256": "1bb86981ea0f03df1da18b922e3dd1b578dfc715c296c689dad1daee752d89b6"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/04_STORAGE_AND_CLOUD.md",
+      "sha256": "94ea115994704d99330544d5d925e3cfb58943904268817c3b1699be698a07bb"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/05_INGEST_STATE_MACHINE.md",
+      "sha256": "1803742fc193599d0eaecbf9969ce441e30dd2d483cf245d78d6b9b210847e1e"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/06_INTERFACES.md",
+      "sha256": "345cae7730fe9ba8456494534334c87a247819c789a69a66387848b5dc02071e"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/07_SECURITY_LEGAL_HOLD.md",
+      "sha256": "9097ff6b117ae4646df03c6884612ede4b887ff3841e5e5c99780da9e8904159"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/08_CAPTURE_PROFILES.md",
+      "sha256": "9b425ad48e02c0e556a92b849f2154ea709f1f44a75dc305312dcf4e86db1483"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/09_TDD_ENTRY.md",
+      "sha256": "109c5557c3efc98639d7bdd718333662495a8a150d2e8143d155ce2c9cc596d6"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/10_TRACEABILITY.md",
+      "sha256": "e774145f74e01d7df780835ad10f0b79dd92ca888dd07b6866b9f2e562975920"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/11_OPEN_DECISIONS.md",
+      "sha256": "975f12fdf18efbec218422dd629d683d19d019994451d200b3b8a638d6a91877"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/12_REFERENCES.md",
+      "sha256": "00a2fd5b5d55a5db4164fdcab8140a1963e36917c6b98c07a076802848bc04ad"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/13_RISK_REGISTER.md",
+      "sha256": "f88fd857521d7c4d7b971f82ddddbac9a5c078dcc5f633bd4af362508cb6bc11"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/14_NAMING_AND_IDS.md",
+      "sha256": "42a638e3002c8f3992a1a039d019ac04b45405f884e31ba5e07b9364852e3ef5"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/15_R1_AUDIT_FINDINGS.md",
+      "sha256": "efe4414cd3cea0a077addde7b21edec4a5ef628d565b4bb343cbf21e6e757595"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/16_WRITE_AUTHORITY_SYNC.md",
+      "sha256": "2736918c36c62c7b598ff9386cbb565ef0fc7dbf3f532932689ef8ae9ad88fa2"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/17_TRANSACTION_AND_RECOVERY.md",
+      "sha256": "0676d75c15f13dd2a94510f82707624a3c02bc9cb02976638489238a0c851bb7"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/18_DATA_CONTRACTS.md",
+      "sha256": "11afe807592e54c6e09365d0c053eb12d4a0560180d56e3db02986b628ca5321"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/19_SECURITY_PRIVACY_AI.md",
+      "sha256": "12fa7ad2d22e47b5b7c65ddb996da5ccabc31909296bdb2eb0e2737ffcc9dade"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/20_BACKUP_RETENTION.md",
+      "sha256": "cdacc83f51862f5f3c344d6ffbfd05d2baa69b033fff1e85d5eb00161bb400b3"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/21_TDD_SCENARIOS.md",
+      "sha256": "9745504ff3d2251302b7b440e951593311eacf7ec1768d59627651e6042eb6b9"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/22_RECURSIVE_MECE_MATRIX.md",
+      "sha256": "58ac74b6a5e725cb2f8c46653babab1a45d50b691549b946d29a90ddfd0bb5d9"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/23_OPERATION_PLAYBOOK.md",
+      "sha256": "29b94ec0ab1fb8f01afbbaab74efd835c6a65d62fc06dab432d758f91d1ec8e6"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/24_EVAL_AND_SLO.md",
+      "sha256": "b97c6952028560d3c228d0cf893785190a0b9a1daf4d1cf1a6eae9a80bb7c1ae"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/25_INTEGRATION_BASELINES.md",
+      "sha256": "65186f69e2a98c6e78399499985bf09c369ee090e16e78cc12d5e9c5c5462be6"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/26_EVIDENCE_EXPORT.md",
+      "sha256": "f0e145160ca37e4f991cba09e514ce9b4659ea33c0c68b949330b91e414398ea"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/27_RETRIEVAL_MEMORY.md",
+      "sha256": "7bd8ab466bbb6dfb18d4c958786d066d734af5807bb5b4ab4082293a5cf21fe6"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/28_RESEARCH_EVIDENCE.md",
+      "sha256": "1e69207d663b1222aba856a182ee84fe9bbb3b0a8e55c024d6bc23993b7ef65c"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/29_RESIDUAL_RISKS.md",
+      "sha256": "0e4352ca1c8f94f42b39ea73976d86d77230a8bbbe2df6142ccda3fc29c6b03b"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/30_RELEASE_GATE.md",
+      "sha256": "89ad1b87023e4e3728554cff71b2284a527e4504b907ec3f3d7d8d251ac22522"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/31_REQUIREMENT_AMENDMENTS.md",
+      "sha256": "f762ade18930beca318720919df63df8eab283bd47e46f7912323d5206f811b8"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/32_NORMATIVE_INDEX_AND_DECISIONS.md",
+      "sha256": "e542b5aa3836a1d8180e6917afb22bf0e3fb54dc22ff90dba53d859f85a284f3"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/33_FEEDBACK_LOOP_STATE_MACHINE.md",
+      "sha256": "631a2862b2d44cc28818ee84caf1f84fb2232029d4997cb5e84e04dd48a362f9"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/34_LIFECYCLE_REQUIREMENTS.md",
+      "sha256": "98f929f2c4ab4462e9d61875f420d085ea22163b93a209c1f56d345ed65b7195"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/35_TDD_TO_RELEASE_GATES.md",
+      "sha256": "e0048ae415156b496b7b60e7c24ab4ff49729abb7aec4430a55add5400d9346a"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/36_SLO_OBSERVABILITY_AND_ALERTS.md",
+      "sha256": "e7cbc79b8820129af6f2f85e21b993677d26bd474157eccfb0d674bf5d7c09fe"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/37_ISSUE_POSTMORTEM_AND_5WHYS.md",
+      "sha256": "594855bec662a75ab4e0edc56ca9d740c37c842511d6110a256178afeb1b38ac"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/38_SECURE_CHANGE_AND_SUPPLY_CHAIN.md",
+      "sha256": "f52c0992d67663a25b0ca1c0bfcb7311616f6e12c423a790ec47acaa8cd40d05"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/39_BACKUP_RESTORE_AND_CHAOS.md",
+      "sha256": "e735b7d6167677847653acc1587135f28857e36b9844e8f197da6ad36fb2d501"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/40_RELEASE_EVIDENCE_AND_DEPENDENCIES.md",
+      "sha256": "c7432ec1a3c6db63babf8c3e4544c79a7f472b9fceec73622b4116f1f8618622"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/41_EVALUATION_CORPUS_AND_KNOWLEDGE_DRIFT.md",
+      "sha256": "cf0b377508ddc5484b471233e8e425117888447b5ce1f14f5fbc36339cd2be5c"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/42_MAINTENANCE_RACI_AND_REVIEW_CADENCE.md",
+      "sha256": "10ec8b9c7c23aded546921011da9930729afd2e5390a147cca23198a2211878e"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/43_RECURSIVE_MECE_LIFECYCLE_AUDIT.md",
+      "sha256": "f4c56f3145d3a135b9ed99a61c94eb0ec1e143c723a0c3963422c933164c703d"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/44_R3_AUDIT_FINDINGS_AND_RESIDUALS.md",
+      "sha256": "ec15ae6af8ef2a0e3b45df06cccbb7984a5ee2132ed9abd589a66ad5606ee0ad"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/45_RESEARCH_REFRESH_AND_DECISION_RECORD.md",
+      "sha256": "4efdaa56a99f059ad73ff8b79bf960fee8cc77332f55addbf0753ac41869e8dc"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/46_POST_TDD_EXECUTION_ROADMAP.md",
+      "sha256": "fe2b327a50b47c2095c14f24e94653e2373f8d90f03b327ca41006877e51eea7"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/47_INDEPENDENT_FINAL_AUDIT.md",
+      "sha256": "f34f3eff4363633644b91f989f707dc68dfe9c5836a808a38f438ab51e96a8c8"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/48_SEMANTIC_VALIDATION_AND_TEST_ORACLES.md",
+      "sha256": "ff1302a2b797a5c3d53a8c6e5e9c025231155c8cc0a20274e37857f0fbbfec49"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/49_PRACTICAL_OPERATIONS_SECURITY_AND_LEGAL_BOUNDARIES.md",
+      "sha256": "6a6f1768a8e5adf4ef3b74904da4da4a33db3d78c68a4ff0fcba4d505ae6ad03"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/50_FINAL_VERDICT_AND_TDD_ORDER.md",
+      "sha256": "3fe262342bff11fdfd33c46a10b19e8f761d497c5e4088c3030c47c4a4db9e59"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/adr/0001-filesystem-first.md",
+      "sha256": "8e0f29482f9ef834dc9c120ce40ab5fb798b11c6ba06d0638de590a993ae3383"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/adr/0002-original-immutable-by-policy.md",
+      "sha256": "5cbb97564a14521c93042eb426efd4190e9d83600ecf7c4d790848cf619aad5a"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/adr/0003-local-rebuildable-indexes.md",
+      "sha256": "1e86a73189c65bc624fcdd17f93df8881719a61aba7c4f0cee09cce42a5cd787"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/adr/0004-primary-sync-secondary-snapshot.md",
+      "sha256": "18273ee8c63556f6404816ec53d7bff49792a5dba657cb8659eebcfe28d28a60"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/adr/0005-object-observation-separation.md",
+      "sha256": "bd4b3b4d71ec02b61a69571a2e66cd6990222a79033bca02147fb85384f941e1"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/adr/0006-deterministic-acquisition-ai-interpretation.md",
+      "sha256": "684a386a4a4e4b514857101e95c476751476970c88b9896c1aae9b54ddffc565"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/adr/0007-peerhub-reference-only.md",
+      "sha256": "54f547ce44b3219b2cbc6c8ec7ef9668f0d3bd8075d6c8a11cd163c6d3eee7e9"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/adr/0008-sync-not-backup.md",
+      "sha256": "5ed28698a92759eb23ace28b87d8dcbdf38a482036f8617356b644a65ece6622"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/adr/0009-event-history.md",
+      "sha256": "5bff4a292770dc6917d15398116305c0f3f85cb8280db62015e95c24c42e4b6e"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/adr/0010-canonical-jcs-event-hash.md",
+      "sha256": "cad998a66a24dc799554509a7007c23d39ce7c085a8f10e988e40db46dd105b4"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/adr/0011-single-writer-cloud-sync.md",
+      "sha256": "2ff7b5e2b73875c8f7254a13a06cc2d75743a80fb41a5d3b84f8c1bd0137f5d3"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/adr/0012-commit-receipts-and-recovery.md",
+      "sha256": "f4ed07eaaf7e24d755b4931134bb589a9fc0e44477dd8283c22040f9332b2bd2"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/adr/0013-erl-derived-not-claimed.md",
+      "sha256": "7f359efdfb4d9dd52653fd3f7789486fd2f425809f66ed8d7dd2890f471352be"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/adr/0014-default-deny-sensitive-egress.md",
+      "sha256": "8ca9ad934c7eda1890dab57b19704a17fb1508cb043aece916ff1a8da15033c3"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/adr/0015-provenance-claims-not-facts.md",
+      "sha256": "7a7bd5b21b6964621aadbf8e726201f16a73e0341c2593bf6dbab3dc864215ec"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/adr/0016-versioned-schema-migrations.md",
+      "sha256": "a026d0842bbabe2a00021abd10330aa799238111590e0a0ee2f49e863e03a295"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/adr/0017-secondary-verified-backup.md",
+      "sha256": "34e55512110d27e935bf8889363341f40e6404f758b2435c5b14cf7460e3118c"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/adr/0018-peerhub-extension-boundary.md",
+      "sha256": "42a13db7193dfbd392e88f1a9e05699a4b3ec4845550856f43fec9c123a068ec"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/adr/0019-internal-uri-and-local-index.md",
+      "sha256": "cb91e4ed1ba9dc5cfdf739a8aa8ec7adfcc07f09ff33996c7717a9e1c5d79ed4"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/adr/0020-candidate-bound-quality-evidence.md",
+      "sha256": "84f7565d33e53703135da45eabf964f581ed917ca5243396612f82bfe466d98f"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/adr/0021-feedback-closure-by-observed-effect.md",
+      "sha256": "3983101360b2510f1636d2fac83270c5e730e9b59abf6a5524892a3f4978de93"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/adr/0022-independent-governance-ssot.md",
+      "sha256": "6c4a855bd166c0d73bed1c824d8299f127d57fb9079eaf522fe6df01a265329a"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/adr/0023-automatic-vs-manual-gates.md",
+      "sha256": "b96cf0e4426082ffa646f1c892c85dd93eeff639167e09a047b83f9ae96370a0"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/docs/adr/superseded/0010-canonical-json-hash-chain.md",
+      "sha256": "91257463b14a1d2f4432c3bc2d8362c6477b3f3c0f9fe41f4cb2c7ff1f01a29a"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/README.md",
+      "sha256": "29190d3b3451bb5032b9253696d22c77383992ecaaec5b209acbe85e20a52f8d"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/governance/v1/compatibility-observation.invalid.json",
+      "sha256": "5a421a420ea9b14788b5491d08da39ff3b60d13b332239e216e36da2e7cfde2f"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/governance/v1/compatibility-observation.valid.json",
+      "sha256": "a50ee3336f5b8030c8e000b8aba1f1463a7b6c2213fcb8b659c7e7a8742501d2"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/governance/v1/feedback-case.invalid.json",
+      "sha256": "39e71e9bdf4feb05e48ffad06530f8967489ed4e8c69a47445e5f28be666c55a"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/governance/v1/feedback-case.valid.json",
+      "sha256": "085e344b8a1e914ce9b4983147ab8a4a95a3f1d20fc4d5c9ca3c705c4e82857a"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/governance/v1/gate-result.invalid.json",
+      "sha256": "3264adb8e9ad2fb4d8c9355d23d3b4e7e09369297a557bea303635c996a2e017"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/governance/v1/gate-result.valid.json",
+      "sha256": "7064a506436090f91c0f8bc90ceaeeee51921b9548d423a7fffb56d11a4ea19a"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/governance/v1/governance-event.invalid.json",
+      "sha256": "c3f7cfffeace1c4fc275ffa77e5f3a739052c1e8ac08b5d7bc58fd552c344700"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/governance/v1/governance-event.valid.json",
+      "sha256": "a3d2ed1e38e6c2835e8ec0205312203dfea02fde1061b014a26106dad1cabd8e"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/governance/v1/improvement-proposal.invalid.json",
+      "sha256": "85b5ed954309078ca6a92cde63475505708c761758a8d6381cd8cef11ae769a9"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/governance/v1/improvement-proposal.valid.json",
+      "sha256": "b7e43f3cbf4b9c343a3673d75443d9c19e1de458933a94038e9af20e469f0fc9"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/governance/v1/improvement-verification.invalid.json",
+      "sha256": "0a6215b6abecfd22eb341e9a1fbfc4db219d7e14bf11b090b08a0e613e6d46cf"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/governance/v1/improvement-verification.valid.json",
+      "sha256": "28d26ab3720f61a36dc24f4a396c6bac09f8b723c88f86e91c4b62c6470c9bbf"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/governance/v1/incident-record.invalid.json",
+      "sha256": "e6721b4961ef52164f625975cbe3c40cac07905883bc286fedd38b5ecace8bc1"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/governance/v1/incident-record.valid.json",
+      "sha256": "23aac09d81732edadf0e1f58a1c17542e6b271339732bbacfd85e631cc702c12"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/governance/v1/release-candidate.invalid.json",
+      "sha256": "0c77d8ce3b49eafd5bede0bba7b38a9b8ac8c400eaa63e8aaf494486c8f2241c"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/governance/v1/release-candidate.valid.json",
+      "sha256": "92cfad4197c038ae18dfd53762f41754f4988ff6719449d7874040bb5e797a90"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/v2/acquisition-event.invalid.json",
+      "sha256": "0772102e5fc12c32bf9730c337bca1cbfbcb10165eeead5145006960d6278d01"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/v2/acquisition-event.valid.json",
+      "sha256": "45a7a6f3006a44444b0034180d388278764932a9780aa2ae76b4d4d8a3d1ddd0"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/v2/backup-verification.invalid.json",
+      "sha256": "a7a00de71d7f15e74ae2090889410e816d8fe5ece6e72ae117ed1fbcd38350c5"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/v2/backup-verification.valid.json",
+      "sha256": "cb1ae95d61f6b9c91e6f0b4f93485bee2f91c5c1ec5f1c7a2d6d22823b1909b0"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/v2/capture-receipt.invalid.json",
+      "sha256": "1b9a310e69136b84f70116ecb44c5c650961d5f148085c89c245fb4b86b3a590"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/v2/capture-receipt.valid.json",
+      "sha256": "a22d610e180575affa14202288401247c1955249fae0d33976dd589901596dff"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/v2/commit-receipt.invalid.json",
+      "sha256": "efd6cc35ec64d1c0b1b70452aa718e6e10d582d63c1e2511e875c85be54ba248"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/v2/commit-receipt.valid.json",
+      "sha256": "96457f6a3ecdad4b263a5312080ffee54e67da90505d43ed65cb6e6af78d6a1f"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/v2/custody-event.invalid.json",
+      "sha256": "17d1a74106ce6984a4155fe0b552c2df548f5a01e53dca5ebc6e983e986543f4"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/v2/custody-event.valid.json",
+      "sha256": "20424c07b2892dab97d5ccc05cb8b7a4c0fb146352ab2044e9f03b4d1c46b4a5"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/v2/derivation.invalid.json",
+      "sha256": "1ca73d5fcf936c1f2248e63fff329af9dd96f6d7f067c329bb987a6d93ab4354"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/v2/derivation.valid.json",
+      "sha256": "8b9b8c342bbbc5dc9b34e57bc63e1a664b07549bf8e7818c81aa14af67b36371"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/v2/egress-approval.invalid.json",
+      "sha256": "525889d40064d35b4afd6d0711a1a2df696e225eb0774776b7df6627a58f8ace"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/v2/egress-approval.valid.json",
+      "sha256": "ff1d3ddecb1606b98357adb8183c229a1c312d76f7afd9359abd636b576536d7"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/v2/evidence-object.invalid.json",
+      "sha256": "294a70b67b474fdd5bf1ab87375e33a200a132d895fa7bafe0b041098ca1f01c"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/v2/evidence-object.valid.json",
+      "sha256": "78b99fc59c849e6ae6961ac6e770c55c0e4dd6383f743681dbb7f0378efa1327"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/v2/evidence-record.invalid.json",
+      "sha256": "80152c2c9a69e0e0dcfa45fac8da5f95341203e9cdf92787078a8ba524a4fa9e"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/v2/evidence-record.valid.json",
+      "sha256": "ded8b873378374cdac0556d55597f36582bf6ed4e35ad62c00cb3645bf564096"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/v2/fact-assertion.invalid.json",
+      "sha256": "834872eb73400f6c609e4015efa2a31e6ffeaa9a915a77715512b6030743a21a"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/v2/fact-assertion.valid.json",
+      "sha256": "834b3b11a5602c5e1973c20fa3bfc1e6599ad8cc41ffa11b65aa027303a006d2"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/v2/legal-hold.invalid.json",
+      "sha256": "c6f65c52f35dd966e876879149a9236e004cf8efc67fb10ee3fcbfeb9f22bd53"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/v2/legal-hold.valid.json",
+      "sha256": "8357d65d59bbdd17f6c1ac3fbd4e96aeee321ccd44bf1fef4e658e4c5600d9d5"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/v2/observation.invalid.json",
+      "sha256": "fc13547a8e1708647e9587d2e137d555694b67bde47134c9cb79103052433a17"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/v2/observation.valid.json",
+      "sha256": "af4ed9e97baab0b4f3736981bb0082d6275e4361e852a7f81883b66798f51e64"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/v2/production.invalid.json",
+      "sha256": "af6a445ca31e457b10d7b96ec42d71ddc6760744bca9f1fb28d2163e220dbbcb"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/v2/production.valid.json",
+      "sha256": "6dccd075fae5a17e740532265c3edad1773363af6ef21f99d223b95443ee8484"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/v2/snapshot.invalid.json",
+      "sha256": "83d8f824b2bd1cfa72b0b0ea93615287ad70b613773d04c09a6e34d89a10674b"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/examples/v2/snapshot.valid.json",
+      "sha256": "1e059d9e2ad0c0c4f4a6dfdf09efe3a5755bf4f7ebe57b8ac8ec958ee2145e65"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/integration/ENGRAM_BASELINE.md",
+      "sha256": "870113187bb8221fe50adea8794927117d5670881b75c5f4291829250d1ea155"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/integration/MCP.md",
+      "sha256": "f374011c4fe2cdefcb7fdfb0dd721a999adc1cfc160bcb179a645aa2347ef27f"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/integration/OBSIDIAN.md",
+      "sha256": "f68afccc97ce3841a69dc5f21ee6eb957dcdc24107343d11e229557f13850225"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/integration/PEERHUB_BASELINE.md",
+      "sha256": "5389e6f1e8f2aa19d30be20487ac5062e6d486cd3e07118d05bd704dd7ccc561"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/pyproject.toml",
+      "sha256": "1c71f49997833466561fab0bcbf16d5d7bb21409702154dd348aaa9e98d4dafc"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/quality/R3_CROSS_TRACE.json",
+      "sha256": "9ff24a2330dd68b9b74f16dd413f27b6c43680b37eb5b9ca9e2f29a811aecf6a"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/quality/R3_STATIC_AUDIT_RESULTS.json",
+      "sha256": "2c4ade4d2e41e695cdda1dcb3fd2defeee13a7aee1a5bc4f7e3076d27408d03a"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/quality/R4_INDEPENDENT_AUDIT_RESULTS.json",
+      "sha256": "e168a263a0c9636a8294cbab8953e800a0e4168b48f7daef85d18175a00f5b5d"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/quality/R4_SCHEMA_LIMITATION_PROBES.json",
+      "sha256": "9605de3d3b207af03ae0d811b0463e20665c93b04af06a98c1891c2b72273998"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/quality/R4_SEMANTIC_TEST_ORACLES.csv",
+      "sha256": "7f4b48adbe34bda5d407300102fa69b00eff4d7ffb3b028277543d39c3543962"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/quality/README.md",
+      "sha256": "ae77ef6b2eede54e9a337dee6a023e5da37ddb69adb5598681f3f9a52eea8347"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/quality/STATIC_AUDIT_RESULTS.json",
+      "sha256": "eef5930b738dc5dddd74bf0422b44afd474214910a0c570361301a6c2a0b85aa"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/quality/gate_to_requirements.csv",
+      "sha256": "37396a00cb846bb8c9d863d999047d1ded79a262ef03a8b59bdb764eb9e260a8"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/quality/lifecycle_scenarios.csv",
+      "sha256": "d84ac863ff2fa7c37ef46fa8529b4b4dd42e797e3d33645f879de4cab8434596"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/quality/quality_cross_coverage.csv",
+      "sha256": "a8b35d018650c694c4a6bcb28026992f724713fd6cc9ade9f368081fe5bb9a66"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/schemas/README.md",
+      "sha256": "b749ae1f446898bff05f21988bdd8d9e7496335199739242cfc2a1f963f5e718"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/schemas/governance/v1/README.md",
+      "sha256": "4e0177f124fbade0654682b6ad56c82f81be46f62a26b2dd69818cd8f935892d"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/schemas/governance/v1/compatibility-observation.schema.json",
+      "sha256": "066133043ef1935ee52e7e00ab1a278fa4fe7e50048358226aea24279d422077"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/schemas/governance/v1/feedback-case.schema.json",
+      "sha256": "c692688d3db8246bed3b658d4583487310e40d996c01255331fee88e5e3dd68b"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/schemas/governance/v1/gate-result.schema.json",
+      "sha256": "790945963ccfa255d88ffa224e255b88524c0dc02d9d473366836034929cdda6"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/schemas/governance/v1/governance-event.schema.json",
+      "sha256": "0677a019ec2bc19316d425e55210a46c8c791ff74dc0dbe0b82d72870df5130c"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/schemas/governance/v1/improvement-proposal.schema.json",
+      "sha256": "88a911a209919255d4e5e5ede15f0d463147e42ddfa8e98de30173dd4450ddea"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/schemas/governance/v1/improvement-verification.schema.json",
+      "sha256": "d55f34e8049ae377f3ee55c9f41203a538fadee7eddef35b8455880597ebc17c"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/schemas/governance/v1/incident-record.schema.json",
+      "sha256": "8ad9932c6768c3c57f41806a2029cbfdb21937b171b94838f109b1062cfd672c"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/schemas/governance/v1/release-candidate.schema.json",
+      "sha256": "557bd4543ff6247d125f7bd04c33b931ba6f2a06c9b8657e202feb90f1e3ed15"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/schemas/v1/acquisition-event.schema.json",
+      "sha256": "2a87eb79a1a26a7d236d28d8cb7ea53a02a461039a3fd85043dafc80db8fce66"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/schemas/v1/custody-event.schema.json",
+      "sha256": "328cf62e15c320c05612c2a86dad7c193f7b9949808ab3f0541588926c637726"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/schemas/v1/derivation.schema.json",
+      "sha256": "4a5877921b16c526d1427efd0394e938c10ef26b691ad411689039f038964368"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/schemas/v1/evidence-object.schema.json",
+      "sha256": "b39a72b82d19176ba3117557c88630982b4063f56ff628d10cbe701bd8514cbe"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/schemas/v1/evidence-record.schema.json",
+      "sha256": "3c3d1630aa202268438a4ab0be565156fd62faf3b7424aad9d063299975afd74"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/schemas/v1/legal-hold.schema.json",
+      "sha256": "c25301c45ff0737118e946f9851a3c155c084cbbf72a42e4d413c57be2cfd982"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/schemas/v1/observation.schema.json",
+      "sha256": "5323d2dfafb2b31878186bbb7a6088a49fa46696edf8985d45ca9537981bde8e"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/schemas/v1/snapshot.schema.json",
+      "sha256": "1a1bffb95a3357fe29ae78d32850c97bc26e55ebbd13a717313bf7515ccb35cf"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/schemas/v2/README.md",
+      "sha256": "b3acf165b8e2ee51d1380a034386a9636eec8ed8784a97bb7661be472aa85aed"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/schemas/v2/acquisition-event.schema.json",
+      "sha256": "3514703bc4cca13cad78411207f92c6196fd5aec517c983e830110c9e0dbd728"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/schemas/v2/backup-verification.schema.json",
+      "sha256": "9d13c256390e6ab181a787a54ca2e2b4a5d5ac17487fe3c8721636116376ce2c"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/schemas/v2/capture-receipt.schema.json",
+      "sha256": "39e2fcb68c3eb5965b248c10848cfb28a5a60d34c76af4005197dd1476b77094"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/schemas/v2/commit-receipt.schema.json",
+      "sha256": "542c000c77c14456c3cc2b314dfd379c1e4c4502849253f289a87bd34cc553c3"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/schemas/v2/custody-event.schema.json",
+      "sha256": "fe63d351df07b17bc35836c4e8776668820b06067eecbe1ae1269803c42581c9"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/schemas/v2/derivation.schema.json",
+      "sha256": "1594c0edbdbad413e527c696aa860f624cf722c7dd446766b909bed1622dfb75"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/schemas/v2/egress-approval.schema.json",
+      "sha256": "0fb0fea3fb0b9a51d7921e4acffc47981c056512c7cc0a0725ead8b4287d6af8"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/schemas/v2/evidence-object.schema.json",
+      "sha256": "40377a19e2881624b7bc8b7b9601bcdb2c9ddf8fd39c3c620438725e6f41bfdc"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/schemas/v2/evidence-record.schema.json",
+      "sha256": "9dbc179536a556338353273d87f26f4b4d3a6e66bc476dc2ffc2fbaa5b2e6670"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/schemas/v2/fact-assertion.schema.json",
+      "sha256": "8a535f8bbb5d2fe36a97e3254953b949e9c4bc038f63ac83eade161a6073875e"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/schemas/v2/legal-hold.schema.json",
+      "sha256": "d7a4ab86e0f9b6ccc793f78d5e824ae06474a7dfb5245df99dec978119fd2459"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/schemas/v2/observation.schema.json",
+      "sha256": "c3db7a774515d9b0c8001cdce5be969846d58b064e09a3aa7df77a9bf25caeea"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/schemas/v2/production.schema.json",
+      "sha256": "c4c49ebf9e88405c43ed091fcfaa30d4f88c41b2567b02a3fd7de5d6ab669e53"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/schemas/v2/snapshot.schema.json",
+      "sha256": "40926d63ca21e4c4da7730b431f12b0ff894706c9aee4cf4c37c40ca8b04b28c"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/src/README.md",
+      "sha256": "53fdd97e5b1826445a8b8f385fb86000e9f5cdb982c6c0078cf5d3246c14a8eb"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/tests/README.md",
+      "sha256": "4c7899b20f6c51cc973830450e74364f7c1ef60da298a8fdfeb232502c0efc8c"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/tools/r4_independent_audit.py",
+      "sha256": "f564809e25a5878ac593fbbdff600d4ed4923adee76934e0b76b3a581ea850e0"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/tools/static_design_audit.py",
+      "sha256": "dc4a0338fd372b438cba29300d084f05227a15f9035f69eff7bec831096b8534"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/traceability/README.md",
+      "sha256": "90984b343db845a73aa807784564803288fbbc729f85574262d45f78595aa237"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/traceability/README_R3.md",
+      "sha256": "562f54f21ffe9b9bd0cdeb64e6f8888f170904f6038fb2b295086fa45cdb44f7"
+    },
+    {
+      "path": "docs/reference/secondbrain-r4/traceability/requirements_to_tests.csv",
+      "sha256": "d38ae077635226a2a5acd062bf96c31b279376165fc1aecd75c7a370858a6434"
+    }
+  ],
+  "excluded_count": 290,
+  "excluded_reasons": {
+    "binary history / generated / path-specific metadata": 56,
+    "non-text": 4,
+    "byte-identical to secondbrain-r4": 230
+  },
+  "excluded_binary_or_non_source_paths": [
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:.editorconfig",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:.gitignore",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:PACKAGE_MANIFEST.sha256",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:history/R1_input.zip",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:history/R2_input.zip",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:history/R3_input.zip",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:history/README.md",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/00_Inbox/Drop/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/00_Inbox/Pending/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/00_Inbox/Quarantine/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/00_Inbox/Rejected/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/10_Evidence/LegalHold/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/10_Evidence/Manifests/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/10_Evidence/Production/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/10_Evidence/Records/acquisition/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/10_Evidence/Records/custody/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/10_Evidence/Records/derivations/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/10_Evidence/Records/integrity/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/10_Evidence/Records/objects/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/10_Evidence/Records/observations/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/10_Evidence/Vault/objects/sha256/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/10_Evidence/Working/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/20_Knowledge/concepts/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/20_Knowledge/decisions/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/20_Knowledge/entities/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/20_Knowledge/methods/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/20_Knowledge/patterns/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/20_Knowledge/questions/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/30_Context/Archives/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/30_Context/Areas/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/30_Context/Projects/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/30_Context/Resources/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/40_Meta/catalog/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/40_Meta/governance/feedback/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/40_Meta/governance/releases/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/40_Meta/provenance/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/40_Meta/relations/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/40_Meta/schemas/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/40_Meta/snapshots/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/50_Memory/episodic/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/50_Memory/procedural/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/50_Memory/semantic/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/50_Memory/summaries/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/90_System/config/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/90_System/config/brain.toml.example",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/90_System/evals/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/90_System/policies/.gitkeep",
+    "SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip:sample-root/90_System/templates/.gitkeep",
+    "Development_Kits_VerySimple_R5_20261010_FINAL.zip:.gitignore",
+    "Development_Kits_VerySimple_R5_20261010_FINAL.zip:PACKAGE_MANIFEST.sha256",
+    "Development_Kits_VerySimple_R5_20261010_FINAL.zip:history/GenericDev_Governance_PreTDD_v2_20261010.zip",
+    "Development_Kits_VerySimple_R5_20261010_FINAL.zip:history/Previous_VerySimple_20261010_FINAL.zip",
+    "Development_Kits_VerySimple_R5_20261010_FINAL.zip:history/SOURCE_FINGERPRINTS.json",
+    "Development_Kits_VerySimple_R5_20261010_FINAL.zip:history/SecondBrain_EvidenceFirst_R4_Independent_Final_Audit_PreTDD_FINAL.zip",
+    "Development_Kits_VerySimple_R5_20261010_FINAL.zip:history/SecondBrain_R4_2026_Trends_Adoption_Overlay.zip",
+    "Development_Kits_VerySimple_R5_20261010_FINAL.zip:profiles/generic/.editorconfig",
+    "Development_Kits_VerySimple_R5_20261010_FINAL.zip:profiles/generic/.gitignore",
+    "Development_Kits_VerySimple_R5_20261010_FINAL.zip:profiles/generic/PACKAGE_MANIFEST.sha256",
+    "Development_Kits_VerySimple_R5_20261010_FINAL.zip:profiles/generic/history/GenericDev_v1_original.zip",
+    "Development_Kits_VerySimple_R5_20261010_FINAL.zip:profiles/secondbrain-methods/PACKAGE_MANIFEST.sha256"
+  ],
+  "byte_identical_r5_secondbrain_files": 230
+}

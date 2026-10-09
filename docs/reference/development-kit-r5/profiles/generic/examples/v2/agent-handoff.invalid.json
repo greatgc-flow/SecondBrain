@@ -1,0 +1,11 @@
+{
+  "task_id": "TASK-001",
+  "source_commit": "fedcba12",
+  "spec_revision": "spec-r1",
+  "run_id": "RUN-1",
+  "verified_commands": [],
+  "outstanding_actions": [],
+  "known_risks": [],
+  "secrets_filtered": "true",
+  "created_at": "bad"
+}

@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/generic-dev/schemas/v1/feedback.schema.json",
+  "title": "feedback",
+  "type": "object",
+  "properties": {
+    "feedback_id": {
+      "type": "string",
+      "pattern": "^FB-[0-9]{3}$"
+    },
+    "state": {
+      "enum": [
+        "OBSERVED",
+        "CAPTURED",
+        "TRIAGED",
+        "ROOT_CAUSE_ESTABLISHED",
+        "APPROVED",
+        "TEST_DESIGNED",
+        "RED_REPRODUCED",
+        "FIXED",
+        "GREEN_VERIFIED",
+        "RELEASED",
+        "EFFECT_OBSERVED",
+        "CLOSED",
+        "BLOCKED",
+        "WONT_FIX",
+        "REOPENED"
+      ]
+    },
+    "owner": {
+      "type": "string",
+      "minLength": 1
+    },
+    "root_cause": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "source_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "before_ref": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "after_ref": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "next_review": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date"
+    },
+    "closure_approval": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "feedback_id",
+    "state",
+    "owner",
+    "root_cause",
+    "source_ref",
+    "before_ref",
+    "after_ref",
+    "evidence_refs",
+    "updated_at",
+    "next_review",
+    "closure_approval"
+  ],
+  "additionalProperties": false
+}

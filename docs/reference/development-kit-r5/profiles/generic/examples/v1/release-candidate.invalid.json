@@ -1,0 +1,14 @@
+{
+  "source_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "tree_digest": "0000000000000000000000000000000000000000000000000000000000000000",
+  "config_digest": "0000000000000000000000000000000000000000000000000000000000000000",
+  "deps_lock_digest": "0000000000000000000000000000000000000000000000000000000000000000",
+  "test_catalog_digest": "0000000000000000000000000000000000000000000000000000000000000000",
+  "schema_revision": "v1",
+  "toolchain": "example only",
+  "target_env": "local",
+  "artifact_digest": null,
+  "gate_refs": [],
+  "release_status": "DRAFT",
+  "created_at": "2026-10-09T00:00:00+09:00"
+}

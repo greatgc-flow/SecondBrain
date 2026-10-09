@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "proposal_id": "proposal-001",
+  "feedback_id": "fb-001",
+  "scope": "Synthetic ingest error handling",
+  "risk_tier": "P1",
+  "approver": "product-owner",
+  "decision": "INVALID_DATA",
+  "requested_at": "2026-10-09T12:00:00+09:00",
+  "rollback_plan": "Restore previous staging test profile"
+}

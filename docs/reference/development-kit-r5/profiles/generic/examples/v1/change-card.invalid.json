@@ -1,0 +1,14 @@
+{
+  "why": "샘플 결함 대응",
+  "scope": "입력 검증",
+  "requirement_ids": [
+    "GD-001"
+  ],
+  "test_ids": [
+    "TEST-001"
+  ],
+  "owner": "developer",
+  "rollback": "기존 동작 복원",
+  "observed_effect_ref": null,
+  "status": "PLANNED"
+}

@@ -1,0 +1,17 @@
+{
+  "task_id": "TASK-001",
+  "source_commit": "fedcba12",
+  "spec_revision": "spec-r1",
+  "run_id": "RUN-1",
+  "verified_commands": [
+    "python -m pytest --collect-only"
+  ],
+  "outstanding_actions": [
+    "create first RED"
+  ],
+  "known_risks": [
+    "Not implemented"
+  ],
+  "secrets_filtered": true,
+  "created_at": "2026-10-10T12:00:00+09:00"
+}

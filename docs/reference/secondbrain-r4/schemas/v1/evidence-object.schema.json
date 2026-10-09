@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/secondbrain/schemas/v1/evidence-object.schema.json",
+  "title": "Evidence Object",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "object_id",
+    "sha256",
+    "sha512",
+    "size_bytes",
+    "media_type",
+    "sealed_at",
+    "vault_relpath"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "object_id": {
+      "type": "string",
+      "minLength": 3
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "sha512": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{128}$"
+    },
+    "size_bytes": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "media_type": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sealed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "vault_relpath": {
+      "type": "string",
+      "minLength": 1
+    },
+    "original_filename": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "status": {
+      "enum": [
+        "SEALED",
+        "QUARANTINED",
+        "DESTROYED"
+      ]
+    },
+    "erl": {
+      "enum": [
+        "ERL-0",
+        "ERL-1",
+        "ERL-2",
+        "ERL-3",
+        "ERL-4",
+        "ERL-5"
+      ]
+    }
+  }
+}

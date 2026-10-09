@@ -1,0 +1,13 @@
+{
+  "feedback_id": "FB-001",
+  "state": "OBSERVED",
+  "owner": "maintainer",
+  "root_cause": null,
+  "source_ref": "INC-001",
+  "before_ref": null,
+  "after_ref": null,
+  "evidence_refs": [],
+  "updated_at": "2026-10-09T00:00:00+09:00",
+  "next_review": null,
+  "closure_approval": null
+}

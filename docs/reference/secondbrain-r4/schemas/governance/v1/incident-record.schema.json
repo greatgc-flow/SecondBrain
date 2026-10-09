@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "$id": "urn:secondbrain:governance:v1:incident-record",
+  "title": "Incident Record",
+  "required": [
+    "schema_version",
+    "incident_id",
+    "severity",
+    "detected_at",
+    "owner",
+    "state",
+    "affected_uris",
+    "containment_action"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "incident_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_.:/-]{2,127}$"
+    },
+    "severity": {
+      "enum": [
+        "P0",
+        "P1",
+        "P2",
+        "P3"
+      ]
+    },
+    "detected_at": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "(Z|[+-][0-9]{2}:[0-9]{2})$"
+    },
+    "owner": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_.:/-]{2,127}$"
+    },
+    "state": {
+      "enum": [
+        "DETECTED",
+        "CONTAINED",
+        "INVESTIGATING",
+        "REMEDIATING",
+        "OBSERVING",
+        "CLOSED"
+      ]
+    },
+    "affected_uris": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "containment_action": {
+      "type": "string"
+    },
+    "root_cause_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "feedback_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

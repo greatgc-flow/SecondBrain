@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/generic-dev/schemas/v2/spec-convergence.schema.json",
+  "title": "spec-convergence",
+  "type": "object",
+  "properties": {
+    "change_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "spec_revision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_commit": {
+      "type": "string",
+      "minLength": 1
+    },
+    "required_task_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "satisfied_task_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "unresolved_must": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "status": {
+      "enum": [
+        "NOT_RUN",
+        "BLOCKED",
+        "FAIL",
+        "PASS"
+      ]
+    }
+  },
+  "required": [
+    "change_id",
+    "spec_revision",
+    "source_commit",
+    "required_task_ids",
+    "satisfied_task_ids",
+    "unresolved_must",
+    "status"
+  ],
+  "additionalProperties": false
+}

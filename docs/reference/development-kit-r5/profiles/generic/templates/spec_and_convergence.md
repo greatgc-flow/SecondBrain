@@ -1,0 +1,12 @@
+# Feature spec / Convergence
+- Change ID:
+- Owner / approved revision:
+- User job / observable outcome:
+- Non-goals:
+- Security boundary / data classification:
+- Contracts impacted:
+- Must acceptance + negative oracles (GD-IDs):
+- Tasks + planned TEST IDs:
+- Evidence per task: (NOT_RUN until executed)
+- Convergence gaps: (must = empty before G2 PASS)
+- Release candidate / effect window:

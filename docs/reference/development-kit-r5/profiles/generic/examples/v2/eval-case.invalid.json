@@ -1,0 +1,11 @@
+{
+  "case_id": "EVAL-001",
+  "scenario": "a",
+  "input_ref": "x",
+  "env_digest": "not-digest",
+  "grader": "MODEL",
+  "grader_version": "1",
+  "expected_outcome": "a",
+  "risk": "UNKNOWN",
+  "min_trials": 0
+}

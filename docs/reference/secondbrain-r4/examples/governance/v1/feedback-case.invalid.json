@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "feedback_id": "fb-001",
+  "category": "DEFECT",
+  "state": "INVALID_DATA",
+  "owner": "maintainer",
+  "created_at": "2026-10-09T12:00:00+09:00",
+  "source_ref": "synthetic://test-case/1",
+  "impact": "synthetic file ingest abort",
+  "next_review_at": "2026-10-10T12:00:00+09:00"
+}

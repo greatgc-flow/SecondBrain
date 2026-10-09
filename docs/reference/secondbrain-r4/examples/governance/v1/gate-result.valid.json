@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "result_id": "gate-001",
+  "candidate_id": "candidate-001",
+  "gate_id": "G2",
+  "status": "NOT_RUN",
+  "test_catalog_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "environment_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "observed_at": "2026-10-09T12:00:00+09:00",
+  "executor": "tester",
+  "evidence_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+}

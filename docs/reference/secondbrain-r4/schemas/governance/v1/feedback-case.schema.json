@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "$id": "urn:secondbrain:governance:v1:feedback-case",
+  "title": "Feedback Case",
+  "required": [
+    "schema_version",
+    "feedback_id",
+    "category",
+    "state",
+    "owner",
+    "created_at",
+    "source_ref",
+    "impact",
+    "next_review_at"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "feedback_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_.:/-]{2,127}$"
+    },
+    "category": {
+      "enum": [
+        "INCIDENT",
+        "DEFECT",
+        "IMPROVEMENT",
+        "RESEARCH_DRIFT",
+        "CONTENT_CORRECTION"
+      ]
+    },
+    "state": {
+      "enum": [
+        "OBSERVED",
+        "CAPTURED",
+        "TRIAGED",
+        "ROOT_CAUSE_ESTABLISHED",
+        "APPROVED",
+        "TEST_DESIGNED",
+        "RED_REPRODUCED",
+        "FIXED",
+        "GREEN_VERIFIED",
+        "RELEASED_OR_DEPLOYED",
+        "EFFECT_OBSERVED",
+        "CLOSED",
+        "BLOCKED",
+        "REOPENED",
+        "WONT_FIX"
+      ]
+    },
+    "owner": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_.:/-]{2,127}$"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "(Z|[+-][0-9]{2}:[0-9]{2})$"
+    },
+    "source_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "impact": {
+      "type": "string",
+      "minLength": 1
+    },
+    "next_review_at": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "(Z|[+-][0-9]{2}:[0-9]{2})$"
+    },
+    "root_cause_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "related_requirements": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "test_evidence_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "closure_evidence": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "state": {
+            "const": "CLOSED"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "closure_evidence",
+          "test_evidence_ids"
+        ],
+        "properties": {
+          "closure_evidence": {
+            "type": "string",
+            "minLength": 1
+          },
+          "test_evidence_ids": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

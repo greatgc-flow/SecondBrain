@@ -1,0 +1,10 @@
+{
+  "gate": "G1",
+  "candidate_id": "RC-001",
+  "candidate_digest": "0000000000000000000000000000000000000000000000000000000000000000",
+  "status": "NOT_RUN",
+  "owner": "team",
+  "recorded_at": "2026-10-09T00:00:00+09:00",
+  "evidence_ref": null,
+  "rationale": "계획상 미실행"
+}

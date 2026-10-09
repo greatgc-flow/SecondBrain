@@ -1,0 +1,11 @@
+repository,release_or_branch,commit_prefix,date_utc,observed_change,devkit_decision
+Engram,v3.7.0,0fba1c6abc,2026-10-03,"CLI MECE help, safe unknown-command echo, dry-run, tidy",adopt docs/help and safe-warning boundary
+Engram,v3.6.1,fe1c743ac1,2026-10-03,repair/relocate/undo journal; Korean root compatibility path,warn and T3 OS path matrix; do not hide tool limitations
+Engram,v3.6.0,a4e1916f9c,2026-10-03,fallback/rollback for Korean root,no hardcoded paths or untested replacement
+PeerHub,v0.12.4,d177722d66,2026-10-09,"release evidence tied to candidate, extension manifest",use independent candidate-bound gates
+PeerHub,v0.12.5,526b01d913,2026-10-09,context efficiency and explicit benchmark,"cost+token outcome, stale benchmark warning"
+PeerHub,v0.12.6,16424647a5,2026-10-09,native resume explicit opt-in / taint fallback,capability negotiation; no generic resume assumption
+PeerHub,post-v0.12.6 main,ccdee96c52,2026-10-09,"current spec docs English, drop prefix-layout follow-up",do not promote source-only changes as a release
+PeerHub,v0.12.2,c7cd147894,2026-10-08,A2A wire first version,"adapter optional, independent of core"
+PeerHub,v0.12.2,cd7c49db22,2026-10-08,shared authoritative CAS helper,avoid repeated concurrency logic
+PeerHub,v0.12.1,dd53826ce8,2026-10-08,catalog single traceability generated count,derive inventories from canonical CSV

@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:secondbrain:schema:v2:egress-approval",
+  "title": "Egress Approval",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "approval_id",
+    "evidence_ids",
+    "actor",
+    "recipient",
+    "purpose",
+    "approved_at",
+    "expires_at",
+    "allowed_representation"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 2
+    },
+    "approval_id": {
+      "type": "string",
+      "pattern": "^[A-Z]{2,5}-[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "evidence_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Z]{2,5}-[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+      },
+      "uniqueItems": true
+    },
+    "actor": {
+      "type": "string",
+      "minLength": 1
+    },
+    "recipient": {
+      "type": "string",
+      "minLength": 1
+    },
+    "purpose": {
+      "type": "string",
+      "minLength": 1
+    },
+    "approved_at": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "(Z|[+-][0-9]{2}:[0-9]{2})$"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "(Z|[+-][0-9]{2}:[0-9]{2})$"
+    },
+    "allowed_representation": {
+      "enum": [
+        "redacted_extract_only",
+        "full_original"
+      ]
+    },
+    "provider_model": {
+      "type": "string",
+      "minLength": 1
+    },
+    "approval_record_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/generic-dev/schemas/v1/adr.schema.json",
+  "title": "adr",
+  "type": "object",
+  "properties": {
+    "adr_id": {
+      "type": "string",
+      "pattern": "^ADR-[0-9]{4}$"
+    },
+    "status": {
+      "enum": [
+        "PROPOSED",
+        "ACCEPTED",
+        "SUPERSEDED"
+      ]
+    },
+    "decision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "alternatives": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1
+    },
+    "consequences": {
+      "type": "string",
+      "minLength": 1
+    },
+    "supersedes": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "approved_by": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "adr_id",
+    "status",
+    "decision",
+    "alternatives",
+    "consequences",
+    "supersedes",
+    "approved_by"
+  ],
+  "additionalProperties": false
+}

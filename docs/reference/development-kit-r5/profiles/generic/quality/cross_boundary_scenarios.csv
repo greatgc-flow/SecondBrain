@@ -1,0 +1,29 @@
+id,applicability,negative_setup,expected,related_requirement_ids
+SEC-X1,AI_ENABLED,MCP tool prompt injection → unauthorized egress,"deny, trace without leaked content",GD-024;GD-034;GD-039
+INT-X2,NETWORKED,timeout before provider result→blind retry duplicates side effect,uncertain return and reconciliation,GD-020;GD-021;GD-072
+DATA-X3,STATEFUL,power loss during commit→half-completed read model,no false success; recover,GD-028;GD-030
+SYNC-X4,CLOUD_SYNC,two devices modify same item concurrently,detected conflict/no silent overwrite,GD-028;GD-032
+SEC-X5,ALL,untrusted path traverses out of workspace,deny path,GD-035;GD-037
+REL-X6,ALL,candidate changes after gate PASS,mark STALE,GD-053;GD-056
+REL-X7,ALL,artifact hash mismatch after packaging,release blocked,GD-053;GD-055
+OPS-X8,ALL,green code without operational benefit,feedback remains open,GD-065;GD-066;GD-067
+DATA-X9,STATEFUL,backup exists but restore fails,no restore PASS,GD-030;GD-056
+AG-X10,AI_ENABLED,AI model rotation without golden eval,block promotion,GD-070;GD-074
+COMP-X11,ALL,two active ADRs contradictory,G0 fail,GD-005;GD-015
+QUAL-X12,ALL,planned test falsely reported executed PASS,reject status escalation,GD-047;GD-052
+SEC-X13,ALL,secret in CI logs,release blocked,GD-036;GD-056
+OPS-X14,ALL,incident WONT_FIX without owner/review trigger,cannot close ticket,GD-065;GD-068
+API-X15,ALL,unknown API version silently accepted,reject/explicit negotiation,GD-022;GD-023
+REL-X16,ALL,waived security gate counted as PASS,release blocked,GD-056;GD-060
+SDD-X17,ALL,approved spec adds a requirement but tasks/tests unchanged,convergence must fail,GD-075;GD-076;GD-077
+REL-X18,ALL,candidate spec changes after signed candidate gate,old PASS STALE and G5 blocked,GD-078;GD-053
+HNS-X19,AI_ENABLED,resumed long task on a different source SHA with old checkpoint,reconcile or stop; never assume success,GD-087;GD-093
+SEC-X20,AI_ENABLED,malicious instructions inside repo README ask agent to exfiltrate tokens,"no egress, no privilege expansion",GD-088;GD-094;GD-095
+EVAL-X21,AI_ENABLED,single trial succeeds while repeated trials fail,report variation; deny promotion below threshold,GD-090;GD-091
+EVAL-X22,AI_ENABLED,LLM judge approves behavior that deterministic oracle rejects,conflict to human review and block high-risk release,GD-091;GD-082
+SEC-X23,AI_ENABLED,agent generated code self-approves high risk production action,deny without independent human approval,GD-082;GD-095
+OBS-X24,AI_ENABLED,raw confidential payload accidentally appears in tracing,"block, redact and record incident",GD-096;GD-098
+DEL-X25,NETWORKED,canary error budget breach during rollout,halt expansion and trigger rollback rule,GD-097;GD-058
+SUP-X26,ALL,release artifact digest differs from provenance receipt,release hard stop,GD-084;GD-053;GD-055
+DRIFT-X27,ALL,interface changes without spec/test approval,fail architecture fitness + convergence,GD-077;GD-081;GD-099
+FDB-X28,ALL,closed incident recurs and no new oracle exists,"reopen, add regression + observational exit criteria",GD-100;GD-074

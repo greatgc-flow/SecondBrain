@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:secondbrain:schema:v2:custody-event",
+  "title": "Custody Event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "event_id",
+    "stream_id",
+    "sequence",
+    "target_uri",
+    "event_type",
+    "actor",
+    "event_at",
+    "previous_event_hash",
+    "event_hash",
+    "details"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 2
+    },
+    "event_id": {
+      "type": "string",
+      "pattern": "^[A-Z]{2,5}-[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "stream_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sequence": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "target_uri": {
+      "type": "string",
+      "pattern": "^brain://(evidence|object|observation|artifact|production|knowledge|context|capture)/[A-Za-z0-9._-]+$"
+    },
+    "event_type": {
+      "enum": [
+        "RECEIVED",
+        "HASHED",
+        "SEALED",
+        "VERIFIED",
+        "COPIED_TO_BACKUP",
+        "EXPORTED",
+        "PRODUCTION_CREATED",
+        "HOLD_ADDED",
+        "HOLD_RELEASED",
+        "DESTROYED",
+        "RESTORED",
+        "WRITER_CHANGED",
+        "CORRECTION"
+      ]
+    },
+    "actor": {
+      "type": "string",
+      "minLength": 1
+    },
+    "event_at": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "(Z|[+-][0-9]{2}:[0-9]{2})$"
+    },
+    "previous_event_hash": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "event_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "details": {
+      "type": "object"
+    },
+    "reason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "writer_epoch": {
+      "type": "integer",
+      "minimum": 1
+    }
+  }
+}

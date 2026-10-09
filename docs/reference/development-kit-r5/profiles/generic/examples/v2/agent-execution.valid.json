@@ -1,0 +1,13 @@
+{
+  "run_id": "R-001",
+  "task_id": "TASK-001",
+  "permission_level": "A0",
+  "allowed_tools": [
+    "read_file"
+  ],
+  "network_egress": "deny",
+  "budget_units": 2.0,
+  "spent_units": 0.0,
+  "approved_action": false,
+  "status": "PLANNED"
+}

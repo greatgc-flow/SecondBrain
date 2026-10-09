@@ -1,0 +1,15 @@
+{
+  "schema_version": 2,
+  "approval_id": "EA-018fa2b3-12cd-7abc-8abc-0123456789ab",
+  "evidence_ids": [
+    "EV-018fa2b3-12cd-7abc-8abc-0123456789ab"
+  ],
+  "actor": "human:fixture",
+  "recipient": "LOCAL-EXAMPLE",
+  "purpose": "synthetic-test",
+  "approved_at": "2026-10-09T20:43:00+09:00",
+  "expires_at": "2026-10-10T20:43:00+09:00",
+  "allowed_representation": "redacted_extract_only",
+  "provider_model": "LOCAL-EXAMPLE",
+  "approval_record_sha256": "5d000b44db178b31c4aca20a5ef5741adb7e14b8297a2139e83f4119c783dd5f"
+}

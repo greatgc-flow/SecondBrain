@@ -1,0 +1,31 @@
+﻿scenario_id,setup_fault,expected_result,verification_mode,gate,status,related_requirements,outcome_evidence
+LC-LIF-01,feedback CLOSED without after-measurement,FAIL_CLOSE,automated,G7,PLANNED_NOT_RUN,REQ-LIF-003;REQ-FBK-003,gate-result+feedback-case+candidate-fingerprint
+LC-LIF-02,feedback WONT_FIX without risk acceptance and revisit,REJECT,automated,G7,PLANNED_NOT_RUN,REQ-LIF-005;REQ-GOV-004,gate-result+feedback-case+candidate-fingerprint
+LC-LIF-03,incident recurrence reopens verified prior root cause,LINK_AND_REOPEN,manual,G7,PLANNED_NOT_RUN,REQ-LIF-006;REQ-FBK-004,gate-result+feedback-case+candidate-fingerprint
+LC-QAL-01,modified behavior without RED regression,BLOCK_G1,automated,G1,PLANNED_NOT_RUN,REQ-QAL-001;REQ-FBK-002,gate-result+feedback-case+candidate-fingerprint
+LC-QAL-02,MUST requirement without test ID,BLOCK_G0,automated,G0,PLANNED_NOT_RUN,REQ-QAL-002;REQ-GOV-002,gate-result+feedback-case+candidate-fingerprint
+LC-QAL-03,negative path test skipped yet release requested,BLOCK_G2,automated,G2,PLANNED_NOT_RUN,REQ-QAL-003;REQ-RLS-003,gate-result+feedback-case+candidate-fingerprint
+LC-OBS-01,zero denominator in prevented egress metric,UNKNOWN_NOT_100,automated,G7,PLANNED_NOT_RUN,REQ-OBS-002;REQ-OBS-001,gate-result+feedback-case+candidate-fingerprint
+LC-OBS-02,source SHA mismatch during periodic verify,FREEZE_AND_INCIDENT,automated,G7,PLANNED_NOT_RUN,REQ-OBS-003;REQ-DRL-004,gate-result+feedback-case+candidate-fingerprint
+LC-OBS-03,logs contain private source content,REJECT_AND_SANITIZE,automated,G4,PLANNED_NOT_RUN,REQ-OBS-004;REQ-SUP-002,gate-result+feedback-case+candidate-fingerprint
+LC-RLS-01,"test suite passed on commit A, candidate B",STALE_REJECT,automated,G5,PLANNED_NOT_RUN,REQ-RLS-001;REQ-RLS-002,gate-result+feedback-case+candidate-fingerprint
+LC-RLS-02,same code but changed dependency lock,INVALIDATE_DEPENDENT_GATES,automated,G5,PLANNED_NOT_RUN,REQ-RLS-002;REQ-CHG-004,gate-result+feedback-case+candidate-fingerprint
+LC-RLS-03,artifact digest mismatch from release bundle,BLOCK_RELEASE,automated,G5,PLANNED_NOT_RUN,REQ-RLS-001;REQ-RLS-003,gate-result+feedback-case+candidate-fingerprint
+LC-RLS-04,release gate waived with no human exception authority,BLOCK_RELEASE,manual,G5,PLANNED_NOT_RUN,REQ-RLS-003;REQ-QAL-005,gate-result+feedback-case+candidate-fingerprint
+LC-RLS-05,canary reports corrupt production evidence,FREEZE_WRITES_AND_ROLLBACK,manual,G6,PLANNED_NOT_RUN,REQ-RLS-005;REQ-DRL-002,gate-result+feedback-case+candidate-fingerprint
+LC-CHG-01,schema upgrade loses missing source field,MIGRATION_REJECT,automated,G3,PLANNED_NOT_RUN,REQ-CHG-001;REQ-DRL-001,gate-result+feedback-case+candidate-fingerprint
+LC-CHG-02,PeerHub extension missing or changed,CORE_INDEPENDENT,automated,G3,PLANNED_NOT_RUN,REQ-CHG-003;REQ-INT-001,gate-result+feedback-case+candidate-fingerprint
+LC-SUP-01,sensitive content in provider prompt,EGRESS_DENIED,automated,G4,PLANNED_NOT_RUN,REQ-SUP-002;REQ-AI-005,gate-result+feedback-case+candidate-fingerprint
+LC-SUP-02,unsigned provenance claimed as SLSA L2,CLAIM_REJECT,manual,G5,PLANNED_NOT_RUN,REQ-SUP-004;REQ-RLS-004,gate-result+feedback-case+candidate-fingerprint
+LC-SUP-03,secret in logs or test artifact,REDUCT_AND_FAIL_GATE,automated,G4,PLANNED_NOT_RUN,REQ-SUP-002;REQ-OBS-004,gate-result+feedback-case+candidate-fingerprint
+LC-SUP-04,malicious retrieved markdown instruction,TREATED_AS_UNTRUSTED,automated,G4,PLANNED_NOT_RUN,REQ-SUP-005;REQ-EVA-001,gate-result+feedback-case+candidate-fingerprint
+LC-DRL-01,restore from corrupted snapshot,REFUSE_AND_KEEP_OLD,automated,G4,PLANNED_NOT_RUN,REQ-DRL-001;REQ-BKP-007,gate-result+feedback-case+candidate-fingerprint
+LC-DRL-02,old writer writes after recovery,EPOCH_DENY,automated,G4,PLANNED_NOT_RUN,REQ-DRL-003;REQ-SYNC-001,gate-result+feedback-case+candidate-fingerprint
+LC-DRL-03,restore switches root without independent verification,BLOCK_CUTOVER,manual,G6,PLANNED_NOT_RUN,REQ-DRL-002;REQ-RLS-004,gate-result+feedback-case+candidate-fingerprint
+LC-EVA-01,temporal citation stale and contradictory,ABSTAIN_OR_QUALIFY,automated,G3,PLANNED_NOT_RUN,REQ-EVA-001;REQ-RET-004,gate-result+feedback-case+candidate-fingerprint
+LC-EVA-02,cross-access vector index retrieval,DENY_BEFORE_RANK,automated,G4,PLANNED_NOT_RUN,REQ-EVA-004;REQ-RET-006,gate-result+feedback-case+candidate-fingerprint
+LC-EVA-03,corpus revision changed after score recorded,STALE_EVAL,automated,G5,PLANNED_NOT_RUN,REQ-EVA-002;REQ-RLS-002,gate-result+feedback-case+candidate-fingerprint
+LC-GOV-01,orphan requirement after doc change,BLOCK_G0,automated,G0,PLANNED_NOT_RUN,REQ-GOV-002;REQ-QAL-002,gate-result+feedback-case+candidate-fingerprint
+LC-GOV-02,quality improvement with no observed effect,NOT_CLOSED,automated,G7,PLANNED_NOT_RUN,REQ-LIF-003;REQ-FBK-003,gate-result+feedback-case+candidate-fingerprint
+LC-GOV-03,optional feature becomes core without evidence,REVIEW_REQUIRED,manual,G0,PLANNED_NOT_RUN,REQ-GOV-005;REQ-GOV-001,gate-result+feedback-case+candidate-fingerprint
+LC-MECE-01,audit finds duplicate ADR-0010 normative claims,ONE_CANONICAL,automated,G0,PLANNED_NOT_RUN,REQ-GOV-002;REQ-QAL-002,gate-result+feedback-case+candidate-fingerprint

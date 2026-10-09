@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/generic-dev/schemas/v2/practice-decision.schema.json",
+  "title": "practice-decision",
+  "type": "object",
+  "properties": {
+    "practice_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "decision": {
+      "enum": [
+        "ADOPT",
+        "ADAPT",
+        "WATCH",
+        "REJECT"
+      ]
+    },
+    "applicability": {
+      "enum": [
+        "ALL",
+        "AI_ENABLED",
+        "STATEFUL",
+        "NETWORKED",
+        "CLI_PUBLIC",
+        "CLOUD_SYNC"
+      ]
+    },
+    "source_url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "rationale": {
+      "type": "string",
+      "minLength": 1
+    },
+    "decision_owner": {
+      "type": "string",
+      "minLength": 1
+    },
+    "revisit_trigger": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "required": [
+    "practice_id",
+    "decision",
+    "applicability",
+    "source_url",
+    "rationale",
+    "decision_owner",
+    "revisit_trigger"
+  ],
+  "additionalProperties": false
+}

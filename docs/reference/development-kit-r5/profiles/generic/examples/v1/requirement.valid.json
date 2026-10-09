@@ -1,0 +1,11 @@
+{
+  "id": "GD-001",
+  "statement": "요구사항 ID 고유해야 한다",
+  "level": "MUST",
+  "applicability": "ALL",
+  "acceptance": "모든 ID의 고유성 통과",
+  "negative": "중복 ID는 반려",
+  "test_id": "TEST-001",
+  "gate": "G0",
+  "status": "PLANNED_NOT_RUN"
+}

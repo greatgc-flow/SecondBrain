@@ -1,0 +1,101 @@
+id,domain,level,applicability,gate,statement,acceptance,negative,test_id,status,owner
+GD-001,Product & scope,MUST,ALL,G0,프로젝트의 대상 사용자·핵심 문제·성공 결과·비목표를 기록한다.,승인된 프로젝트 차터에 각각 명시되어 있다.,성공 조건 또는 비목표가 없는 차터는 G0 반려,TEST-001,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-002,Product & scope,MUST,ALL,G0,기능 요구사항을 고유하고 불변하는 ID로 관리한다.,요구사항 변경 후에도 식별자가 재사용되지 않는다.,삭제된 ID 재사용이 확인되면 반려,TEST-002,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-003,Product & scope,MUST,ALL,G0,MUST/SHOULD/MAY와 적용 조건을 분리한다.,프로파일 조건별 적용 대상이 계산 가능하다.,선택 기능을 암묵적 MUST로 승격하면 반려,TEST-003,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-004,Product & scope,MUST,ALL,G0,각 MUST는 적어도 하나의 객관적 수락 기준에 연결한다.,요구사항과 테스트 오라클을 1:1 이상 역추적한다.,오라클 없는 MUST는 G0 실패,TEST-004,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-005,Product & scope,MUST,ALL,G0,가정·모호함·대안·결정권자를 기록하고 충돌 시 권위 문서를 정의한다.,결정 로그의 owner와 규범 우선순위를 확인한다.,상충 지시가 해소되지 않으면 착수 중단,TEST-005,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-006,Product & scope,MUST,ALL,G0,범위 변경은 명시적 영향평가와 우선순위 조정 후 승인한다.,신규 범위의 일정·테스트·보안 영향이 기록된다.,무승인 스코프 확장은 반려,TEST-006,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-007,Product & scope,MUST,ALL,G0,외부 시스템과 사용자의 권한·데이터 경계를 도식화한다.,경계마다 입력·출력·owner가 명시된다.,소유자 없는 외부 데이터 흐름 거부,TEST-007,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-008,Product & scope,MUST,ALL,G0,MVP와 후속 확장을 별도 backlog로 구분한다.,MVP 필수 기능만 핵심 구현 범위에 남는다.,확장 기능이 필수 Core에 무단 유입하면 보류,TEST-008,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-009,Architecture & modularity,MUST,ALL,G0,Core는 최소 책임만 소유하고 확장은 독립 어댑터로 격리한다.,레이어 간 허용 의존방향을 설계도로 확인한다.,Core가 구체 공급자를 직접 import하면 반려,TEST-009,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-010,Architecture & modularity,MUST,ALL,G0,코어와 어댑터 간 불변 계약을 명시한다.,인터페이스 버전·호출자·실패 의미가 존재한다.,호출 경계를 우회하면 실패,TEST-010,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-011,Architecture & modularity,MUST,ALL,G0,단일 책임과 데이터 소유권을 각각 하나의 authoritative owner로 지정한다.,모든 mutable aggregate에 단일 owner가 있다.,서로 다른 두 모듈의 무통제 동시 authoritative write 거부,TEST-011,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-012,Architecture & modularity,MUST,ALL,G0,내부 식별자와 물리경로/공급자명/세션 ID를 분리한다.,설정 변경 뒤 canonical ID가 유지된다.,하드코딩된 머신 경로가 API 계약에 노출되면 실패,TEST-012,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-013,Architecture & modularity,MUST,ALL,G0,구성·정책은 설정/스키마로 관리하고 하드코딩하지 않는다.,환경변수/프로젝트 설정 우선순위가 명시된다.,코드에 고객별 토큰·경로가 박히면 실패,TEST-013,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-014,Architecture & modularity,MUST,ALL,G0,외부 의존성을 선택 사항과 필수 사항으로 구분한다.,의존성 장애 시 degrade/stop이 결정되어 있다.,선택 플러그인 장애가 무관 Core 작업까지 중지하면 실패,TEST-014,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-015,Architecture & modularity,MUST,ALL,G0,ADR은 이유·대안·역효과·되돌림 기준을 기록한다.,각 구조 결정에 하나의 현행 ADR이 존재한다.,두 ADR이 동시에 권위를 주장하면 G0 실패,TEST-015,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-016,Architecture & modularity,MUST,ALL,G3,어댑터 교체 시 동일 계약 테스트를 수행한다.,적어도 두 구현 또는 fake adapter로 계약 시험한다.,공급자 변경 후 계약 오작동을 탐지하지 못하면 실패,TEST-016,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-017,Interface & CLI,MUST,ALL,G0,공개 API/CLI는 명령·입력·출력·오류를 명시한다.,계약서에 모든 공개 동작이 대응된다.,문서 없는 공개 동작이 생기면 실패,TEST-017,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-018,Interface & CLI,MUST,CLI_PUBLIC,G2,CLI는 일관된 help·예제·오류 및 exit code를 제공한다.,root 및 하위 명령에서 도움말 재귀 접근이 가능하다.,잘못된 인수에 성공 코드가 나가면 실패,TEST-018,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-019,Interface & CLI,MUST,CLI_PUBLIC,G2,자동화 가능한 구조화 출력과 사람이 보는 출력을 분리한다.,--json 출력은 표준 출력에 단일 스키마만 담는다.,로그와 JSON이 stdout에 혼재하면 실패,TEST-019,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-020,Interface & CLI,MUST,ALL,G2,실패 응답은 안정적 오류 코드와 재시도 가능 여부를 포함한다.,같은 오류 유형은 일관된 code/class를 가진다.,일시/영구 오류를 indistinguishable 처리하면 실패,TEST-020,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-021,Interface & CLI,MUST,NETWORKED,G3,"네트워크 계약은 timeout, retry, idempotency 범위를 명시한다.",같은 request-id 재호출 시 중복 부작용이 없다.,timeout 후 무조건 재실행하여 이중 결제가 나면 실패,TEST-021,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-022,Interface & CLI,MUST,ALL,G3,변경에 영향을 받는 하위 호환성 계약을 검사한다.,지원 호환범위 밖이면 명시적으로 오류로 종료한다.,지원하던 소비자가 예고 없이 깨지면 실패,TEST-022,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-023,Interface & CLI,MUST,ALL,G0,버전·프로토콜 협상 규칙을 문서화한다.,unknown version은 안전한 실패로 처리한다.,협상 실패 상태에서 묵시적 부분 실행 금지,TEST-023,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-024,Interface & CLI,MUST,AI_ENABLED,G3,AI 도구 프로토콜 호출은 권한·입출력 제한·오류를 명시한다.,허가되지 않은 tool 호출은 실제 실행되지 않는다.,모델 발화만으로 권한 승격되는 경로는 실패,TEST-024,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-025,Data & state,MUST,STATEFUL,G2,SSOT와 파생 cache/index의 경계를 분리한다.,cache 제거 후 SSOT로부터 재구축할 수 있다.,cache 단독 보존만으로 데이터가 복구되어야 하는 설계는 반려,TEST-025,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-026,Data & state,MUST,STATEFUL,G2,영구 식별자와 관찰/수정 이력을 구분한다.,동일 객체의 반복 관찰이 별도 이벤트로 표현된다.,관찰 업데이트가 원본을 덮어쓰면 실패,TEST-026,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-027,Data & state,MUST,STATEFUL,G2,데이터 스키마를 버전화하고 하위 호환/마이그레이션을 명시한다.,구버전 읽기·전환·거부 정책을 시험한다.,무선언 silent migration/데이터 유실이면 실패,TEST-027,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-028,Data & state,MUST,STATEFUL,G2,파일/DB mutation은 commit 지점과 중단 복구를 정의한다.,충돌/전원 중단 후 미완료 상태가 탐지된다.,반쪽 쓰기를 성공으로 보고하면 실패,TEST-028,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-029,Data & state,MUST,STATEFUL,G2,구조 검증과 도메인 불변식 검증을 분리한다.,스키마 PASS이지만 의미상 불일치하는 fixture를 거부한다.,총합과 상세 수치가 상충하는데 유효 판정하면 실패,TEST-029,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-030,Data & state,MUST,STATEFUL,G4,복구 또는 재생성 절차를 실제 독립 환경에서 검증한다.,복원 뒤 무결성·권한·핵심 사용자 경로가 정상이다.,백업 성공 로그만으로 복구 PASS 처리하면 실패,TEST-030,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-031,Data & state,MUST,STATEFUL,G2,삭제/보존/개인정보 정책을 데이터 생명주기에 적용한다.,정책에 따른 보존기간·삭제 요청을 추적 가능하다.,보존 중 데이터가 무단 삭제되면 실패,TEST-031,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-032,Data & state,MUST,CLOUD_SYNC,G3,다중 장치 동기화의 작성자·충돌·중복 처리 정책을 명시한다.,두 장치가 충돌할 때 무결성 불확실성을 보고한다.,sync 완료 표시만으로 분산 원자성 주장하면 실패,TEST-032,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-033,Security & privacy,MUST,ALL,G0,신뢰 경계·공격표면·데이터 등급을 정의한다.,threat model의 asset/actor/trust boundary가 있다.,비밀 데이터가 등급 없이 외부로 전송되면 실패,TEST-033,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-034,Security & privacy,MUST,ALL,G2,외부 입력을 untrusted로 취급하고 검증한다.,악의적 입력은 데이터로만 처리된다.,문서 안의 지시문으로 보안 설정이 변경되면 실패,TEST-034,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-035,Security & privacy,MUST,ALL,G2,기본 최소권한과 deny-by-default 원칙을 적용한다.,미승인 주체/범위의 읽기·쓰기·실행이 거절된다.,기본 승인된 위험 행위가 존재하면 실패,TEST-035,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-036,Security & privacy,MUST,ALL,G2,비밀키/토큰을 코드·로그·샘플·릴리스에 포함하지 않는다.,secret scan 및 기록 샘플 검사에서 노출이 없다.,자격증명 기록이나 출력이 있으면 실패,TEST-036,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-037,Security & privacy,MUST,ALL,G3,경로 처리에 traversal·symlink 등 OS별 우회 위험을 고려한다.,선택한 파일 접근 전략에 부합하는 경계 테스트가 있다.,../ 및 reparse 경로로 권한 밖 읽기 가능하면 실패,TEST-037,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-038,Security & privacy,MUST,NETWORKED,G3,인증과 인가를 구분하고 각 요청에서 인가를 검증한다.,다른 tenant/사용자 리소스 조회는 차단된다.,인증만 성공하면 모든 ID가 보이는 IDOR 발생 시 실패,TEST-038,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-039,Security & privacy,MUST,AI_ENABLED,G4,민감정보의 모델 전송·embedding·로그 포함을 별도 승인한다.,승인되지 않은 비밀은 모든 경로에서 외부로 나가지 않는다.,검색 cache/trace를 통한 간접 유출 발생하면 실패,TEST-039,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-040,Security & privacy,MUST,ALL,G4,의존성·빌드·배포 경로의 공급망 위험을 평가한다.,사용 중 취약종속과 출처를 목록화한다.,알 수 없는 바이너리를 무검증 실행하면 실패,TEST-040,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-041,Security & privacy,MUST,ALL,G4,취약점 접수·분류·완화·사후 복구 절차를 정의한다.,P0 보안 결함 발생 시 릴리스가 자동 차단된다.,보안 고위험을 승인 없이 덮고 배포하면 실패,TEST-041,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-042,Security & privacy,MUST,ALL,G4,개인정보 최소수집·목적 제한·마스킹·삭제 요구를 분리한다.,데이터 보존과 삭제 정책 사이 충돌이 탐지된다.,백업/캐시에 개인정보가 무기한 남으면 실패,TEST-042,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-043,TDD & quality,MUST,ALL,G1,변경은 사전에 반례·기대 결과가 정의된 failing test에서 출발한다.,RED 결과가 후보 버전과 함께 기록된다.,처음부터 항상 GREEN인 테스트만 증빙되면 보류,TEST-043,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-044,TDD & quality,MUST,ALL,G2,unit·contract·integration·e2e·복구 테스트의 책임을 구분한다.,적용 대상마다 최소 하나의 명시적 시험 경로가 있다.,unit pass를 배포 e2e pass로 주장하면 실패,TEST-044,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-045,TDD & quality,MUST,ALL,G2,성공·실패·경계값·성능·중단/재시도 시나리오를 다룬다.,중요 MUST마다 부정 사례와 경계 사례가 있다.,happy path만 존재하면 G2 보류,TEST-045,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-046,TDD & quality,MUST,ALL,G2,테스트는 결정적이되 실제 외부 시스템 증빙은 별도 수행한다.,fake 결과와 live 결과를 구분해 표시한다.,mock pass를 실제 provider pass로 라벨링하면 실패,TEST-046,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-047,TDD & quality,MUST,ALL,G2,변경된 요구사항과 테스트 catalog·문서·ADR을 양방향 추적한다.,요구사항·오라클·실제 실행결과 역참조를 확인한다.,연결 ID만 있고 실행 evidence가 없는데 VERIFIED로 표기하면 실패,TEST-047,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-048,TDD & quality,MUST,ALL,G3,통합 시험은 구현 간 계약·버전 변화·실행 환경 차이를 다룬다.,지원 OS/runtime 매트릭스가 후보별 검증된다.,지원 플랫폼 하나 누락한 출시 승인 거부,TEST-048,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-049,TDD & quality,MUST,ALL,G4,보안·파괴적 작업·복구 시험은 격리된 합성 데이터로 수행한다.,실사용 자료가 테스트 중 변경되지 않는다.,실데이터 쓰기/삭제를 테스트가 실행하면 실패,TEST-049,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-050,TDD & quality,MUST,ALL,G2,정적 분석·포맷·타입검사·테스트 기준을 명시한다.,도구/버전/임계값과 예외 승인이 기록된다.,실행 안 된 검사를 PASS로 보고하면 실패,TEST-050,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-051,TDD & quality,MUST,ALL,G2,Flaky test는 격리·재현·원인 검증 없이 영구 제외하지 않는다.,격리 이유·owner·복귀시점이 기록된다.,실패 테스트 무음 skip으로 품질 판정하면 실패,TEST-051,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-052,TDD & quality,MUST,ALL,G0,설계 단계 검사와 제품 런타임 검증을 명확히 구분한다.,NOT_RUN/PLANNED 표시를 누락하지 않는다.,스키마 예제 파싱을 제품 작동 검증으로 홍보하면 실패,TEST-052,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-053,Release & supply chain,MUST,ALL,G5,릴리스 후보는 source/config/deps/test catalog/artifact 지문으로 식별한다.,모든 gate 결과가 정확한 후보 지문을 참조한다.,후보 변경 후 옛 PASS 재사용하면 실패,TEST-053,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-054,Release & supply chain,MUST,ALL,G5,의존성 버전과 출처 및 라이선스·취약성 검토 결과를 보존한다.,잠금 파일과 SBOM/목록이 후보와 결속된다.,미승인 binary 또는 unpinned high-risk dependency 방치 시 보류,TEST-054,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-055,Release & supply chain,MUST,ALL,G5,빌드 산출물 해시와 생성경로/provenance를 기록한다.,검증한 artifact digest와 배포 digest가 같다.,서명/attestation이 없는데 SLSA 준수로 주장하면 실패,TEST-055,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-056,Release & supply chain,MUST,ALL,G5,필수 게이트 상태를 NOT_RUN/BLOCKED/FAIL/PASS로 구분한다.,필수 게이트가 모두 실제 PASS일 때만 승인된다.,WAIVED를 PASS와 합산하면 실패,TEST-056,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-057,Release & supply chain,MUST,ALL,G5,릴리스 노트와 breaking change·지원범위·업그레이드 경로를 문서화한다.,소비자 계약 변경의 마이그레이션/사전 공지가 있다.,파괴 변경이 숨겨져 있으면 실패,TEST-057,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-058,Release & supply chain,MUST,ALL,G6,배포는 canary/shadow/rollback 또는 동등한 안전 절차로 진행한다.,실패 조건에서 전환을 중지하고 되돌릴 수 있다.,롤백 없는 파괴 배포를 기본 승인하면 실패,TEST-058,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-059,Release & supply chain,MUST,ALL,G6,릴리스 승인자와 제작자 역할을 위험도에 따라 분리한다.,승인 주체와 근거·시각이 남는다.,모델 자체 평가만으로 고위험 출시 승인하면 실패,TEST-059,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-060,Release & supply chain,MUST,ALL,G5,공급망 표준 준수는 실제 달성·검증된 수준만 표시한다.,SLSA 등 claim에 해당 증빙·레벨이 있다.,단순 hash 파일을 서명 provenance로 혼동하면 실패,TEST-060,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-061,Operations & improvement,MUST,ALL,G6,운영 runbook에 시작·중단·건강검사·문제해결·복구 경로를 둔다.,낯선 운영자가 단독으로 필수 조치를 재현할 수 있다.,실패 상황에서 대응 절차가 없으면 보류,TEST-061,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-062,Operations & improvement,MUST,ALL,G7,사용자 가치·신뢰성·비용·보안을 분리해서 측정한다.,각 지표에 분모·단위·기간·owner가 있다.,테스트 통과율만을 고객가치로 간주하면 실패,TEST-062,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-063,Operations & improvement,MUST,NETWORKED,G7,SLO/오류 예산과 알림 조건을 정의한다.,소음/무응답 모두 별도 시나리오로 점검한다.,경보 미수신으로 장애를 방치하면 실패,TEST-063,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-064,Operations & improvement,MUST,ALL,G7,사고 기록에 영향·완화·5 Whys/근본원인·재발방지를 남긴다.,동일 장애의 회귀검증이 계획에 추가된다.,원인 없이 담당자 실수로 종결하면 실패,TEST-064,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-065,Operations & improvement,MUST,ALL,G7,피드백은 capture→triage→approve→RED→fix→verify→release→effect→close로 관리한다.,단계마다 owner·증빙·다음 전환 조건이 있다.,테스트만 GREEN이고 효과 미관측인데 CLOSED 처리하면 실패,TEST-065,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-066,Operations & improvement,MUST,ALL,G7,관측 기간·기준선·성공효과를 변경 전에 정한다.,before/expected/after와 모집단이 일치한다.,사후 유리한 기간으로 KPI 바꾸면 실패,TEST-066,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-067,Operations & improvement,MUST,ALL,G7,개선 결과는 지침·테스트·계약으로 환류하고 재발을 추적한다.,lesson 또는 regression이 실제 시스템에 남는다.,회고 문서만 저장하고 재발차단이 없으면 실패,TEST-067,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-068,Operations & improvement,MUST,ALL,G7,WONT_FIX/BLOCKED는 승인 이유와 재검토 트리거를 기록한다.,이해관계자 승인·다음 점검 시점이 있다.,미해결 티켓을 조용히 CLOSED로 이동하면 실패,TEST-068,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-069,Agent & integration,MUST,AI_ENABLED,G0,AI 사용 위치를 결정·검색·실행으로 구분하고 권한 경계를 정의한다.,AI 결과는 권위 데이터와 구분하여 표기한다.,모델 요약이 자동으로 시스템 SSOT를 대체하면 실패,TEST-069,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-070,Agent & integration,MUST,AI_ENABLED,G3,모델·프롬프트·도구·평가 세트를 후보와 함께 버전화한다.,동일 golden set으로 변화 영향을 비교한다.,모델 변경 후 평가 없이 PASS 재사용하면 실패,TEST-070,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-071,Agent & integration,MUST,AI_ENABLED,G4,모델 공급자 장애·쿼터 고갈은 fail-safe하게 처리한다.,한도 초과 시 내구 상태가 손상되지 않는다.,모델 오류가 확정 성공으로 기록되면 실패,TEST-071,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-072,Agent & integration,MUST,AI_ENABLED,G3,AI 실행은 idempotency key·timeout·cost budget·stop 조건을 가진다.,재시작 후 중복 호출 및 무한 반복이 방지된다.,request-id 충돌 후 다른 입력을 재실행하면 실패,TEST-072,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-073,Agent & integration,MUST,ALL,G3,Engram/PeerHub/MCP 등 통합은 선택 어댑터로 둔다.,통합 미설치 상태에서도 필수 Core 경로를 검증한다.,PeerHub 장애로 unrelated Core commit이 실패하면 거부,TEST-073,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-074,Agent & integration,MUST,AI_ENABLED,G7,모델 출력 품질은 groundedness·거절 정확도·실사용 회복성을 측정한다.,근거 미존재 답변은 unknown 또는 검토 대상으로 표시된다.,출처 없는 hallucination을 승인 데이터로 승격하면 실패,TEST-074,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-075,Specification,MUST,ALL,G0,승인된 목표·사용자 시나리오·비목표를 명시한 사양을 작업과 구현의 기준으로 관리한다.,승인 spec revision이 계획·작업·수락 오라클과 연결된다.,승인되지 않은 기능을 구현 성공으로 간주하면 실패,TEST-075,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-076,Specification,MUST,ALL,G0,사양 변경 시 영향을 받는 계약·테스트·문서·릴리스 게이트를 변경 영향표로 갱신한다.,변경된 spec에서 영향 항목과 영향 없는 항목을 식별한다.,사양 변경 후 테스트 카탈로그가 구 버전인데 release PASS면 실패,TEST-076,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-077,Specification,MUST,ALL,G2,Spec→Task→Test→Implementation에 대한 수렴 검사를 수행하고 필수 미해결 항목이 있으면 완료 처리하지 않는다.,필수 수락기준의 갭 목록이 0이고 evidence가 후보에 바인딩됨.,누락 작업이 있는데 converged라고 하면 실패,TEST-077,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-078,Specification,MUST,ALL,G5,동일 릴리스 후보가 아닌 과거 검증 증빙을 자동 재사용하지 않는다.,source/config/deps/spec/eval 변경 시 영향 증빙이 STALE 된다.,후보 digest 변경 후 이전 PASS를 유지하면 실패,TEST-078,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-079,Architecture,MUST,ALL,G2,독립 실행 가능한 작은 수직 슬라이스 단위로 구현해 사용자 관측 가능 결과를 테스트한다.,첫 slice가 input→core→output까지 관측되며 fake-only stub과 구별된다.,계층별 stub만 작성하고 실기능 완료로 표기하면 실패,TEST-079,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-080,Governance,MUST,ALL,G0,최신 개발기법은 채택/변형/관찰/거부와 조건·근거·철회 트리거를 명시하고 적용한다.,research decision 레코드의 범위·결정권자·재평가 트리거가 있다.,사전 승인 없이 새 프레임워크를 Core 필수 의존성에 넣으면 실패,TEST-080,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-081,Architecture,MUST,ALL,G2,계층 경계·순환 의존·공개 API 불변조건을 자동 fitness check로 확인한다.,금지 의존·공개 계약 변경에 실패하는 검사가 존재한다.,기존 contract를 깨고 단위 테스트만 녹색이면 실패,TEST-081,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-082,Quality,MUST,ALL,G4,고위험 변경의 검토는 변경을 만든 주체의 주장만으로 통과시키지 않는다.,독립 review 또는 결정적 외부 검증 로그가 남는다.,같은 AI의 자기평가만으로 고위험 승인 처리하면 실패,TEST-082,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-083,Developer Experience,MUST,ALL,G0,프로젝트 템플릿은 단일 명령으로 lint/계약/테스트 진입점을 찾도록 제공한다.,새 참가자가 최소 절차로 동일 검증을 재현한다.,문서 밖 수동 비밀 단계가 있어 재현 불가면 실패,TEST-083,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-084,Supply Chain,MUST,ALL,G5,개발 실행환경·빌드 산출물·검증 도구 버전과 후보의 관계를 별도로 기록한다.,source→artifact digest와 toolchain/config refs를 확인한다.,재생성 산출물의 출처가 없는데 신뢰 릴리스 표기하면 실패,TEST-084,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-085,Feedback,MUST,ALL,G7,AI 또는 자동화 개선의 효과는 사전 기준선·비용·안정성·사용자 효과를 함께 비교한다.,효과 관측 window·모수·부작용·의사결정자가 기록된다.,코드 생산량만 증가했다고 개선 CLOSED 처리하면 실패,TEST-085,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-086,Governance,MUST,ALL,G7,방법론·도구 도입은 주기적으로 재평가하며 도입 실패 시 철회 경로를 유지한다.,매 단계 실측 비용·운영 이점·철회 트리거가 기록된다.,사용되지 않는 표준을 의무로 영구 유지하면 실패,TEST-086,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-087,Agent Harness,MUST,AI_ENABLED,G3,긴 AI 작업은 작은 체크포인트와 검증된 인수인계 기록으로 중단·재개한다.,재개 전 소스 SHA/잔여작업/테스트/권한을 재검증한다.,오래된 에이전트 기억을 현재 작업 사실로 무검증 사용하면 실패,TEST-087,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-088,Agent Security,MUST,AI_ENABLED,G4,에이전트의 도구·경로·네트워크 접근은 명시적 allowlist와 권한 단계로 제한한다.,미승인 egress·쓰기·삭제 명령은 모델 의도와 무관하게 차단한다.,문서 텍스트에 의한 권한 상승 발생 시 실패,TEST-088,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-089,Agent Evals,MUST,AI_ENABLED,G2,에이전트 기능은 버전 관리된 평가 사례·환경·채점기와 기대되는 최종 상태로 정의한다.,task/fixture/grader/revision이 candidate에 연결된다.,출력 문장만 비교하고 외부 부작용 무시하면 실패,TEST-089,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-090,Agent Evals,MUST,AI_ENABLED,G5,비결정적 평가에는 복수 trial과 변동성·불확실성 및 기준선 비교를 포함한다.,n과 성공수·실패수·seed/env·grader 판본을 보존한다.,단 한 번 PASS를 통계적으로 확정된 품질로 표기하면 실패,TEST-090,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-091,Agent Evals,MUST,AI_ENABLED,G5,모델 채점 결과는 정기적으로 코드/인간 오라클과 보정한다.,평가자 불일치 사례·해소/미해결 상태가 남는다.,모델 판정만으로 보안 승인 처리하면 실패,TEST-091,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-092,Agent Economics,MUST,AI_ENABLED,G5,AI 작업 품질·지연·호출량·비용을 동시에 후보 별 측정한다.,품질 하한과 비용/지연 상한을 사전에 명시한다.,품질이 하락했는데 비용만 저렴해 승격하면 실패,TEST-092,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-093,Agent Reproducibility,MUST,AI_ENABLED,G5,모델·프롬프트·스킬·도구 정의·권한·평가셋 변경을 후보 증빙에 연결한다.,한 구성요소 변화 시 관련 평가가 STALE/재실행된다.,모델 업그레이드를 코드 변경 없음으로 무검증 승인하면 실패,TEST-093,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-094,Agent Security,MUST,AI_ENABLED,G4,외부 입력·검색 결과·레포 내 instruction은 비신뢰 데이터로 취급한다.,prompt injection fixture에서 무단 tool action이 불발한다.,원문 인용의 숨은 명령으로 토큰 유출 시 실패,TEST-094,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-095,Agent Approval,MUST,AI_ENABLED,G4,고위험 AI 작업은 확인 가능한 승인/취소·예상 영향·실행 영수증을 갖춘다.,고위험 삭제·배포·권한변경 전에 별도 승인 증빙을 검증한다.,timeout 뒤 중복 실행이나 자기 승인 가능하면 실패,TEST-095,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-096,Agent Privacy,MUST,AI_ENABLED,G4,AI trace·checkpoint는 비밀과 원본 payload를 기본 저장하지 않는다.,허용된 digest/요약만 유지하며 비밀 스캔 및 접근통제 적용.,미가공 민감 문서가 자동으로 원격 모델/로그로 나가면 실패,TEST-096,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-097,Delivery,MUST,NETWORKED,G6,점진 배포 단계마다 측정 중단 조건과 롤백 책임자를 지정한다.,canary/feature flag 조건에 실측값과 복귀 경로가 있다.,배포 이상 징후가 기준 초과인데 자동 확대되면 실패,TEST-097,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-098,Observability,MUST,AI_ENABLED,G7,AI trace는 안정적인 자체 이벤트 계약을 유지하고 OTel GenAI development 필드 종속을 격리한다.,표준 변경에도 내부 평가 링크·비밀 마스킹 유지.,실험적 vendor field 누락으로 핵심 지표 계산이 중단되면 실패,TEST-098,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-099,Change Assurance,MUST,ALL,G2,변경 범위 바깥의 기존 사용자 행동에 대한 반례 회귀 검사를 유지한다.,affected + unaffected regression을 구분하고 함께 실행한다.,신규 기능만 PASS인데 기존 계약이 깨지면 실패,TEST-099,PLANNED_NOT_RUN,PROJECT_OWNER
+GD-100,Evaluation,MUST,ALL,G7,운영사고·사용자 피드백은 새 failing oracle로 환류하고 해결 후 효과까지 추적한다.,실패 재현→테스트→수정→릴리스→효과 관측의 링크가 1:1로 닫힌다.,같은 유형의 사고가 재발했는데 CLOSED 유지하면 실패,TEST-100,PLANNED_NOT_RUN,PROJECT_OWNER

@@ -1,0 +1,11 @@
+# AI Eval Case
+- Eval ID / owner / risk:
+- Candidate fingerprint (model/prompt/tool/skill/schema):
+- Fixture (synthetic / authorized) and setup digest:
+- Input + allowed tools + expected end state:
+- Forbidden side effects / negative case:
+- Code-based grader / model grader / human rubric:
+- Trials required & lower confidence policy:
+- Acceptance threshold / latency & cost limits:
+- Baseline, result refs, disagreement, calibration:
+- Latest status: NOT_RUN (until executed)

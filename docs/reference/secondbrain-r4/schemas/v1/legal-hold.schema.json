@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/secondbrain/schemas/v1/legal-hold.schema.json",
+  "title": "Legal Hold",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "hold_id",
+    "matter",
+    "status",
+    "created_at",
+    "created_by",
+    "scope"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "hold_id": {
+      "type": "string",
+      "minLength": 3
+    },
+    "matter": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "enum": [
+        "DRAFT",
+        "ACTIVE",
+        "RELEASED"
+      ]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "created_by": {
+      "type": "string",
+      "minLength": 1
+    },
+    "released_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "released_by": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "scope": {
+      "type": "object",
+      "required": [
+        "evidence_ids"
+      ],
+      "properties": {
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "context_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "policy": {
+      "type": "object",
+      "properties": {
+        "block_evidence_destroy": {
+          "type": "boolean"
+        },
+        "block_record_overwrite": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

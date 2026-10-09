@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/generic-dev/schemas/v2/eval-case.schema.json",
+  "title": "eval-case",
+  "type": "object",
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scenario": {
+      "type": "string",
+      "minLength": 1
+    },
+    "input_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "env_digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "grader": {
+      "enum": [
+        "CODE",
+        "MODEL",
+        "HUMAN",
+        "COMPOSITE"
+      ]
+    },
+    "grader_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "expected_outcome": {
+      "type": "string",
+      "minLength": 1
+    },
+    "risk": {
+      "enum": [
+        "LOW",
+        "MEDIUM",
+        "HIGH",
+        "CRITICAL"
+      ]
+    },
+    "min_trials": {
+      "type": "integer",
+      "minimum": 1
+    }
+  },
+  "required": [
+    "case_id",
+    "scenario",
+    "input_ref",
+    "env_digest",
+    "grader",
+    "grader_version",
+    "expected_outcome",
+    "risk",
+    "min_trials"
+  ],
+  "additionalProperties": false
+}

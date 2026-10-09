@@ -1,0 +1,13 @@
+{
+  "schema_version": 2,
+  "observation_id": "OV-018fa2b3-12cd-7abc-8abc-0123456789ab",
+  "actor": "human:fixture",
+  "started_at": "2026-10-09T20:43:00+09:00",
+  "completed_at": "2026-10-09T20:43:00+09:00",
+  "method": "file-copy",
+  "tool": {
+    "name": "brain",
+    "version": "0.0-design"
+  },
+  "result": "SUCCESS"
+}

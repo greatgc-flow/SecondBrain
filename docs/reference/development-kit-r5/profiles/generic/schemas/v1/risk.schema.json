@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/generic-dev/schemas/v1/risk.schema.json",
+  "title": "risk",
+  "type": "object",
+  "properties": {
+    "risk_id": {
+      "type": "string",
+      "pattern": "^R-[0-9]{2,}$"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "trigger": {
+      "type": "string",
+      "minLength": 1
+    },
+    "impact": {
+      "enum": [
+        "LOW",
+        "MEDIUM",
+        "HIGH",
+        "CRITICAL"
+      ]
+    },
+    "likelihood": {
+      "enum": [
+        "LOW",
+        "MEDIUM",
+        "HIGH"
+      ]
+    },
+    "mitigation": {
+      "type": "string",
+      "minLength": 1
+    },
+    "owner": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "enum": [
+        "OPEN",
+        "MITIGATED",
+        "ACCEPTED",
+        "CLOSED"
+      ]
+    },
+    "next_review": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": [
+    "risk_id",
+    "description",
+    "trigger",
+    "impact",
+    "likelihood",
+    "mitigation",
+    "owner",
+    "status",
+    "next_review"
+  ],
+  "additionalProperties": false
+}

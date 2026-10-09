@@ -9,6 +9,7 @@ from brain_core.capture import CaptureFailure, capture_file, verify_capture
 from brain_core.writer import WriterFailure, configure_writer, publish_capture, verify_publication
 from brain_core.custody import CustodyFailure, commit_capture, verify_commit, verify_chain, _canon
 from brain_core.checkpoint import CheckpointFailure, create_checkpoint, verify_checkpoint
+from brain_core.backup import BackupFailure, create_backup, verify_backup, restore_backup
 
 
 def main(argv=None):
@@ -96,15 +97,36 @@ def main(argv=None):
     check_anchor.add_argument('--root', default=os.environ.get('SECOND_BRAIN_ROOT'))
     check_anchor.add_argument('--json', action='store_true')
 
+    backups = commands.add_parser('backup', help='R12 offline local snapshot/restore (external custody NOT verified)')
+    backup_actions = backups.add_subparsers(dest='action', required=True)
+    snapshot = backup_actions.add_parser('create', help='Copy complete R7-R11 local closure to NEW outside-root directory')
+    snapshot.add_argument('--root', default=os.environ.get('SECOND_BRAIN_ROOT'))
+    snapshot.add_argument('--to', required=True)
+    snapshot.add_argument('--json', action='store_true')
+    verify_snap = backup_actions.add_parser('verify', help='Verify snapshot bytes and entire local closure, read-only')
+    verify_snap.add_argument('snapshot')
+    verify_snap.add_argument('--json', action='store_true')
+    restore = backup_actions.add_parser('restore', help='Restore to a NEW root without overwrite')
+    restore.add_argument('snapshot')
+    restore.add_argument('--to-root', required=True)
+    restore.add_argument('--json', action='store_true')
+
     args = parser.parse_args(argv)
-    if not args.root:
+    if not getattr(args, 'root', None) and not (args.group == 'backup' and args.action != 'create'):
         result, exit_code = {'status': 'FAIL', 'error_code': 'ROOT_NOT_SET'}, 2
     elif ((args.group in ('writer', 'custody') and args.action in ('publish', 'commit')) or
           (args.group == 'object' and args.action == 'create')) and not args.writer_epoch:
         result, exit_code = {'status': 'FAIL', 'error_code': 'WRITER_EPOCH_NOT_SET'}, 2
     else:
         try:
-            if args.group == 'object':
+            if args.group == 'backup':
+                if args.action == 'create':
+                    result = create_backup(args.root, args.to)
+                elif args.action == 'verify':
+                    result = verify_backup(args.snapshot)
+                else:
+                    result = restore_backup(args.snapshot, args.to_root)
+            elif args.group == 'object':
                 if args.action == 'verify':
                     result = verify_object(args.root, args.object_id)
                 elif args.action == 'verify-link':
@@ -134,7 +156,7 @@ def main(argv=None):
             else:
                 result = verify_publication(args.root, args.device_id, args.capture_id)
             exit_code = 0
-        except (IntegrityFailure, CaptureFailure, WriterFailure, CustodyFailure, CheckpointFailure, ObjectFailure) as exc:
+        except (IntegrityFailure, CaptureFailure, WriterFailure, CustodyFailure, CheckpointFailure, ObjectFailure, BackupFailure) as exc:
             result, exit_code = {'status': 'FAIL', 'error_code': exc.code}, 3
     if args.json:
         if args.group == 'checkpoint' and args.action == 'export' and exit_code == 0:
@@ -142,7 +164,9 @@ def main(argv=None):
         else:
             print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     elif exit_code == 0:
-        if args.group == 'object' and args.action == 'verify':
+        if args.group == 'backup':
+            print(f"{result['status']} files={result['file_count']} | captures={result['capture_count']}")
+        elif args.group == 'object' and args.action == 'verify':
             print(f"PASS {result['object_id']} | sha256={result['sha256']} | bytes={result['size_bytes']}")
         elif args.group == 'object':
             print(f"{result['status']} {result['capture_id']} | object={result['object_id']}")

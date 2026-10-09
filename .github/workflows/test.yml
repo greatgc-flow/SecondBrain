@@ -1,4 +1,4 @@
-name: R13-E synthetic path identity and portability
+name: R13-F synthetic cloud attribute safety and portability
 on:
   push:
     branches: [main]
@@ -21,7 +21,7 @@ jobs:
           python-version: '3.12'
       - name: Install source-only test dependencies (explicit date-time validator)
         run: python -m pip install 'pytest>=8,<10' 'jsonschema>=4.23,<5' 'rfc3339-validator>=0.1,<1' 'rfc8785==0.1.4'
-      - name: R7-R13-E complete synthetic regression
+      - name: R7-R13-F complete synthetic regression
         working-directory: profiles/secondbrain
         run: python -m pytest -q tests/
 

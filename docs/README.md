@@ -1,6 +1,6 @@
 # Current documentation index (single source of truth)
 
-**Continue in a new chat:** [R10 → R11 verified handoff](handoff/2026-10-10_R10_TO_R11_HANDOFF.md) · [Copyable R11 start prompt](handoff/START_NEW_CHAT_R11.md). Check latest `main` SHA/CI first.
+**Continue in a new chat:** inspect private GitHub latest `main` SHA, open PRs and Actions first, then follow [R13 developer gate](history/R13_DEV_GATE.md), [current roadmap](roadmap/S1_NEXT.md), and [R13 operational issue #11](https://github.com/greatgc-flow/SecondBrain/issues/11). Historical R10→R11 handoff prompts are not today's implementation SSOT.
 
 1. **Current implementation:** `profiles/secondbrain/brain.py`, `brain_core/`, `schemas/`, `tests/`.
 2. **Current user guide:** `profiles/secondbrain/R13_RECOVERY_SCOPE.md` (recovery quarantine), then `R12_BACKUP_QUICKSTART.md` / `R12_SCOPE.md`, R11 and earlier guides.

@@ -1,4 +1,4 @@
-name: R7 product tests
+name: R8 synthetic source tests
 on:
   push:
     branches: [main]
@@ -15,8 +15,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install source-only test dependencies, including date-time format validation
+      - name: Install source-only test dependencies (explicit date-time validator)
         run: python -m pip install 'pytest>=8,<10' 'jsonschema>=4.23,<5' 'rfc3339-validator>=0.1,<1'
-      - name: Test R7 source slice (synthetic only)
+      - name: R8 S1 pre-commit writer plus R7 regression (synthetic data)
         working-directory: profiles/secondbrain
-        run: python -m pytest -q tests/test_capture_tdd.py tests/test_object_verify_tdd.py
+        run: python -m pytest -q tests/test_writer_tdd.py tests/test_capture_tdd.py tests/test_object_verify_tdd.py

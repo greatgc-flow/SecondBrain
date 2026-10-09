@@ -1,33 +1,29 @@
 # Evidence-First SecondBrain
 
-Private development repository for an evidence-first Second Brain. Current milestone: **R7, two narrow TDD product slices**.
+Private development repository; **R8 S1 local Writer pre-commit**, not a production evidence system.
 
-## What's implemented
+## Implemented
 
-- Local copy-only Capture landing: `brain capture file` / `brain capture verify`
-- Read-only Evidence Object verification: `brain object verify`
-- Two JSON Schema v2 contracts and 40 synthetic pytest test cases
-- GitHub Actions to run tests against the pushed source
+- `brain capture file/verify`: source-preserving local Capture; receipts and last `.ready` marker
+- `brain writer init/publish/verify`: explicit local Writer policy, hash-based Vault reuse, distinct pending observation per capture, read-only verification of pre-commit receipt
+- `brain object verify`: read-only validation of an already independently created v2 canonical object record (R8 does **not** create this record)
+- 57 local, synthetic TDD tests with negative/fault cases; GitHub Actions executes all three suites
 
-**Important:** A READY capture is **not** a legally sealed evidence object. Writer, Custody, Legal Hold, cloud sync/restore, provenance certification and full system validation remain unimplemented or unverified.
+**`READY` and `VAULT_VERIFIED_UNCOMMITTED` are NOT `SEALED`, `COMMITTED` or evidence authenticity guarantees.** No Custody JCS hash chain, AcquisitionEvent, distributed Writer gate, cloud validation, Legal Hold, restore or production release exists yet.
 
 ## Start
 
 ```bash
 cd profiles/secondbrain
-python -m pip install 'pytest>=8,<10' 'jsonschema>=4,<5' 'rfc3339-validator>=0.1,<1'
-python -m pytest -q tests/test_capture_tdd.py tests/test_object_verify_tdd.py
+python -m pip install 'pytest>=8,<10' 'jsonschema>=4.23,<5' 'rfc3339-validator>=0.1,<1'
+python -m pytest -q tests/test_writer_tdd.py tests/test_capture_tdd.py tests/test_object_verify_tdd.py
 python brain.py --help
 ```
 
-For practical examples, see [R7 Quickstart](profiles/secondbrain/TDD_R7_QUICKSTART.md). For scope and release limitations, see [R7 Scope](profiles/secondbrain/R7_SCOPE.md).
+See [R8 quickstart](profiles/secondbrain/TDD_R8_WRITER_QUICKSTART.md), [scope/gates](profiles/secondbrain/R8_SCOPE.md) and [R7 history](profiles/secondbrain/R7_SCOPE.md).
 
-## Roadmap
+## Safety and publication
 
-Next is S1 single-writer canonical commit: verify authority → stage source → publish Vault → Observation/Acquisition/Custody → recovery/commit receipt, with independently verified RFC 8785 canonicalization. A tested local capture does not authorize promotion to SEALED/COMMITTED.
+Only synthetic tests and reviewed source belong in Git. **Never commit personal evidence, credentials, original archives, cloud sync folders or test caches.** The local writer epoch is a policy generation ID, not a secret or cross-cloud lock. On failure, retain and inspect partial assets; never automatically delete the only original. The `.active` lock may require manual operator recovery after a crash.
 
-## Publishing policy
-
-No private evidence source files, copied personal data, secrets, generated archives or test caches should be committed. Existing archived R1–R7 ZIPs remain outside Git; publication of archival material requires separate review.
-
-Repository initialized after the owner's privacy change; prior README and ignore commits were preserved. This Git tree contains the **R7 runtime core, schemas, test suite, quickstart and scope docs**. The full historical design corpus and archived R1–R7 ZIP bundles remain in the original local handoff ZIP, not in Git. Editable/wheel distribution packaging and install-from-wheel testing are not yet completed. This is a **development snapshot, not a formal release**.
+Product release remains **NO-GO** pending complete TDD, verified RFC8785 custody streams, recovery, backup/restore, live Windows and sync tests and security review. Version stays `0.0.0`; do not publish to pip/winget yet.

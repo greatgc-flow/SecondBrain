@@ -5,9 +5,8 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "evidence-first-secondbrain"
 version = "0.0.0"
-description = "Evidence-first second brain — initial read-only object verification slice"
+description = "Evidence-first Second Brain experimental R8 pre-commit Writer slice"
 requires-python = ">=3.11"
-# Without rfc3339-validator, JSON Schema's FormatChecker can silently skip date-time validation.
 dependencies = ["jsonschema>=4.23,<5", "rfc3339-validator>=0.1,<1"]
 
 [project.optional-dependencies]

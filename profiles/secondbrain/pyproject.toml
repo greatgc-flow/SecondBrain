@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "evidence-first-secondbrain"
 version = "0.0.0"
-description = "Evidence-first Second Brain experimental R8 pre-commit Writer slice"
+description = "Evidence-first Second Brain R10 unanchored custody + manual external checkpoint slice"
 requires-python = ">=3.11"
 dependencies = ["jsonschema>=4.23,<5", "rfc3339-validator>=0.1,<1", "rfc8785==0.1.4"]
 

@@ -87,13 +87,17 @@ def _walk_files(root: Path, *, skip_writer_lock: bool = False) -> tuple[list[str
                     continue
                 if hasattr(child, 'is_junction') and child.is_junction():
                     raise BackupFailure('UNSAFE_PATH')
-                mode = child.lstat().st_mode
+                child_stat = child.lstat()
+                mode = child_stat.st_mode
                 if stat.S_ISDIR(mode):
                     if child.name.startswith(".stage-") or child.name == "__pycache__":
                         raise BackupFailure("SNAPSHOT_NOT_CLOSED")
                     dirs.append(rel)
                     visit(child)
                 elif stat.S_ISREG(mode):
+                    if child_stat.st_nlink != 1:
+                        # Identical hashes cannot detect a hardlink outside this tree.
+                        raise BackupFailure("UNSAFE_PATH")
                     if child.name.startswith(".stage-") or child.name == ".active":
                         raise BackupFailure("SNAPSHOT_NOT_CLOSED")
                     files.append(rel)
@@ -188,10 +192,22 @@ def _closure(root: Path, *, skip_writer_lock: bool = False, recovery_hold: bool 
 
 
 def _copy_file(source: Path, dest: Path) -> tuple[str, int]:
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    sha256, _, count = _copy_source(source, dest)
-    _fsync_dir(dest.parent)
-    return sha256, count
+    # Recheck around copying: initial closure enumeration alone is not enough
+    # to notice stable aliases introduced after the first tree traversal.
+    try:
+        before = source.lstat()
+        if not stat.S_ISREG(before.st_mode) or before.st_nlink != 1:
+            raise BackupFailure("UNSAFE_PATH")
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        _no_symlink_ancestors(dest.parent, "UNSAFE_DESTINATION")
+        sha256, _, count = _copy_source(source, dest)
+        after = source.lstat()
+        if not stat.S_ISREG(after.st_mode) or after.st_nlink != 1:
+            raise BackupFailure("UNSAFE_PATH")
+        _fsync_dir(dest.parent)
+        return sha256, count
+    except (OSError, ValueError) as exc:
+        raise BackupFailure("UNSAFE_PATH") from exc
 
 
 def _manifest_body(data: dict[str, Any], entries: list[dict[str, Any]]) -> dict[str, Any]:

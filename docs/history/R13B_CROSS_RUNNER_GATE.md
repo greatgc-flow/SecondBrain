@@ -51,10 +51,21 @@ directions, not long-term operator-managed offsite backup.
   commit `f15083e274e2fc6c9ba1ec5604aee4792a828cd8`, missing script;
   GitHub RED run https://github.com/greatgc-flow/SecondBrain/actions/runs/37994579328
   (expected module-not-found failure).
-- Candidate, final PR-tip and post-merge `main` CI SHA and exact test
-  counts must be added **only after observing their outcomes**.
-- Do not claim a source gate PASS from code or a green earlier commit
-  until BOTH separate-job cross-OS consumers and regressions pass.
+- First cross-runner GREEN candidate commit
+  `4da11727e8b4167e0c18d12df2fb7bee93741dff`:
+  https://github.com/greatgc-flow/SecondBrain/actions/runs/37994673139
+  **SUCCESS: all SIX jobs**: Ubuntu and Windows unit suites, Ubuntu
+  fixture production, Windows fixture production, Windows-produced
+  snapshot restored on Ubuntu and Ubuntu-produced snapshot restored
+  on Windows. Both consumers ran on jobs distinct from source jobs,
+  and both validated R7–R13 local closure and R10 checkpoint.
+- Earlier code-only candidate:
+  https://github.com/greatgc-flow/SecondBrain/actions/runs/37994630604
+  **SUCCESS**: Windows **154 passed**; Ubuntu **152 passed, 2 skipped
+  (Windows-only)**.
+- Final PR-tip candidate and post-merge `main` runs are recorded in a
+  separate exact-SHA closure after they finish. The R13-B gate is a
+  synthetic source/transport test, not full operational R13 #11 PASS.
 
 ## Residual NO-GO
 

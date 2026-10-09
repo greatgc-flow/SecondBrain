@@ -10,6 +10,7 @@ from brain_core.writer import WriterFailure, configure_writer, publish_capture, 
 from brain_core.custody import CustodyFailure, commit_capture, verify_commit, verify_chain, _canon
 from brain_core.checkpoint import CheckpointFailure, create_checkpoint, verify_checkpoint
 from brain_core.backup import BackupFailure, create_backup, verify_backup, restore_backup
+from brain_core.recovery import RecoveryFailure, recovery_status
 
 
 def main(argv=None):
@@ -111,6 +112,12 @@ def main(argv=None):
     restore.add_argument('--to-root', required=True)
     restore.add_argument('--json', action='store_true')
 
+    recovery = commands.add_parser('recovery', help='R13 restored-root local quarantine, NOT distributed fencing')
+    recovery_actions = recovery.add_subparsers(dest='action', required=True)
+    status = recovery_actions.add_parser('status', help='Read-only local recovery hold status')
+    status.add_argument('--root', default=os.environ.get('SECOND_BRAIN_ROOT'))
+    status.add_argument('--json', action='store_true')
+
     args = parser.parse_args(argv)
     if not getattr(args, 'root', None) and not (args.group == 'backup' and args.action != 'create'):
         result, exit_code = {'status': 'FAIL', 'error_code': 'ROOT_NOT_SET'}, 2
@@ -119,7 +126,9 @@ def main(argv=None):
         result, exit_code = {'status': 'FAIL', 'error_code': 'WRITER_EPOCH_NOT_SET'}, 2
     else:
         try:
-            if args.group == 'backup':
+            if args.group == 'recovery':
+                result = recovery_status(args.root)
+            elif args.group == 'backup':
                 if args.action == 'create':
                     result = create_backup(args.root, args.to)
                 elif args.action == 'verify':
@@ -156,7 +165,7 @@ def main(argv=None):
             else:
                 result = verify_publication(args.root, args.device_id, args.capture_id)
             exit_code = 0
-        except (IntegrityFailure, CaptureFailure, WriterFailure, CustodyFailure, CheckpointFailure, ObjectFailure, BackupFailure) as exc:
+        except (IntegrityFailure, CaptureFailure, WriterFailure, CustodyFailure, CheckpointFailure, ObjectFailure, BackupFailure, RecoveryFailure) as exc:
             result, exit_code = {'status': 'FAIL', 'error_code': exc.code}, 3
     if args.json:
         if args.group == 'checkpoint' and args.action == 'export' and exit_code == 0:
@@ -164,7 +173,9 @@ def main(argv=None):
         else:
             print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     elif exit_code == 0:
-        if args.group == 'backup':
+        if args.group == 'recovery':
+            print(result['status'] + ' (local advisory only, not a distributed fence)')
+        elif args.group == 'backup':
             print(f"{result['status']} files={result['file_count']} | captures={result['capture_count']}")
         elif args.group == 'object' and args.action == 'verify':
             print(f"PASS {result['object_id']} | sha256={result['sha256']} | bytes={result['size_bytes']}")

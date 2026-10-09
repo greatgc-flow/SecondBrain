@@ -71,7 +71,8 @@ def _ensure_parent(root: Path, directory: Path) -> None:
             except FileExistsError:
                 pass
             mode = curr.lstat().st_mode
-            if not stat.S_ISDIR(mode) or stat.S_ISLNK(mode):
+            if (not stat.S_ISDIR(mode) or stat.S_ISLNK(mode) or
+                    (hasattr(curr, 'is_junction') and curr.is_junction())):
                 raise CaptureFailure("UNSAFE_PATH")
     except OSError as exc:
         raise CaptureFailure("UNSAFE_PATH") from exc
@@ -84,7 +85,7 @@ def _source_fd(source: Path) -> int:
         for part in source.parts[1:]:
             path = path / part
             mode = path.lstat().st_mode
-            if stat.S_ISLNK(mode):
+            if stat.S_ISLNK(mode) or (hasattr(path, 'is_junction') and path.is_junction()):
                 raise CaptureFailure("UNSAFE_SOURCE")
             if path == source:
                 if not stat.S_ISREG(mode):
@@ -214,6 +215,9 @@ def capture_file(root: str | Path, source: str | Path, device_id: str, collector
     Incomplete directories are retained for review; no automatic overwrite/cleanup.
     """
     root, cid = _arguments(root, device_id, capture_id)
+    from .recovery import recovery_hold_present
+    if recovery_hold_present(root):
+        raise CaptureFailure('RECOVERY_HOLD')
     if not collector or not isinstance(collector, str) or not source_type or not isinstance(source_type,str):
         raise CaptureFailure("INVALID_ARGUMENT")
     source = Path(source).expanduser().absolute()

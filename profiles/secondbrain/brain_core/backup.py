@@ -50,9 +50,12 @@ class BackupFailure(Exception):
 def _no_symlink_ancestors(path: Path, code: str) -> None:
     for component in (path, *path.parents):
         try:
-            if component.exists() and _unsafe_windows_attributes(component.lstat()):
-                raise BackupFailure(code)
-            if component.is_symlink() or (hasattr(component, 'is_junction') and component.is_junction()):
+            try:
+                info = component.lstat()  # never follow a cloud or symlink target
+            except FileNotFoundError:
+                continue  # destination may not exist yet; inspect ancestors
+            if (_unsafe_windows_attributes(info) or stat.S_ISLNK(info.st_mode) or
+                    (hasattr(component, 'is_junction') and component.is_junction())):
                 raise BackupFailure(code)
         except OSError as exc:
             raise BackupFailure(code) from exc

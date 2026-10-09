@@ -63,9 +63,27 @@ directions, not long-term operator-managed offsite backup.
   https://github.com/greatgc-flow/SecondBrain/actions/runs/37994630604
   **SUCCESS**: Windows **154 passed**; Ubuntu **152 passed, 2 skipped
   (Windows-only)**.
-- Final PR-tip candidate and post-merge `main` runs are recorded in a
-  separate exact-SHA closure after they finish. The R13-B gate is a
-  synthetic source/transport test, not full operational R13 #11 PASS.
+- **Final PR #14 tip** `5e5ed3b36c45a1a2cd9787061321f752da766104`:
+  https://github.com/greatgc-flow/SecondBrain/actions/runs/37994954745
+  **SUCCESS — six of six jobs**, Windows **154 passed in 65.73s**,
+  Ubuntu **152 passed, 2 Windows-only skipped in 12.26s**, 2 producers
+  plus BOTH opposite-OS consumer restore jobs. Real
+  `rfc8785==0.1.4`, Python 3.12.
+- **PR #14 squash-merged to main commit**
+  `b7f2aee8a9caddc80c0c5924403f9187addaca27`:
+  https://github.com/greatgc-flow/SecondBrain/commit/b7f2aee8a9caddc80c0c5924403f9187addaca27
+- **Exact post-merge main CI**:
+  https://github.com/greatgc-flow/SecondBrain/actions/runs/37995266083
+  **SUCCESS — six of six jobs**, Windows **154 passed in 89.25s**;
+  Ubuntu **152 passed, 2 Windows-only skipped in 14.86s**; both
+  opposite-OS download/restore jobs succeeded. Run head SHA exactly
+  equals `b7f2aee8a9caddc80c0c5924403f9187addaca27`. All unit
+  jobs installed real `rfc8785==0.1.4`.
+- **R13-B synthetic cross-runner source-development gate PASS**.
+  Physical/offsite operator-custody acceptance remains **UNVERIFIED /
+  NO-GO**; full R13 issue #11 remains OPEN and formal release NO-GO.
+  This documentation-only gate update does not alter the verified
+  implementation or claim independent trusted custody.
 
 ## Residual NO-GO
 

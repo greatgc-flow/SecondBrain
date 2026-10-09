@@ -127,7 +127,7 @@ def verify_object(root: str | Path, object_id: str) -> dict[str, str | int]:
         raise IntegrityFailure("SCHEMA_INVALID")
     digest = match.group(1)
     root = Path(root).expanduser().absolute()
-    if not root.is_dir() or root.is_symlink():
+    if not root.is_dir() or root.is_symlink() or _unsafe_windows_attributes(root.lstat()):
         raise IntegrityFailure("UNSAFE_PATH")
     rp = root / "10_Evidence" / "Records" / "objects" / f"{object_id}.json"
     _safe_regular_file(root, rp, missing_code="INCOMPLETE_COMMIT")

@@ -231,3 +231,50 @@ def test_no_network_or_provider_api(tmp_path, monkeypatch):
     create_backup(root, folder)
     verify_backup(folder)
     restore_backup(folder, tmp_path / "restored")
+
+
+def test_unknown_empty_directory_rejected_before_snapshot(tmp_path):
+    root, _, _ = fixture(tmp_path, n=1)
+    (root / "10_Evidence/Records/unlisted-empty").mkdir()
+    with pytest.raises(BackupFailure, match="SNAPSHOT_NOT_CLOSED"):
+        create_backup(root, tmp_path / "snapshot")
+
+
+def test_unlisted_empty_directory_in_snapshot_or_restore_is_conflict(tmp_path):
+    root, _, _ = fixture(tmp_path, n=1)
+    folder = tmp_path / "snapshot"; create_backup(root, folder)
+    (folder / "data" / "hidden-empty").mkdir()
+    with pytest.raises(BackupFailure, match="SNAPSHOT_TAMPERED"):
+        verify_backup(folder)
+    (folder / "data" / "hidden-empty").rmdir()
+    dest = tmp_path / "restored"
+    restore_backup(folder, dest)
+    (dest / "unlisted-dir").mkdir()
+    with pytest.raises(BackupFailure, match="DESTINATION_CONFLICT"):
+        restore_backup(folder, dest)
+
+
+def test_local_writer_busy_never_starts_snapshot(tmp_path):
+    root, _, _ = fixture(tmp_path, n=1)
+    lock = root / "90_System/writer/.active"
+    lock.write_bytes(b"another writer")
+    with pytest.raises(BackupFailure, match="SOURCE_BUSY"):
+        create_backup(root, tmp_path / "snapshot")
+    assert not (tmp_path / "snapshot").exists()
+
+
+def test_completion_marker_write_interrupted_fails_closed(tmp_path, monkeypatch):
+    from brain_core import backup as mod
+    root, _, _ = fixture(tmp_path, n=1)
+    real = mod._write_exclusive
+    def fail_on_marker(path, data):
+        if path.name == ".complete":
+            raise OSError("simulated marker fsync failure")
+        return real(path, data)
+    monkeypatch.setattr(mod, "_write_exclusive", fail_on_marker)
+    with pytest.raises(BackupFailure, match="INCOMPLETE_SNAPSHOT"):
+        create_backup(root, tmp_path / "snapshot")
+    assert not (tmp_path / "snapshot" / ".complete").exists()
+    monkeypatch.setattr(mod, "_write_exclusive", real)
+    with pytest.raises(BackupFailure, match="INCOMPLETE_SNAPSHOT"):
+        verify_backup(tmp_path / "snapshot")

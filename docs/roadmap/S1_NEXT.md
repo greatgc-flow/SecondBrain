@@ -17,7 +17,12 @@ Version 0.0.0 and **formal product release NO-GO** remain unchanged.
   see [R12 gate](../history/R12_GATE.md). Development CI success does
   **not** mean operational independent backup acceptance.
 
-## Next gate: R13 — independent storage/recovery drill and platform matrix
+- **R13-A LOCAL SAFETY:** synthetic R12 restored-root quarantine blocks
+  mutating commands via two locally removable manifest-bound markers;
+  development code/test results in [R13 gate](../history/R13_DEV_GATE.md).
+  This is **not** external writer fencing or independent recovery proof.
+
+## Next operational gate: remaining R13 — independent storage/recovery drill and platform matrix
 
 1. **Independent custody:** operator chooses a separately administered
    physical medium or account, retains and authenticates a snapshot
@@ -29,7 +34,9 @@ Version 0.0.0 and **formal product release NO-GO** remain unchanged.
    `backup verify`, `backup restore`, and all R7–R12 verifiers.
    Record observed source loss/recovery, RPO/RTO, digest equality,
    recovery-only status and controlled writer handover.
-3. **Real filesystem tests:** NTFS/junction/reparse, permissions,
+3. **Real filesystem tests:** CI-level Windows NTFS junction/reparse
+   guard coverage (R13-A) is distinct from full platform operational
+   acceptance; still test permissions,
    missing hydration, OneDrive and Google Drive offline files,
    conflicts, restore and multi-device race matrix. Fail closed,
    never silently repair sync conflicts or assert a distributed lock.

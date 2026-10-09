@@ -34,6 +34,12 @@ Version 0.0.0 and **formal product release NO-GO** remain unchanged.
   the recovery root. See [R13-C gate](../history/R13C_DETACHED_DIGEST_GATE.md).
   A digest co-traveling with the backup is not independently authenticated.
 
+- **R13-D HARDLINK GUARD:** reject regular files with `st_nlink != 1`
+  in source/snapshot/restored root (including recovery hold), checked in
+  read-only verifier and copy path; distinct same-content objects remain
+  allowed. See [R13-D gate](../history/R13D_HARDLINK_GATE.md).
+  **Not** protection against concurrent hostile filesystem path swaps.
+
 ## Next operational gate: remaining R13 — independent storage/recovery drill and platform matrix
 
 Runbook: [operator-observed independent restore and Windows/cloud matrix](../runbooks/R13_INDEPENDENT_RESTORE_DRILL.md). **Not performed by CI; no operational PASS assertion.**

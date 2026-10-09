@@ -1,29 +1,30 @@
 # Evidence-First SecondBrain
 
-Private development repository; **R8 S1 local Writer pre-commit**, not a production evidence system.
+**R9 development snapshot — private repository, not a production evidence system.**
 
-## Implemented
+## Implemented vertical slices
 
-- `brain capture file/verify`: source-preserving local Capture; receipts and last `.ready` marker
-- `brain writer init/publish/verify`: explicit local Writer policy, hash-based Vault reuse, distinct pending observation per capture, read-only verification of pre-commit receipt
-- `brain object verify`: read-only validation of an already independently created v2 canonical object record (R8 does **not** create this record)
-- 57 local, synthetic TDD tests with negative/fault cases; GitHub Actions executes all three suites
+- **R7 Capture:** `brain capture file|verify` copies local source bytes into an Inbox without deleting the source.
+- **R8 Writer:** `brain writer init|publish|verify` checks local single-writer policy and publishes an **uncommitted** content-addressed Vault payload.
+- **R9 Local custody ledger:** `brain custody commit|verify|chain` stores two RFC8785-canonicalized hash-linked events (Acquisition and Custody) per capture and a local receipt. Retry is idempotent and partial writes fail closed.
+- **Read-only object verifier:** `brain object verify` validates already-created object metadata and bytes. R9 still does **not** generate a sealed EvidenceObject record.
 
-**`READY` and `VAULT_VERIFIED_UNCOMMITTED` are NOT `SEALED`, `COMMITTED` or evidence authenticity guarantees.** No Custody JCS hash chain, AcquisitionEvent, distributed Writer gate, cloud validation, Legal Hold, restore or production release exists yet.
-
-## Start
+## Quick start (synthetic samples only)
 
 ```bash
 cd profiles/secondbrain
 python -m pip install 'pytest>=8,<10' 'jsonschema>=4.23,<5' 'rfc3339-validator>=0.1,<1' 'rfc8785==0.1.4'
-python -m pytest -q tests/test_writer_tdd.py tests/test_capture_tdd.py tests/test_object_verify_tdd.py tests/test_writer_tdd.py tests/test_custody_tdd.py
+python -m pytest -q
 python brain.py --help
+python brain.py custody --help
 ```
 
-See [R8 quickstart](profiles/secondbrain/TDD_R8_WRITER_QUICKSTART.md), [scope/gates](profiles/secondbrain/R8_SCOPE.md) and [R7 history](profiles/secondbrain/R7_SCOPE.md).
+See [R9 custody example](profiles/secondbrain/TDD_R9_CUSTODY_QUICKSTART.md), [R9 scope/limits](profiles/secondbrain/R9_SCOPE.md), and [R8 Writer example](profiles/secondbrain/TDD_R8_WRITER_QUICKSTART.md).
 
-## Safety and publication
+## Critical distinctions
 
-Only synthetic tests and reviewed source belong in Git. **Never commit personal evidence, credentials, original archives, cloud sync folders or test caches.** The local writer epoch is a policy generation ID, not a secret or cross-cloud lock. On failure, retain and inspect partial assets; never automatically delete the only original. The `.active` lock may require manual operator recovery after a crash.
+`READY` → `VAULT_VERIFIED_UNCOMMITTED` → `LOCAL_CHAIN_COMMITTED_UNANCHORED` reflects **local data processing**, not a judicial determination or trusted forensic custody. Without an authenticated checkpoint outside the writable filesystem, the entire ledger can be substituted or rolled back undetected. Neither filesystem locks nor cloud-sync files provide cross-device writer fencing. Original acquisition authenticity, WORM, trusted time, full EvidenceObject sealing, backups, Legal Hold and real Windows/OneDrive/Drive recovery remain **unverified/unimplemented**.
 
-Product release remains **NO-GO** pending complete TDD, verified RFC8785 custody streams, recovery, backup/restore, live Windows and sync tests and security review. Version stays `0.0.0`; do not publish to pip/winget yet.
+Only synthetic tests and reviewed source are committed. Do not upload real personal evidence, passwords or historical archive ZIPs. The initial local offline suite passed **73 tests** with a restricted non-RFC shim and omitted one Unicode ordering test; the branch CI ran all **74 tests using actual `rfc8785==0.1.4` and passed**. Subsequent `main` CI remains a separate release gate.
+
+**Product release: NO-GO.** Version remains `0.0.0`; no PyPI/winget release is authorized.

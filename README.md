@@ -14,7 +14,7 @@
 - **R13-C operator-supplied backup pin:** optional `backup verify|restore --expect-manifest-sha256` compares a separately obtained manifest fingerprint before creating a restore root. A co-traveling or unauthenticated digest is not external proof.
 - **R13-B synthetic cross-runner recovery:** independent CI jobs transfer synthetic snapshots using short-lived GitHub artifact storage and validate Ubuntu→Windows and Windows→Ubuntu restore with the original root unavailable to the consumer. This verifies portability only, **not** offsite custody, production recovery or RPO/RTO.
 
-**Continue development from current GitHub `main`:** check the latest commit/PR/Actions first, then [current docs index](docs/README.md), [R13 development gate](docs/history/R13_DEV_GATE.md), [current roadmap](docs/roadmap/S1_NEXT.md) and [open R13 operational gate](https://github.com/greatgc-flow/SecondBrain/issues/11). Older R10→R11 handoffs are archived history and must **not** roll back the active code/tests.
+**Continue development from current GitHub `main`:** check the latest commit/PR/Actions first, then [current docs index](docs/README.md), [R13-C quality gate](docs/history/R13C_DETACHED_DIGEST_GATE.md), [current roadmap](docs/roadmap/S1_NEXT.md) and [open R13 operational gate](https://github.com/greatgc-flow/SecondBrain/issues/11). Older R10→R11 handoffs are archived history and must **not** roll back the active code/tests.
 
 ## Quick start (synthetic samples only)
 

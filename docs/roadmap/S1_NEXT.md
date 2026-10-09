@@ -1,16 +1,44 @@
 # S1 roadmap — GitHub SSOT
 
-Current code: `profiles/secondbrain/`. Historical specs: `docs/reference/`. R10 was the first manual off-root checkpoint comparison.
+Implementation: `profiles/secondbrain/`. Historical specs: `docs/reference/`.
+Release version `0.0.0`; product **NO-GO**.
 
-## Next vertical slice (R11)
-1. RED tests for EvidenceObject record schema and cross-links to the local Vault payload and R9 acquisition/custody receipt. Duplicate records must not silently overwrite.
-2. Minimal source implementation using canonical content address and immutable create-if-absent. Different Captures containing the same bytes share payload but retain independent Acquisition and Observation records.
-3. Fail-closed partial write and read-only verify, including hash and record path consistency, duplicate keys, missing metadata, symlink, abort/retry.
-4. Run full local tests and candidate-bound GitHub CI; update `profiles/secondbrain/R11_SCOPE.md` and `docs/history/R11_GATE.md` with exact run/SHA.
-5. Move on to independently verified backup/restore and Windows reparse-point tests **after** content records and recovery are correct.
+## Completed local development slices
+
+- **R7:** source-preserving local Capture receipt and READY marker.
+- **R8:** local single-writer Vault publication and capture-specific pending Observation.
+- **R9:** RFC 8785 canonical local Acquisition/Custody event pair and unanchored chain.
+- **R10:** operator-managed off-root checkpoint export/comparison (custody of that
+  checkpoint itself is not verified).
+- **R11:** [unsealed EvidenceObject creation and full per-Capture lineage](../../profiles/secondbrain/R11_SCOPE.md)
+  with immutable local metadata, capture-specific Observation/Acquisition/Custody
+  cross-links, retry, integrity and CLI. Verified synthetic PR tests and exact
+  limitations are tracked at [R11 gate](../history/R11_GATE.md). No external
+  anchor, legal seal, trusted time or cloud durability is inferred.
+
+## Next gate: R12 — independent backup and restore
+
+1. RED: deterministic backup manifest, copying of the verified *entire*
+   capture/Vault/Observation/ledger/object closure; reject missing or
+   inconsistent source records and placeholders; preserve exact bytes.
+2. Restore into a separate root without overwriting a populated or
+   untrusted destination. Fail closed on interrupt, partial snapshot,
+   conflicting path, symlink and digest mismatch. Prove all R7–R11
+   verifiers still agree and exercise repeated idempotent restore.
+3. Verify actual independently retained copies and documented restoration
+   with operator-observed results. Simulated local copies are not proof of
+   independent offsite retention.
+4. Add Windows (NTFS, junction/reparse) and OneDrive/Google Drive
+   offline/placeholder/conflict matrix on real endpoints after isolated
+   synthetic tests. Do not test with personal evidence.
 
 ## Deferred gates
-- Cloud OneDrive/Google Drive test matrix, conflict reconciliation, offline/placeholder behaviors, snapshot integrity, independent backup and restore.
-- Trusted external timestamp/signature/anchor (manual checkpoint comparison is **not** proof of independent external custody).
-- Legal Hold rules, production security review, installer/wheel validation, real provider/paid AI tests and production release.
-- GitHub private source control is the source of truth; no nested ZIP release artifacts or personal evidence should be added.
+
+External authentic time and checkpoint custody, cross-device/cloud writer
+fencing, hostile filesystem TOCTOU hardening, Legal Hold policy, legal export,
+AI/privacy and paid-provider tests, installer/wheel/winget review, independent
+security assessment and public product release.
+
+For all gates: RED → cause → minimal GREEN → full synthetic regression →
+candidate-bound GitHub CI → PR review → merge → fresh main CI. Maintain
+Very Simple, SSOT, no duplicate engines, no evidence/secrets/caches/ZIPs in Git.

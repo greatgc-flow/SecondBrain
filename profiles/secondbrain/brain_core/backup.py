@@ -6,6 +6,7 @@ archive extraction, credential access, legal attestation or unsafe overwrite.
 from __future__ import annotations
 
 import hashlib
+import hmac
 import os
 from pathlib import Path
 import re
@@ -337,19 +338,28 @@ def create_backup(root: str | Path, destination: str | Path) -> dict[str, Any]:
         raise BackupFailure(code) from exc
 
 
-def verify_backup(snapshot: str | Path) -> dict[str, Any]:
+def verify_backup(snapshot: str | Path, *, expected_manifest_sha256: str | None = None) -> dict[str, Any]:
+    # Validate operator-supplied fingerprint before reading or creating any restore root.
+    if expected_manifest_sha256 is not None and (
+        type(expected_manifest_sha256) is not str or
+        not HEX64.fullmatch(expected_manifest_sha256)
+    ):
+        raise BackupFailure('INVALID_EXPECTED_MANIFEST_SHA256')
     folder = _dir(snapshot)
     _no_symlink_ancestors(folder, "UNSAFE_PATH")
     manifest = _validate_manifest(folder)
+    if (expected_manifest_sha256 is not None and
+            not hmac.compare_digest(expected_manifest_sha256, manifest['manifest_sha256'])):
+        raise BackupFailure('MANIFEST_DIGEST_MISMATCH')
     # Do not read a user's original root; verify only the supplied copy.
     data = _dir(folder / "data")
     _compare_data(data, manifest)
     return _snapshot_result(manifest, "LOCAL_SNAPSHOT_VERIFIED_EXTERNAL_CUSTODY_UNVERIFIED")
 
 
-def restore_backup(snapshot: str | Path, destination: str | Path) -> dict[str, Any]:
+def restore_backup(snapshot: str | Path, destination: str | Path, *, expected_manifest_sha256: str | None = None) -> dict[str, Any]:
     folder = _dir(snapshot)
-    verified = verify_backup(folder)
+    verified = verify_backup(folder, expected_manifest_sha256=expected_manifest_sha256)
     manifest = _validate_manifest(folder)
     target = _destination(folder, destination)
     if target.exists() or target.is_symlink():

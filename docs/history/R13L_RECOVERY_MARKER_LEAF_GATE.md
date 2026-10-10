@@ -37,13 +37,22 @@ Expected outcomes:
 - [PR #31](https://github.com/greatgc-flow/SecondBrain/pull/31).
 - RED test commit `3c64e55fd45be6f39043483f14006bb64f1fbeda`.
 - [RED run #38046599176](https://github.com/greatgc-flow/SecondBrain/actions/runs/38046599176):
-  Ubuntu observed **4 failures / 256 passes / 2 skips**; all four swaps were
-  incorrectly accepted before fixing the implementation. Windows job and
-  full final CI outcomes must be read from the exact linked run.
-- Initial narrow implementation commit:
-  `b71da47f4b31a72341b46e2b6c4202981d3929e2`.
-- Final full-matrix PR CI and post-merge main CI: **pending verification**.
-  Do not promote to GREEN until the six jobs actually complete.
+  Ubuntu **4 failed, 256 passed, 2 skipped**; Windows **4 failed,
+  258 passed**. All four swap cases were incorrectly accepted on both
+  platforms before the implementation change.
+- Initial narrow implementation commit
+  `b71da47f4b31a72341b46e2b6c4202981d3929e2`; its
+  [code-only 6/6 CI](https://github.com/greatgc-flow/SecondBrain/actions/runs/38046682433)
+  passed before documentation edits.
+- Final PR head `76dce62cbd3f74a7b13d2d3c77aa6d6266090a61`:
+  [full PR CI #38046745935](https://github.com/greatgc-flow/SecondBrain/actions/runs/38046745935)
+  **6/6 PASS**, Ubuntu **260 passed, 2 skipped**, Windows
+  **262 passed**, both cross-OS synthetic restore consumers PASS.
+- [PR #31](https://github.com/greatgc-flow/SecondBrain/pull/31) squash-merged
+  as `befa9715c390e7d56405a86996476d8e5f794fbf`.
+  [Post-merge main CI #38047174432](https://github.com/greatgc-flow/SecondBrain/actions/runs/38047174432)
+  is a distinct live gate; the final result is archived in issue #11
+  only after verified as terminal successful.
 
 ## Known boundaries
 

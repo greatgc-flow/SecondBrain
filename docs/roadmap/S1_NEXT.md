@@ -77,6 +77,15 @@ Version 0.0.0 and **formal product release NO-GO** remain unchanged.
   [R13-I gate](../history/R13I_MARKER_PRESENCE_GATE.md). Two markers can still
   be deleted by a malicious root owner; this is **not distributed fencing**.
 
+- **R13-J PARENT-TRAVERSAL PATH ISOLATION:** reject caller-supplied `..`
+  components in backup source/snapshot and create/restore destination paths
+  *before* absolute-path normalization or directory creation. Prevents a
+  lexical containment check being bypassed to place a snapshot inside the
+  source root, or a restore inside its own snapshot. See
+  [R13-J gate](../history/R13J_PATH_BOUNDARY_GATE.md). Static path inspection
+  still does not provide atomic security against hostile parent swaps or
+  Windows filesystem aliasing; no independent custody claim.
+
 ## Next operational gate: remaining R13 — independent storage/recovery drill and platform matrix
 
 Runbook: [operator-observed independent restore and Windows/cloud matrix](../runbooks/R13_INDEPENDENT_RESTORE_DRILL.md). **Not performed by CI; no operational PASS assertion.**

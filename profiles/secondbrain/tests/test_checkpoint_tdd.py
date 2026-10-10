@@ -138,3 +138,18 @@ def test_red_cli_export_verify_and_no_false_certificate(tmp_path):
     check = subprocess.run(base+['verify',str(outside),'--root',str(root),'--json'],capture_output=True,text=True)
     assert check.returncode == 0, check.stderr
     assert 'EXTERNAL_CUSTODY_UNVERIFIED' in check.stdout
+
+
+def test_r13n_cli_export_redirect_is_verifiable_byte_for_byte(tmp_path):
+    """Documented `checkpoint export --json > file` must round-trip (no trailing newline/CRLF)."""
+    root, _, _ = prepared(tmp_path)
+    brain = Path(__file__).resolve().parents[1] / 'brain.py'
+    out = tmp_path / 'external-checkpoint.json'
+    with out.open('wb') as handle:
+        done = subprocess.run([sys.executable, str(brain), 'checkpoint', 'export', '--root', str(root), '--json'],
+                              stdout=handle, check=False)
+    assert done.returncode == 0
+    assert not out.read_bytes().endswith((b'\n', b'\r'))
+    verify = subprocess.run([sys.executable, str(brain), 'checkpoint', 'verify', str(out), '--root', str(root), '--json'],
+                            capture_output=True, text=True, check=False)
+    assert verify.returncode == 0, verify.stdout

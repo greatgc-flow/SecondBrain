@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import re
+import stat
 
 from .verify import IntegrityFailure, _safe_regular_file, _strict_json, _unsafe_windows_attributes
 
@@ -22,9 +23,41 @@ class RecoveryFailure(Exception):
         super().__init__(code)
 
 
+def _marker_state(root: Path, relpath: str) -> str:
+    """Metadata-only presence check: present / missing / unsafe.
+
+    Unlike Path.exists(), lstat does not follow the marker's link target.
+    A denied read or unsafe ancestor is NEVER interpreted as absent. This is
+    only a local guard on one mutable filesystem, not distributed fencing.
+    """
+    try:
+        for parent in (root, root / "90_System", root / "90_System" / "writer"):
+            try:
+                info = parent.lstat()
+            except FileNotFoundError:
+                return "missing"  # no marker possible under absent directory
+            if (_unsafe_windows_attributes(info) or
+                    not stat.S_ISDIR(info.st_mode) or
+                    (hasattr(parent, "is_junction") and parent.is_junction())):
+                return "unsafe"
+        marker = root / relpath
+        try:
+            info = marker.lstat()
+        except FileNotFoundError:
+            return "missing"
+        if (_unsafe_windows_attributes(info) or
+                not stat.S_ISREG(info.st_mode) or info.st_nlink != 1 or
+                (hasattr(marker, "is_junction") and marker.is_junction())):
+            return "unsafe"
+        return "present"
+    except (OSError, RuntimeError, ValueError):
+        # ACL denial, vanished provider, invalid path, broken parent, etc.
+        return "unsafe"
+
+
 def recovery_hold_present(root: Path) -> bool:
-    """Presence of EITHER marker blocks writers, regardless of its bytes."""
-    return any((root / path).exists() or (root / path).is_symlink()
+    """Fail closed when EITHER quarantine marker exists or cannot be ruled out."""
+    return any(_marker_state(root, path) != "missing"
                for path in (HOLD_REL, SENTINEL_REL))
 
 
@@ -43,11 +76,11 @@ def validate_recovery_hold(root: Path, expected_manifest_sha256: str | None = No
     """Read only: inspect both canonical records and optional expected snapshot ID."""
     p = root / HOLD_REL
     second = root / SENTINEL_REL
-    has_p = p.exists() or p.is_symlink()
-    has_s = second.exists() or second.is_symlink()
-    if not has_p and not has_s:
-        raise RecoveryFailure("RECOVERY_HOLD_MISSING")
-    if not has_p or not has_s:
+    p_state = _marker_state(root, HOLD_REL)
+    s_state = _marker_state(root, SENTINEL_REL)
+    if "unsafe" in (p_state, s_state):
+        raise RecoveryFailure("UNSAFE_PATH")
+    if p_state != "present" or s_state != "present":
         raise RecoveryFailure("RECOVERY_HOLD_MISSING")
     try:
         _safe_regular_file(root, p, missing_code="RECOVERY_HOLD_MISSING")

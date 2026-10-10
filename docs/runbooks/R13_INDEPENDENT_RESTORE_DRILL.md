@@ -22,6 +22,19 @@
 
 Run isolated synthetic drills on supported Windows NTFS including junctions/reparse, hardlink aliases outside the snapshot (reject even with equal hashes), same-byte replacement of a source file path during copy or digest (must refuse success), file permissions, Unicode paths, cross-volume behavior and abrupt interruption. The R13-F metadata test uses injected Win32 attributes and does not prove real placeholder behavior. On real Windows, record observed OFFLINE, REPARSE_POINT, RECALL_ON_OPEN and RECALL_ON_DATA_ACCESS values before an operation (where exposed); assert no silent hydration, and log any values not exposed by the API. For OneDrive and Google Drive use **test accounts/data only**, repeat with placeholders/unhydrated files, offline availability, simultaneous clients, conflict renames, delayed sync and deletion/reappearance. Record whether errors are reliably fail-closed; do not modify any user's actual synced evidence. The GitHub Windows runner only validates conventional Windows filesystem + junction conditions, not these live providers.
 
+## Optional synthetic-only assisted local restore
+
+The [R13-G operator rehearsal](../history/R13G_OPERATOR_PREFLIGHT_GATE.md)
+uses `profiles/secondbrain/synthetic_offline_drill.py` with a manually
+supplied `--expect-manifest-sha256`, separate `--checkpoint` path and
+one `--expect-capture ci-device/CAP-...` per synthetic Capture. It
+prechecks before creating a fresh restored root and verifies all links.
+The printed `restore_execution_seconds` is **not** disaster RTO.
+The inputs may still be co-controlled; this helper **does not** validate
+operator independence, physical source loss or actual RPO/RTO. It never
+replaces the numbered real-world steps above or the mandatory
+17-item NOT_RUN operator evidence checklist.
+
 ## Required evidence log (store sanitized technical results in GitHub)
 
 Use the [blank R13 operator acceptance record](R13_OPERATOR_EVIDENCE_RECORD_TEMPLATE.md)

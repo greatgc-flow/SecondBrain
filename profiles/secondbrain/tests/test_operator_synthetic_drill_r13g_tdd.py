@@ -68,7 +68,6 @@ def test_wrong_or_invalid_pin_fails_without_creating_root(tmp_path, bad):
 def test_valid_but_rolled_back_snapshot_cannot_use_newer_witness(tmp_path):
     origin = tmp_path / "first"
     produce_fixture(origin)
-    expected = recovered_fixture(tmp_path / "unrelated") if False else None
     other = tmp_path / "other"
     produce_fixture(other)
     proof = json.loads((other / "proof.json").read_bytes())

@@ -25,3 +25,14 @@ main CI 38059376828. Reviewer: none (owner = operator).
 Consequences: issue #11 stays OPEN; formal release stays `0.0.0` **NO-GO**
 (rows 11, 15–17 and real independence unmet). Any later real drill supersedes
 `WAIVED-SIM` rows; a failing real drill reopens them.
+
+## R13-R — row 16 bounded path-swap stress (WAIVED-SIM, low power)
+
+Windows NTFS, 150 `verify_backup` calls while a thread rename-swapped the snapshot directory
+between a good and a byte-flipped copy (a junction-swap variant is rejected up front as
+`UNSAFE_PATH`). Result: 0 crashes, 0 accepted tampered snapshots, all fail-closed; the
+tampered copy alone is rejected. **Limits:** swap rate and mixed-read windows were not
+measured and no success path was observed during the race, so this means no defect found,
+not TOCTOU safety. Row 16 stays `NOT_RUN` for acceptance; hostile parent-directory ABA and
+atomic directory-swap protection remain unsupported (see R13-K/L). Rows 11 (external
+fencing) and 15 (power loss) cannot be simulated here and stay `NOT_RUN`.

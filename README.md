@@ -1,6 +1,6 @@
 # Evidence-First SecondBrain
 
-**R13-G development snapshot — private repository, not a production evidence system.**
+**R13-H development snapshot — private repository, not a production evidence system.**
 
 ## Implemented vertical slices
 
@@ -11,6 +11,7 @@
 - **R11 local EvidenceObject record:** `brain object create|verify-link` writes and validates a content-addressed **unsealed** object metadata record plus an immutable **per-Capture** Observation/Acquisition/Custody linkage. Identical bytes share one object, but not their capture events. `brain object verify` remains a narrow, read-only byte and metadata check. **Nothing is legally sealed, externally certified or independently timestamped.**
 - **R12 synthetic local backup/restore:** `brain backup create|verify|restore` snapshots only complete R7–R11 local roots, uses an exact canonical manifest and last completion marker, and verifies all bytes/links on an isolated restore. **Independent offsite custody, Windows/cloud recovery and actual power-loss durability are not verified.**
 - **R13-A local recovery quarantine:** a restored root receives two canonical advisory hold/sentinel files **before** copying writer authority. Writes fail with `RECOVERY_HOLD`; read-only verifiers continue. `brain recovery status` reports local hold state. **Neither marker is secure distributed fencing, and Windows CI is not a cloud recovery drill.**
+- **R13-H detached-checkpoint path safety:** R10 caller-supplied checkpoint verification fails closed on file/ancestor cloud attributes, junctions, symlinks, hardlinks and same-byte leaf replacement. These static metadata checks do **not** authenticate independent custody or defeat hostile atomic TOCTOU. [R13-H gate](docs/history/R13H_CHECKPOINT_PATH_GATE.md).
 - **R13-G synthetic operator offline rehearsal:** requires separately entered manifest SHA-256, exact synthetic Capture roster and supplied checkpoint before creating a fresh quarantined restore root; verifies all links and measures only program execution time. Does **not** attest offsite custody or actual RPO/RTO. See [R13-G gate](docs/history/R13G_OPERATOR_PREFLIGHT_GATE.md).
 - **R13-F Windows cloud file attributes:** fail closed on detected reparse/offline/recall flags before file content reads; synthetic injected metadata CI does NOT certify OneDrive/Google Drive hydration or real provider behavior.
 - **R13-E leaf-name drift guard:** existing R12 backup source copy and preflight digest additionally compare source pathname file identity before and after each operation; reject same-bytes replaced leaf in create/verify/restore. This is a limited before/after check, not atomic directory race defense.

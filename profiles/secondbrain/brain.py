@@ -171,7 +171,7 @@ def main(argv=None):
             result, exit_code = {'status': 'FAIL', 'error_code': exc.code}, 3
     if args.json:
         if args.group == 'checkpoint' and args.action == 'export' and exit_code == 0:
-            print(_canon(result).decode('utf-8'))
+            sys.stdout.write(_canon(result).decode('utf-8'))  # exact canonical bytes: no newline/CRLF
         else:
             print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     elif exit_code == 0:

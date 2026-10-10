@@ -9,7 +9,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from brain_core.capture import capture_file
 from brain_core.writer import configure_writer, publish_capture
-from brain_core.custody import commit_capture, _event_path
+from brain_core.custody import commit_capture, _event_path, _canon
 from brain_core.checkpoint import CheckpointFailure, create_checkpoint, verify_checkpoint
 
 
@@ -153,3 +153,40 @@ def test_r13n_cli_export_redirect_is_verifiable_byte_for_byte(tmp_path):
     verify = subprocess.run([sys.executable, str(brain), 'checkpoint', 'verify', str(out), '--root', str(root), '--json'],
                             capture_output=True, text=True, check=False)
     assert verify.returncode == 0, verify.stdout
+
+
+@pytest.mark.parametrize('flags', [[], ['--json']])
+def test_red_cli_export_stdout_is_canonical_bytes(tmp_path, flags):
+    root, _, _ = prepared(tmp_path)
+    brain = Path(__file__).resolve().parents[1] / 'brain.py'
+    done = subprocess.run([sys.executable, str(brain), 'checkpoint', 'export', '--root', str(root)] + flags,
+                          capture_output=True)
+    assert done.returncode == 0, done.stderr
+    assert done.stdout == _canon(create_checkpoint(root))
+
+
+@pytest.mark.parametrize('flags', [[], ['--json']])
+def test_red_cli_export_out_is_canonical_and_no_overwrite(tmp_path, flags):
+    root, _, _ = prepared(tmp_path)
+    brain = Path(__file__).resolve().parents[1] / 'brain.py'
+    outside = tmp_path / '한글 external checkpoint.json'
+    command = [sys.executable, str(brain), 'checkpoint', 'export', '--root', str(root), '--out', str(outside)] + flags
+    done = subprocess.run(command, capture_output=True)
+    assert done.returncode == 0, done.stderr
+    assert outside.read_bytes() == _canon(create_checkpoint(root))
+    assert done.stdout == b''
+    outside.write_bytes(b'existing operator copy')
+    refused = subprocess.run(command, capture_output=True)
+    assert refused.returncode != 0
+    assert outside.read_bytes() == b'existing operator copy'
+
+
+def test_red_cli_export_out_inside_root_rejected(tmp_path):
+    root, _, _ = prepared(tmp_path)
+    brain = Path(__file__).resolve().parents[1] / 'brain.py'
+    inside = root / 'checkpoint.json'
+    done = subprocess.run([sys.executable, str(brain), 'checkpoint', 'export', '--root', str(root), '--out', str(inside)],
+                          capture_output=True)
+    assert done.returncode != 0
+    assert b'CHECKPOINT_INSIDE_ROOT' in done.stderr
+    assert not inside.exists()

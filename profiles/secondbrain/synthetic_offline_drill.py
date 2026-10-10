@@ -24,7 +24,7 @@ from brain_core.recovery import RecoveryFailure, recovery_status
 from brain_core.verify import IntegrityFailure, _strict_json, _safe_regular_file
 from brain_core.writer import WriterFailure, verify_publication
 
-_CAPTURE_ROSTER = re.compile(rf"{DEVICE}/{CAP}\\Z")
+_CAPTURE_ROSTER = re.compile(rf"{DEVICE}/{CAP}\Z")
 
 
 class DrillFailure(Exception):

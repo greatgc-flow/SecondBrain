@@ -43,7 +43,7 @@ jobs:
         run: python -m pip install 'jsonschema>=4.23,<5' 'rfc3339-validator>=0.1,<1' 'rfc8785==0.1.4'
       - name: Produce synthetic captures and snapshot; never upload source root
         working-directory: profiles/secondbrain
-        run: python ci_cross_runner_drill.py produce ../../ci-artifacts
+        run: python ci_cross_runner_drill.py produce "${{ github.workspace }}/ci-artifacts"
       - name: Upload ONLY short-lived synthetic fixture, including .ready/.complete
         uses: actions/upload-artifact@v4
         with:
@@ -80,4 +80,4 @@ jobs:
           path: ci-artifacts
       - name: Verify downloaded snapshot and restore WITHOUT producer source
         working-directory: profiles/secondbrain
-        run: python ci_cross_runner_drill.py consume ../../ci-artifacts
+        run: python ci_cross_runner_drill.py consume "${{ github.workspace }}/ci-artifacts"

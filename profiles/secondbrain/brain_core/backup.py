@@ -284,8 +284,12 @@ def _validate_manifest(snapshot: Path) -> dict[str, Any]:
     path = snapshot / "manifest.json"
     try:
         _safe_regular_file(snapshot, path, missing_code="INCOMPLETE_SNAPSHOT")
+        manifest_leaf = _regular_leaf_identity(path)
         manifest = _strict_json(path)
         if path.read_bytes() != _canon(manifest):
+            raise BackupFailure("SNAPSHOT_TAMPERED")
+        if _regular_leaf_identity(path) != manifest_leaf:
+            # Hash equality does not authorize a different ordinary inode.
             raise BackupFailure("SNAPSHOT_TAMPERED")
         if set(manifest) != {
             "schema_version", "kind", "capture_count", "object_count",
@@ -318,11 +322,15 @@ def _validate_manifest(snapshot: Path) -> dict[str, Any]:
             raise BackupFailure("SNAPSHOT_TAMPERED")
         marker = snapshot / ".complete"
         _safe_regular_file(snapshot, marker, missing_code="INCOMPLETE_SNAPSHOT")
+        marker_leaf = _regular_leaf_identity(marker)
         if marker.read_bytes() != (manifest["manifest_sha256"] + "\n").encode("ascii"):
             raise BackupFailure("SNAPSHOT_TAMPERED")
         listed, dirs = _walk_files(snapshot)
         wanted = {"manifest.json", ".complete"} | {"data/" + p for p in names}
         if set(listed) != wanted or set(dirs) != _expected_dirs(sorted(wanted)):
+            raise BackupFailure("SNAPSHOT_TAMPERED")
+        if (_regular_leaf_identity(path) != manifest_leaf or
+                _regular_leaf_identity(marker) != marker_leaf):
             raise BackupFailure("SNAPSHOT_TAMPERED")
         return manifest
     except BackupFailure:

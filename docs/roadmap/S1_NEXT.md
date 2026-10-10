@@ -86,6 +86,15 @@ Version 0.0.0 and **formal product release NO-GO** remain unchanged.
   still does not provide atomic security against hostile parent swaps or
   Windows filesystem aliasing; no independent custody claim.
 
+- **R13-K SNAPSHOT CONTROL-LEAF DRIFT:** snapshot `manifest.json` and
+  `.complete` must remain the same ordinary file identity throughout
+  canonical read and tree scan, even when an attacker substitutes a
+  different inode with the *same bytes*. Reject as `SNAPSHOT_TAMPERED`
+  before restore-root creation. See
+  [R13-K development gate](../history/R13K_SNAPSHOT_CONTROL_LEAF_GATE.md).
+  This still does not close hostile parent-directory ABA races, secure
+  descriptor-relative opens or independent offsite custody.
+
 ## Next operational gate: remaining R13 — independent storage/recovery drill and platform matrix
 
 Runbook: [operator-observed independent restore and Windows/cloud matrix](../runbooks/R13_INDEPENDENT_RESTORE_DRILL.md). **Not performed by CI; no operational PASS assertion.**

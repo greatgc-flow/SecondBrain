@@ -95,6 +95,8 @@ Version 0.0.0 and **formal product release NO-GO** remain unchanged.
   This still does not close hostile parent-directory ABA races, secure
   descriptor-relative opens or independent offsite custody.
 
+- **R13-L LOCAL QUARANTINE CONTINUITY:** both restored-root recovery markers must retain ordinary-file identity across JSON/canonical reads, even under byte-identical leaf replacement. See [R13-L gate](../history/R13L_RECOVERY_MARKER_LEAF_GATE.md). Synthetic CI, not independent custody or distributed writer fencing.
+
 ## Next operational gate: remaining R13 — independent storage/recovery drill and platform matrix
 
 Runbook: [operator-observed independent restore and Windows/cloud matrix](../runbooks/R13_INDEPENDENT_RESTORE_DRILL.md). **Not performed by CI; no operational PASS assertion.**

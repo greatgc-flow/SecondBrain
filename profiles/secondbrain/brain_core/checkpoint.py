@@ -8,11 +8,12 @@ from __future__ import annotations
 
 import hashlib
 import re
+import stat
 from pathlib import Path
 from typing import Any
 
 from .custody import CustodyFailure, _canon, _root_checked, _scan
-from .verify import IntegrityFailure, _strict_json
+from .verify import IntegrityFailure, _strict_json, _unsafe_windows_attributes
 
 HEX = re.compile(r'[0-9a-f]{64}\Z')
 FIELDS = frozenset({'schema_version', 'kind', 'event_count', 'tip_hash', 'checkpoint_sha256'})
@@ -41,21 +42,44 @@ def create_checkpoint(root: str | Path) -> dict[str, Any]:
         raise CheckpointFailure(exc.code) from exc
 
 
+def _external_leaf_identity(path: Path) -> tuple[int, ...]:
+    """Read ONLY metadata; block external aliases and Windows recall paths.
+
+    Before/after leaf stats guard ordinary replacement, not malicious
+    parent-directory ABA races or proofs of external custody.
+    """
+    try:
+        leaf = None
+        for current in (path, *path.parents):
+            info = current.lstat()  # do not traverse symlink/cloud targets
+            if (_unsafe_windows_attributes(info) or
+                    stat.S_ISLNK(info.st_mode) or
+                    (hasattr(current, 'is_junction') and current.is_junction())):
+                raise CheckpointFailure('UNSAFE_CHECKPOINT_PATH')
+            if current == path:
+                if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+                    raise CheckpointFailure('UNSAFE_CHECKPOINT_PATH')
+                leaf = info
+            elif not stat.S_ISDIR(info.st_mode):
+                raise CheckpointFailure('UNSAFE_CHECKPOINT_PATH')
+        assert leaf is not None
+        return (leaf.st_dev, leaf.st_ino, leaf.st_size, leaf.st_mtime_ns,
+                leaf.st_ctime_ns, leaf.st_nlink)
+    except (OSError, RuntimeError, ValueError) as exc:
+        raise CheckpointFailure('UNSAFE_CHECKPOINT_PATH') from exc
+
+
 def _external_path(root: Path, file: str | Path) -> Path:
-    """Reject paths inside root and symlinked paths. Not a proof of independence."""
+    """Reject aliases before resolving/reading; NOT custody independence."""
     path = Path(file).expanduser().absolute()
     if path == root or path.is_relative_to(root):
         raise CheckpointFailure('CHECKPOINT_INSIDE_ROOT')
+    _external_leaf_identity(path)
     try:
         canonical_root = root.resolve(strict=True)
         canonical_path = path.resolve(strict=True)
         if canonical_path == canonical_root or canonical_path.is_relative_to(canonical_root):
             raise CheckpointFailure('CHECKPOINT_INSIDE_ROOT')
-        for current in (path, *path.parents):
-            if current.is_symlink():
-                raise CheckpointFailure('UNSAFE_CHECKPOINT_PATH')
-        if not path.is_file():
-            raise CheckpointFailure('UNSAFE_CHECKPOINT_PATH')
     except (OSError, RuntimeError) as exc:
         raise CheckpointFailure('UNSAFE_CHECKPOINT_PATH') from exc
     return path
@@ -66,6 +90,7 @@ def verify_checkpoint(root: str | Path, checkpoint_path: str | Path) -> dict[str
     try:
         checked_root = _root_checked(root)
         file = _external_path(checked_root, checkpoint_path)
+        witness_before = _external_leaf_identity(file)
         try:
             record = _strict_json(file)
         except IntegrityFailure as exc:
@@ -81,7 +106,11 @@ def verify_checkpoint(root: str | Path, checkpoint_path: str | Path) -> dict[str
         body = _body(record['event_count'], record['tip_hash'])
         if hashlib.sha256(_canon(body)).hexdigest() != record['checkpoint_sha256']:
             raise CheckpointFailure('CHECKPOINT_MISMATCH')
-        if file.read_bytes() != _canon(record):
+        canonical_bytes_match = file.read_bytes() == _canon(record)
+        witness_after = _external_leaf_identity(file)
+        if witness_after != witness_before:
+            raise CheckpointFailure('UNSAFE_CHECKPOINT_PATH')
+        if not canonical_bytes_match:
             raise CheckpointFailure('CHECKPOINT_MALFORMED')
         chain = _scan(checked_root)
         count = record['event_count']

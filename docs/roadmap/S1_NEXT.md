@@ -60,6 +60,14 @@ Version 0.0.0 and **formal product release NO-GO** remain unchanged.
   No inference of actual custody independence, observed disaster RTO/RPO
   or external Writer fencing.
 
+- **R13-H DETACHED CHECKPOINT PATH SAFETY:** externally provided R10 witness
+  file and all ancestors are checked with lstat before following paths or
+  reading JSON: reject known Win32 OFFLINE/REPARSE/RECALL flags, links,
+  junctions and nonunique regular-file hardlinks. Repeat identity check
+  after canonical JSON reads to reject byte-identical leaf replacements.
+  [R13-H gate](../history/R13H_CHECKPOINT_PATH_GATE.md). This does not
+  prove independent witness custody or prevent hostile parent ABA races.
+
 ## Next operational gate: remaining R13 — independent storage/recovery drill and platform matrix
 
 Runbook: [operator-observed independent restore and Windows/cloud matrix](../runbooks/R13_INDEPENDENT_RESTORE_DRILL.md). **Not performed by CI; no operational PASS assertion.**

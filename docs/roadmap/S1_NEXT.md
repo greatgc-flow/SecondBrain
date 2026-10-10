@@ -52,6 +52,14 @@ Version 0.0.0 and **formal product release NO-GO** remain unchanged.
   genuine cloud placeholders/online-offline states remain unverified.
   See [R13-F gate](../history/R13F_WIN_CLOUD_ATTR_GATE.md).
 
+- **R13-G OPERATOR SYNTHETIC REHEARSAL:** `synthetic_offline_drill.py` accepts an
+  externally typed R12 manifest fingerprint, Capture IDs and checkpoint;
+  performs read-only preflight before creating a fresh quarantined restore
+  root, then checks R7–R11 links and records only elapsed program time.
+  CI-synthetic receipts are enforced. See [R13-G gate](../history/R13G_OPERATOR_PREFLIGHT_GATE.md).
+  No inference of actual custody independence, observed disaster RTO/RPO
+  or external Writer fencing.
+
 ## Next operational gate: remaining R13 — independent storage/recovery drill and platform matrix
 
 Runbook: [operator-observed independent restore and Windows/cloud matrix](../runbooks/R13_INDEPENDENT_RESTORE_DRILL.md). **Not performed by CI; no operational PASS assertion.**

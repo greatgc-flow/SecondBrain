@@ -30,6 +30,15 @@ python brain.py backup verify '/outside-root/snapshot-001' --json
 python brain.py backup restore '/outside-root/snapshot-001' --to-root '/another/빈 복구 루트' --json
 ```
 
+**R13-J path isolation:** Supply explicit source, snapshot and restore paths
+without any `..` parent component. `brain backup create|verify|restore`
+fail closed on such inputs even when the operating system could resolve
+them to an existing directory. This prevents a path alias from creating a
+backup *inside its own source root* or a restore *inside its snapshot*.
+Normalize your intended path explicitly before invoking the CLI. This
+static rule does not close hostile concurrent path swaps or every
+platform-specific directory alias.
+
 **R13-C optional separately recorded snapshot pin:** Pass the `manifest_sha256`
 returned by `backup create --json` through an independently trusted
 operator-controlled channel, then run both `backup verify` and

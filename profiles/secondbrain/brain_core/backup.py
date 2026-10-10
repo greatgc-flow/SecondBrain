@@ -47,7 +47,21 @@ class BackupFailure(Exception):
         super().__init__(code)
 
 
+def _absolute_without_parent_refs(path: str | Path, code: str) -> Path:
+    """Refuse dotdot BEFORE absolute() can normalize away an unsafe alias.
+
+    A lexical is_relative_to() check cannot protect root/snapshot separation
+    while parent-traversal components are present in the caller's path.
+    """
+    raw = Path(path).expanduser()
+    if ".." in raw.parts:
+        raise BackupFailure(code)
+    return raw.absolute()
+
+
 def _no_symlink_ancestors(path: Path, code: str) -> None:
+    if ".." in path.parts:
+        raise BackupFailure(code)
     for component in (path, *path.parents):
         try:
             try:
@@ -62,7 +76,7 @@ def _no_symlink_ancestors(path: Path, code: str) -> None:
 
 
 def _dir(path: str | Path, missing: str = "UNSAFE_PATH") -> Path:
-    p = Path(path).expanduser().absolute()
+    p = _absolute_without_parent_refs(path, missing)
     _no_symlink_ancestors(p, missing)
     if not p.is_dir():
         raise BackupFailure(missing)
@@ -70,7 +84,7 @@ def _dir(path: str | Path, missing: str = "UNSAFE_PATH") -> Path:
 
 
 def _destination(source: Path, destination: str | Path) -> Path:
-    p = Path(destination).expanduser().absolute()
+    p = _absolute_without_parent_refs(destination, "UNSAFE_DESTINATION")
     _no_symlink_ancestors(p, "UNSAFE_DESTINATION")
     if p == source or p.is_relative_to(source) or source.is_relative_to(p):
         raise BackupFailure("UNSAFE_DESTINATION")

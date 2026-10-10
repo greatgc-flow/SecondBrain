@@ -68,6 +68,15 @@ Version 0.0.0 and **formal product release NO-GO** remain unchanged.
   [R13-H gate](../history/R13H_CHECKPOINT_PATH_GATE.md). This does not
   prove independent witness custody or prevent hostile parent ABA races.
 
+- **R13-I RECOVERY MARKER PRESENCE:** local restored-root quarantine
+  now uses metadata-only `lstat` for both markers and their directories.
+  A denied stat, dangling/unsafe link, known Win32 offline/reparse/recall
+  attribute or nonregular marker is treated as HOLD/UNSAFE, never as
+  permission to write. This prevents `Path.exists()` false negatives from
+  bypassing the local advisory quarantine. See
+  [R13-I gate](../history/R13I_MARKER_PRESENCE_GATE.md). Two markers can still
+  be deleted by a malicious root owner; this is **not distributed fencing**.
+
 ## Next operational gate: remaining R13 — independent storage/recovery drill and platform matrix
 
 Runbook: [operator-observed independent restore and Windows/cloud matrix](../runbooks/R13_INDEPENDENT_RESTORE_DRILL.md). **Not performed by CI; no operational PASS assertion.**

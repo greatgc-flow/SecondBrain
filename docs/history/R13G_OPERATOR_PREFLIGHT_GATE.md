@@ -62,12 +62,42 @@ merely typing a value **is not proof of independence**.
   and detached digest mismatch, malformed pin, missing/altered checkpoint,
   incorrect/duplicate/malformed Capture roster, refusal to overwrite,
   CLI error JSON and quarantined root.
-- Exact failing run/green PR tip/merged-main six-job Windows and Ubuntu CI
-  results must be recorded **only after observed**.
-- **Development PASS** only if all six synthetic regression, producer and
-  opposite-OS consumer jobs finish SUCCESS, with the pinned actual RFC8785.
+- **RED first-tests commit** `8242bb014d4ff566077cb8adb6cb62bab867d49b`:
+  https://github.com/greatgc-flow/SecondBrain/actions/runs/38012661565
+  Expected **one collection/import error per OS** (operator helper not
+  yet implemented). Both CI fixture producer jobs were skipped.
+- **Initial failing implementation** `a3bc6d4748e5ce81d41276787a9bae5e3075893c`:
+  https://github.com/greatgc-flow/SecondBrain/actions/runs/38012688716
+  Windows **10 failed/219 passed**; Ubuntu **10 failed/217 passed,
+  2 Windows-only skipped**. Invalidly doubled regex end-of-string escape
+  rejected legitimate `ci-device/CAP-...` IDs; corrected in
+  `93a18eb30a1adf90a107d62846da14f9371b8b3c`.
+- **First GREEN code candidate**:
+  https://github.com/greatgc-flow/SecondBrain/actions/runs/38012726740
+  **SUCCESS ALL SIX JOBS**: Windows **229 passed in 146.24s**;
+  Ubuntu **227 passed, 2 Windows-only skipped in 39.14s**;
+  both cross-OS synthetic producer/consumer artifact restores passed.
+- **Final PR #24 tip**:
+  `a1b624403294db6f0990b75e86c7926d98ad566d`
+  https://github.com/greatgc-flow/SecondBrain/actions/runs/38012906061
+  **SUCCESS ALL SIX JOBS**: Windows **229 passed in 182.94s**,
+  Ubuntu **227 passed, 2 Windows-only skipped in 35.81s**;
+  both cross-OS transfer/restore jobs succeeded. Actual Python 3.12
+  `rfc8785==0.1.4` pinned in both test jobs.
+- **PR #24 squash merged to main**:
+  SHA `4b912ee3bf0cb052c5dc51474246a1c34b7bb45b`,
+  https://github.com/greatgc-flow/SecondBrain/commit/4b912ee3bf0cb052c5dc51474246a1c34b7bb45b
+- **Exact source-implementation merged-main CI**:
+  https://github.com/greatgc-flow/SecondBrain/actions/runs/38013233035
+  **SUCCESS ALL SIX JOBS**: Windows **229 passed in 113.51s**,
+  Ubuntu **227 passed, 2 Windows-only skipped in 37.21s**,
+  independent synthetic Windows→Ubuntu and Ubuntu→Windows restores
+  both passed; pinned real RFC8785 installed on both test OSes.
+  Run head equals `4b912ee3bf0cb052c5dc51474246a1c34b7bb45b`.
+- **R13-G synthetic operator-input preflight development gate PASS**.
   Neither separate CI jobs nor manually passed witness inputs establish
-  real independently governed custody.
+  real independently governed custody. Operational #11 and formal
+  release stay **NO-GO**. This gate closure changes documentation only.
 
 ## Mandatory separate real-world gate
 

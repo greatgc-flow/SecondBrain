@@ -1,6 +1,6 @@
 # Current documentation index (single source of truth)
 
-**Continue in a new chat:** inspect private GitHub latest `main` SHA, open PRs and Actions first, then follow [R13-I developer gate](history/R13I_MARKER_PRESENCE_GATE.md), [current roadmap](roadmap/S1_NEXT.md), and [R13 operational issue #11](https://github.com/greatgc-flow/SecondBrain/issues/11). Historical R10→R11 handoff prompts are not today's implementation SSOT.
+**Continue in a new chat:** start from [current R13-L → R13 operational handoff and one copy/paste prompt](handoff/2026-10-10_R13L_TO_R13_OPERATIONS.md), first verifying live GitHub `main` SHA, open PRs and Actions. Read [R13-L development gate](history/R13L_RECOVERY_MARKER_LEAF_GATE.md), [current roadmap](roadmap/S1_NEXT.md), and [open R13 operational issue #11](https://github.com/greatgc-flow/SecondBrain/issues/11). Historical R10→R11 handoff prompts are not current.
 
 1. **Current implementation:** `profiles/secondbrain/brain.py`, `brain_core/`, `schemas/`, `tests/`.
 2. **Current user guide:** `profiles/secondbrain/R13C_DETACHED_DIGEST_QUICKSTART.md` (optional manifest pin), `R13_RECOVERY_SCOPE.md` (recovery quarantine), then `R12_BACKUP_QUICKSTART.md` / `R12_SCOPE.md`, R11 and earlier guides.

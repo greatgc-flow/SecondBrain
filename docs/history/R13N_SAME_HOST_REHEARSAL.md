@@ -28,3 +28,16 @@ failed pre-fix; fix = `sys.stdout.write`. Main CI 38056892529 6/6.
 Open follow-ups (unverified/optional): PowerShell `>` may re-encode output (use
 cmd/bash redirect); `export` without `--json` is non-canonical; consider `--out <path>`.
 Still NOT_RUN: independent custody, cloud, fencing, real RPO/RTO, power loss. Release `0.0.0` NO-GO.
+
+## R13-P — `subst` drive-letter alias drill (simulation, NOT cross-volume)
+
+`subst S:` maps a folder of the SAME NTFS volume, so this is neither independent
+custody nor row-12 cross-volume. It exercises drive-letter/path-alias behaviour only.
+
+| Case | Result |
+|---|---|
+| `backup create --to S:\snap`; verify via `S:` and via the real path; restore from `S:` | all `LOCAL_*_VERIFIED_EXTERNAL_CUSTODY_UNVERIFIED`; `RECOVERED_READ_ONLY` |
+| Source via alias `T:`, snapshot written inside source via real path | `UNSAFE_PATH`, no dir left |
+| Restore target inside snapshot via `S:` alias | `UNSAFE_DESTINATION` |
+
+No defect found. Aliases removed afterwards. All 17 rows stay `NOT_RUN`; `0.0.0` NO-GO.

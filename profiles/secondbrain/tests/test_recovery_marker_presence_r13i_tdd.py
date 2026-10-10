@@ -67,11 +67,12 @@ def test_inaccessible_marker_is_assumed_present_and_blocks_mutation(tmp_path, mo
     assert recovery_hold_present(root)
     with pytest.raises(RecoveryFailure, match="UNSAFE_PATH"):
         recovery_status(root)
+    before = set((root / "00_Inbox/Drop/ci-device").iterdir())
     source = tmp_path / "purely synthetic.txt"
     source.write_bytes(b"test bytes")
     with pytest.raises(CaptureFailure, match="RECOVERY_HOLD"):
         capture_file(root, source, "ci-device", "synthetic")
-    assert not (root / "00_Inbox" / "Drop" / "ci-device").exists()
+    assert set((root / "00_Inbox/Drop/ci-device").iterdir()) == before
 
 
 class FlaggedStat:

@@ -3,6 +3,7 @@ import argparse
 import json
 import os
 import sys
+from pathlib import Path
 from brain_core.verify import IntegrityFailure, verify_object
 from brain_core.object import ObjectFailure, create_object, verify_object_link
 from brain_core.capture import CaptureFailure, capture_file, verify_capture
@@ -93,6 +94,7 @@ def main(argv=None):
     export = checkpoint_commands.add_parser('export', help='Print checkpoint JSON; operator must store it outside root')
     export.add_argument('--root', default=os.environ.get('SECOND_BRAIN_ROOT'))
     export.add_argument('--json', action='store_true')
+    export.add_argument('--out', help='Write canonical bytes to a NEW file outside root')
     check_anchor = checkpoint_commands.add_parser('verify', help='Compare chain with operator-supplied independent checkpoint')
     check_anchor.add_argument('checkpoint_path')
     check_anchor.add_argument('--root', default=os.environ.get('SECOND_BRAIN_ROOT'))
@@ -153,6 +155,18 @@ def main(argv=None):
             elif args.group == 'checkpoint':
                 result = (create_checkpoint(args.root) if args.action == 'export'
                           else verify_checkpoint(args.root, args.checkpoint_path))
+                if args.action == 'export' and args.out:
+                    try:
+                        path = Path(args.out).expanduser().resolve()
+                        root = Path(args.root).expanduser().resolve()
+                        if path == root or path.is_relative_to(root):
+                            raise CheckpointFailure('CHECKPOINT_INSIDE_ROOT')
+                        with path.open('xb') as handle:
+                            handle.write(_canon(result))
+                    except FileExistsError as exc:
+                        raise CheckpointFailure('CHECKPOINT_OUT_EXISTS') from exc
+                    except (OSError, RuntimeError, ValueError) as exc:
+                        raise CheckpointFailure('UNSAFE_CHECKPOINT_PATH') from exc
             elif args.group == 'custody':
                 if args.action == 'chain':
                     result = verify_chain(args.root)
@@ -169,11 +183,12 @@ def main(argv=None):
             exit_code = 0
         except (IntegrityFailure, CaptureFailure, WriterFailure, CustodyFailure, CheckpointFailure, ObjectFailure, BackupFailure, RecoveryFailure) as exc:
             result, exit_code = {'status': 'FAIL', 'error_code': exc.code}, 3
-    if args.json:
-        if args.group == 'checkpoint' and args.action == 'export' and exit_code == 0:
-            sys.stdout.write(_canon(result).decode('utf-8'))  # exact canonical bytes: no newline/CRLF
-        else:
-            print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+    if args.group == 'checkpoint' and args.action == 'export' and exit_code == 0:
+        if not args.out:
+            sys.stdout.buffer.write(_canon(result))
+            sys.stdout.buffer.flush()
+    elif args.json:
+        print(json.dumps(result, ensure_ascii=False, sort_keys=True))
     elif exit_code == 0:
         if args.group == 'recovery':
             print(result['status'] + ' (local advisory only, not a distributed fence)')

@@ -72,6 +72,16 @@ def _payloads(manifest_sha256: str) -> tuple[dict, dict]:
     )
 
 
+def _marker_file_identity(path: Path) -> tuple[int, ...]:
+    try:
+        info = path.lstat()
+        if (_unsafe_windows_attributes(info) or not stat.S_ISREG(info.st_mode) or info.st_nlink != 1):
+            raise RecoveryFailure("UNSAFE_PATH")
+        return (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns, info.st_nlink)
+    except OSError as exc:
+        raise RecoveryFailure("UNSAFE_PATH") from exc
+
+
 def validate_recovery_hold(root: Path, expected_manifest_sha256: str | None = None) -> dict:
     """Read only: inspect both canonical records and optional expected snapshot ID."""
     p = root / HOLD_REL
@@ -85,6 +95,7 @@ def validate_recovery_hold(root: Path, expected_manifest_sha256: str | None = No
     try:
         _safe_regular_file(root, p, missing_code="RECOVERY_HOLD_MISSING")
         _safe_regular_file(root, second, missing_code="RECOVERY_HOLD_MISSING")
+        identity_before = (_marker_file_identity(p), _marker_file_identity(second))
         value = _strict_json(p)
         other = _strict_json(second)
         from .custody import _canon  # lazy import: writer/custody import each other
@@ -93,6 +104,8 @@ def validate_recovery_hold(root: Path, expected_manifest_sha256: str | None = No
         if (value != pair[0] or other != pair[1] or
             p.read_bytes() != _canon(value) or second.read_bytes() != _canon(other) or
             (expected_manifest_sha256 is not None and digest != expected_manifest_sha256)):
+            raise RecoveryFailure("RECOVERY_HOLD_INVALID")
+        if identity_before != (_marker_file_identity(p), _marker_file_identity(second)):
             raise RecoveryFailure("RECOVERY_HOLD_INVALID")
         return {"status": "RECOVERED_READ_ONLY", "writer_active": False,
                 "manifest_sha256": digest,

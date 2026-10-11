@@ -22,6 +22,12 @@
 
 Run isolated synthetic drills on supported Windows NTFS including junctions/reparse, hardlink aliases outside the snapshot (reject even with equal hashes), same-byte replacement of a source file path during copy or digest (must refuse success), file permissions, Unicode paths, cross-volume behavior and abrupt interruption. The R13-F metadata test uses injected Win32 attributes and does not prove real placeholder behavior. On real Windows, record observed OFFLINE, REPARSE_POINT, RECALL_ON_OPEN and RECALL_ON_DATA_ACCESS values before an operation (where exposed); assert no silent hydration, and log any values not exposed by the API. For OneDrive and Google Drive use **test accounts/data only**, repeat with placeholders/unhydrated files, offline availability, simultaneous clients, conflict renames, delayed sync and deletion/reappearance. Record whether errors are reliably fail-closed; do not modify any user's actual synced evidence. The GitHub Windows runner only validates conventional Windows filesystem + junction conditions, not these live providers.
 
+Google Drive for desktop was observed reporting `st_nlink == 0` on Windows.
+It is an unsupported DIRECT snapshot source: keep the R13-D single-link guard
+and stage a copy to local disk before verification/restore with the retained
+manifest digest. See [R13-S partial observation and policy A](../history/R13S_GDRIVE_NLINK_OBSERVATION.md);
+row 14 remains `NOT_RUN` / **NO-GO**.
+
 ## R13-H detached witness path gate
 
 Before using the R10 checkpoint supplied to either the R13-G helper or

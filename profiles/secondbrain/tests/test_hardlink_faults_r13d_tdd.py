@@ -88,6 +88,38 @@ def test_snapshot_hardlinked_data_or_metadata_refused(tmp_path, which):
     assert not target.exists()
 
 
+def test_snapshot_zero_link_count_refused_before_restore_destination(tmp_path, monkeypatch):
+    folder = make_snapshot(tmp_path)
+    verified = verify_backup(folder)
+    manifest = json.loads((folder / "manifest.json").read_bytes())
+    file = folder / "data" / manifest["files"][0]["path"]
+    assert file.is_file()
+    original_lstat = Path.lstat
+
+    class ZeroLinkStat:
+        st_nlink = 0
+
+        def __init__(self, result):
+            self.result = result
+
+        def __getattr__(self, name):
+            return getattr(self.result, name)
+
+    def zero_link_lstat(path, *args, **kwargs):
+        result = original_lstat(path, *args, **kwargs)
+        return ZeroLinkStat(result) if Path(path) == file else result
+
+    monkeypatch.setattr(Path, "lstat", zero_link_lstat)
+    target = tmp_path / "zero-link-restore-not-created"
+    with pytest.raises(BackupFailure) as verify_error:
+        verify_backup(folder)
+    assert verify_error.value.code == "UNSAFE_PATH"
+    with pytest.raises(BackupFailure) as restore_error:
+        restore_backup(folder, target, expected_manifest_sha256=verified["manifest_sha256"])
+    assert restore_error.value.code == "UNSAFE_PATH"
+    assert not target.exists()
+
+
 def test_existing_restored_root_data_hardlink_never_idempotently_accepted(tmp_path):
     folder = make_snapshot(tmp_path)
     target = tmp_path / "restored"

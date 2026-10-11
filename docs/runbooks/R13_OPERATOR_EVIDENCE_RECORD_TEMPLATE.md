@@ -46,7 +46,7 @@ reviewer's decision. Never infer one PASS from another.
 | 11 | Source and restored Writer cannot both become active (external fencing) | NOT_RUN | |
 | 12 | Windows NTFS junction/reparse/permissions/cross-volume fault drills | NOT_RUN | |
 | 13 | Genuine OneDrive offline/placeholder/rename/delete/conflict drills | NOT_RUN | |
-| 14 | Genuine Google Drive offline/placeholder/rename/delete/conflict drills | NOT_RUN | |
+| 14 | Genuine Google Drive offline/placeholder/rename/delete/conflict drills | NOT_RUN | [R13-S partial observation](../history/R13S_GDRIVE_NLINK_OBSERVATION.md): zero links; stage to local disk; offline/independent custody/remote sync unverified; NO-GO. |
 | 15 | Power-loss/interruption/durable completion behavior on real media | NOT_RUN | |
 | 16 | Hostile concurrent path-swap / unsupported conditions documented | NOT_RUN | |
 | 17 | Independent reviewer repeated evidence and accepted limitations | NOT_RUN | |

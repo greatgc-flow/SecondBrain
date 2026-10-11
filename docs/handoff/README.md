@@ -1,6 +1,7 @@
 # Current handoff / new-chat entry
 
 **LATEST — [R13-L → R13 operational handoff (2026-10-10)](2026-10-10_R13L_TO_R13_OPERATIONS.md).** This file holds the copy/paste prompt, exact verified main+CI baseline, implemented R7–R13-L slices, 17-item operational NO-GO gate, links and safe next-chat working rules. Always check live GitHub first.
+Supplements (in order): [R13-R handoff](2026-10-10_R13R_TO_REAL_DRILL.md), then [R13-S Google Drive observation](../history/R13S_GDRIVE_NLINK_OBSERVATION.md) — Google Drive for desktop reports `st_nlink` 0; direct verify/restore rejected by the R13-D guard by decision; stage to a local disk first; row 14 still `NOT_RUN`.
 
 ## Historical handoffs (do NOT roll back)
 

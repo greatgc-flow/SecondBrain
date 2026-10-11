@@ -8,3 +8,6 @@
 - Status: owner waived independence for same-host/`subst` drills (`WAIVED-SIM` ≠ PASS). Rows 11, 15–17 `NOT_RUN`; 13–14 `SKIPPED_BY_OWNER`. Issue #11 OPEN; release `0.0.0` **NO-GO**.
 - Next (needs real resources): external USB disk → row 12 cross-volume, 03/04; second device/account → 01/03/05/11; reviewer → 17; later OneDrive/Google Drive test accounts → 13/14. A real run supersedes `WAIVED-SIM`.
 - Ops notes: on Windows use cmd/bash (not PowerShell `>`) or `--out` for checkpoints; `docs/history/` is gitignored, add new files with `git add -f`; keep background shells light (a low-memory event killed two watchers).
+
+> Supplement: [R13-S Google Drive observation](../history/R13S_GDRIVE_NLINK_OBSERVATION.md).
+> Google Drive for desktop reports `st_nlink` 0; direct verify/restore rejected by the R13-D guard by decision; stage to a local disk first; row 14 still `NOT_RUN`.

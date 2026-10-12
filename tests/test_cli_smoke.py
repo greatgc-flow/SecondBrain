@@ -29,7 +29,10 @@ def test_cli_help_lists_commands(capsys: pytest.CaptureFixture[str]) -> None:
         assert cmd in captured.out
 
 
-@pytest.mark.parametrize("cmd", SUBCOMMANDS)
+STUB_COMMANDS: tuple[str, ...] = ("find", "open", "verify", "backup", "restore")
+
+
+@pytest.mark.parametrize("cmd", STUB_COMMANDS)
 def test_cli_stub_exits_2(cmd: str, capsys: pytest.CaptureFixture[str]) -> None:
     """Test that each stub subcommand prints 'not implemented' and exits with code 2."""
     with pytest.raises(SystemExit) as exc_info:
@@ -40,15 +43,41 @@ def test_cli_stub_exits_2(cmd: str, capsys: pytest.CaptureFixture[str]) -> None:
     assert "not implemented" in output
 
 
-@pytest.mark.parametrize("cmd", SUBCOMMANDS)
+@pytest.mark.parametrize("cmd", STUB_COMMANDS)
 def test_cli_stub_with_flags_exits_2(cmd: str, capsys: pytest.CaptureFixture[str]) -> None:
-    """Test that subcommands work with --root and --json flags and exit 2."""
+    """Test that subcommands work with --root and --json flags and exit 2 with JSON envelope."""
+    import json
+
     with pytest.raises(SystemExit) as exc_info:
         main(["--root", "my_store", "--json", cmd])
     assert exc_info.value.code == 2
     captured = capsys.readouterr()
-    output = captured.out + captured.err
-    assert "not implemented" in output
+    data = json.loads(captured.out)
+    assert data["status"] == "error"
+    assert "not implemented" in data["error"]
+    assert data["results"] == []
+    assert len(data["errors"]) >= 1
+
+
+def test_cli_capture_no_target_exits_2(capsys: pytest.CaptureFixture[str]) -> None:
+    """Test that invoking sb capture without a target exits with code 2."""
+    with pytest.raises(SystemExit) as exc_info:
+        main(["capture"])
+    assert exc_info.value.code == 2
+
+
+def test_cli_parse_failure_honours_json(capsys: pytest.CaptureFixture[str]) -> None:
+    """Test that argparse failures honour --json and include results in error envelope."""
+    import json
+
+    with pytest.raises(SystemExit) as exc_info:
+        main(["--json", "capture"])
+    assert exc_info.value.code == 2
+    captured = capsys.readouterr()
+    data = json.loads(captured.out)
+    assert data["status"] == "error"
+    assert data["results"] == []
+    assert len(data["errors"]) >= 1
 
 
 def test_cli_no_args_exits_2(capsys: pytest.CaptureFixture[str]) -> None:
@@ -56,3 +85,4 @@ def test_cli_no_args_exits_2(capsys: pytest.CaptureFixture[str]) -> None:
     with pytest.raises(SystemExit) as exc_info:
         main([])
     assert exc_info.value.code == 2
+

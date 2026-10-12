@@ -1,11 +1,21 @@
-# Current documentation index (single source of truth)
+# Documentation map
 
-**Continue in a new chat:** start from [current R13-L → R13 operational handoff and one copy/paste prompt](handoff/2026-10-10_R13L_TO_R13_OPERATIONS.md), first verifying live GitHub `main` SHA, open PRs and Actions. Read [R13-L development gate](history/R13L_RECOVERY_MARKER_LEAF_GATE.md), [current roadmap](roadmap/S1_NEXT.md), and [open R13 operational issue #11](https://github.com/greatgc-flow/SecondBrain/issues/11). Historical R10→R11 handoff prompts are not current.
+The project restarted on 2026-10-12. Start with the proposed v0.1 contract below.
+These documents define intended behaviour; they do not assert that the new CLI is implemented.
 
-1. **Current implementation:** `profiles/secondbrain/brain.py`, `brain_core/`, `schemas/`, `tests/`.
-2. **Current user guide:** `profiles/secondbrain/R13C_DETACHED_DIGEST_QUICKSTART.md` (optional manifest pin), `R13_RECOVERY_SCOPE.md` (recovery quarantine), then `R12_BACKUP_QUICKSTART.md` / `R12_SCOPE.md`, R11 and earlier guides.
-3. **Current release facts:** `docs/history/R13I_MARKER_PRESENCE_GATE.md` (local marker fail-closed), `R13H_CHECKPOINT_PATH_GATE.md` (detached R10 checkpoint path alias/placeholder checks, NOT custody authentication), `R13G_OPERATOR_PREFLIGHT_GATE.md` (caller-supplied synthetic witness and local restore, NOT offsite provenance), `R13F_WIN_CLOUD_ATTR_GATE.md` (Win32 offline/reparse/recall attribute injection, NOT real cloud), `R13E_LEAF_DRIFT_GATE.md` (same-bytes leaf replacement before/after copy and hash, not atomic TOCTOU), `R13D_HARDLINK_GATE.md` (static hardlink refusal and limits), `R13C_DETACHED_DIGEST_GATE.md` (operator-supplied manifest digest, not authenticated independently), `R13B_CROSS_RUNNER_GATE.md` (synthetic cross-OS transfer) and `R13_DEV_GATE.md` (local quarantine), then `R12_GATE.md`. Live run/SHA verification is authoritative. Operational R13 #11 is **still open**.
-4. **Next action:** `docs/roadmap/S1_NEXT.md`: independently controlled restore drill, external writer fencing, and real platform/cloud fault tests.
-5. **Archived design and generic kit:** `docs/reference/README.md` and `docs/reference/SOURCE_INVENTORY.json` (read-only historical references, not code generation instructions and not an alternate normative spec).
+| Document | Purpose |
+| --- | --- |
+| [design.md](design.md) | Product, six-command walkthrough, files/receipts, search limits, recovery, failures and acceptance. |
+| [decisions.md](decisions.md) | Eight short ADRs explaining the restart and deliberately small scope. |
+| [Repository README](../README.md) | Restart pointer followed by the frozen earlier project description. |
 
-Documentation that asserts a product feature is implemented must cite a source file, a runnable test and a candidate-bound CI result. **Never interpret historical requirements or planned test catalog IDs as implemented tests.**
+The controlling decision record is the owner's `sb_plan_v21.md` (2026-10-12, very simple first).
+Supporting discussion: `sb_law.md`, `sb_design_cx.out`, `sb_design_ag.out`, `sb_vote_cx.out` and `sb_vote_ag.out`.
+These inputs are external discussion files, not additional product specifications.
+`sb_plan_v2.md` was referenced by the decision record but unavailable when these docs were written; v2.1 controls scope.
+
+Earlier R7–R13 documentation, handoffs, roadmaps and reference kits remain frozen historical material under `legacy-r13-final`.
+Their implementation claims and next-step instructions apply to that earlier line, not the restarted v0.1.
+No files are moved in M0a. Read the new design and decisions before consulting old test cases.
+
+Later ideas are listed without design in [design.md](design.md#later); they are outside v0.1 acceptance.

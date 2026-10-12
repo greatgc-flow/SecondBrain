@@ -1,3 +1,4 @@
+The project was restarted on 2026-10-12; the earlier R7-R13 line is frozen reference material (tag legacy-r13-final); start at docs/design.md.
 # Evidence-First SecondBrain
 
 **R13-L development snapshot — private repository, not a production evidence system.**

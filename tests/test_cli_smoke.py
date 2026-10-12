@@ -29,7 +29,7 @@ def test_cli_help_lists_commands(capsys: pytest.CaptureFixture[str]) -> None:
         assert cmd in captured.out
 
 
-STUB_COMMANDS: tuple[str, ...] = ("find", "backup", "restore")
+STUB_COMMANDS: tuple[str, ...] = ("backup", "restore")
 
 
 @pytest.mark.parametrize("cmd", STUB_COMMANDS)

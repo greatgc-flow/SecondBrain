@@ -82,13 +82,44 @@ Verify checks receipt format, referenced hashes and object names; reports missin
 
 ## Search
 
-SQLite FTS5 searches names, receipt context and extracted UTF-8 `.txt`/`.md` and text-based PDF text (`pypdf`).
-Start with `unicode61` tokenization; automatically rebuild missing/stale indexes from plain files.
-Return acquisition ID, name and snippet; report extraction failures while retaining filename/context search.
-No OCR, embeddings, semantic matching or Korean morphological analyzer in v0.1.
-Korean spacing and particles affect matches; partial words and two-character substrings are not guaranteed hits.
-Document a Korean benchmark: names, spaced/unspaced phrases, particles, two-character queries, expected/actual hits and extraction failures.
-Report measured limits rather than universal Korean support; scanned PDFs have no extracted text.
+Derived SQLite FTS5 index at `<root>/cache/index.db` searches names, receipt context, and extracted text.
+The database is rebuildable from plain files; plain objects and receipts stay the authoritative source of truth, and deleting `index.db` loses nothing.
+`sb find` builds and updates the index incrementally from receipts and objects, extracting only unseen `(sha256, ext, extractor_version)` combinations.
+`sb find --reindex` rebuilds the index into a temporary file and atomically replaces `index.db`.
+Indexing extracts text outside `WriterLock` from a snapshot of receipts, taking the lock only for short index commits or atomic replaces so extraction never blocks concurrent capture.
+The index and cache never follow links: `cache/` and `index.db` (and temporary DB files) that are reparse points, symlinks, or hardlinks are rejected before any write, preventing alias attacks against objects or receipts. Index writes occur strictly under `<root>/cache`.
+
+Supported text extractors and safety limits:
+- Input size caps: plain text 32 MiB, PDF 64 MiB, EML/HTML 16 MiB. Oversize files yield status `failed` with limit notice and remain findable by name.
+- Output text cap: maximum 2 MiB of indexed text per file.
+- Unsupported formats: payloads are never read from disk (name-only rows, status `no_text`).
+- Plain text (`.txt`, `.md`, `.csv`, `.json`, `.log`): UTF-8 with BOM, UTF-16 heuristics (NUL byte pattern, Hangul byte range, trial decode scoring) evaluated before UTF-8/CP949 fallback, and low-confidence decodings flagged in extraction notes.
+- Text PDFs via `pypdf`: extracted in an isolated worker child process with a 30-second wall-clock timeout, 1000 pages cap, and 32 MiB stream size cap. Encrypted, corrupt, oversize, or timed-out PDFs report `failed(reason)` and remain findable by name.
+- Email (`.eml`): parsed via stdlib `email` (headers and plain/html body); undecodable/invalid charsets or malformed text with replacement characters yield `ok_with_warnings` (with note) or `failed` rather than plain `ok`.
+- HTML (`.html`, `.htm`): tag stripping via stdlib `html.parser` (ignoring script/style tags).
+- Extraction cache key: `(sha256, format class, extractor_version)`. Capturing identical bytes under another format class or changing extractor version re-extracts; same-ID metadata changes and successful retries update persisted rows (upsert by receipt ID, replacing text/status); recoverable failures (`failed`) are retried on subsequent searches.
+
+Korean tokenization, substring matching, and normalisation:
+- All text, names, and queries are normalised to Unicode NFC, correctly handling decomposed NFD input from macOS.
+- Probes SQLite FTS5 and trigram tokenizer capabilities at startup. If trigram is available, combines `unicode61` for word tokens and `trigram` for substring matching (matching 3+ character Korean queries and particle-attached words without spaces).
+- If trigram tokenizer is missing, automatically falls back to SQL `LIKE` substring search with a clear stderr notice, exit 0, and JSON field `index_mode: "like"` (or `"trigram"` when available).
+- Queries shorter than 3 characters (< 3 chars, such as 1-2 character Korean queries or acronyms) automatically use SQL `LIKE` substring matching.
+- Match snippets wrap matched query terms in highlight markers `[...]`.
+
+Staleness, integrity, and failure behaviour:
+- Stale index is detected by comparing `(receipt_id, sha256, ext_class, extractor_version)` rows against database rows (not receipt IDs only), rebuilding or upserting if extractor versions, format classes, receipts, or metadata changed.
+- Validates `schema_version` and FTS table health; SQLite `OperationalError` and MATCH errors are reported (exit 2) rather than swallowed.
+- Malformed receipt files or missing referenced objects are reported in `errors` with exit 1.
+- Successful JSON output always carries `status: "ok"`, `index_mode`, `results`, and `errors: []`.
+
+Documented limits:
+- Input caps: text 32 MiB, PDF 64 MiB, EML/HTML 16 MiB; output cap: 2 MiB indexed text per file; PDF worker timeout: 30 seconds; max PDF pages: 1000; max PDF stream size: 32 MiB.
+- Where the OS offers no hard memory limit (such as Windows, which lacks POSIX resource.setrlimit): honest residual risk is that pypdf may use memory proportional to the file; mitigation = input size cap + page cap + stream cap + timeout + child process isolation + name-only fallback.
+- Queries under 3 characters (or systems without trigram) use SQL `LIKE` fallback scanning over normalised text rather than trigram index acceleration.
+- No morphological analyzer (Mecab/Komoran/etc.) is included: compound nouns or grammatical conjugations without direct substring overlap will not match (e.g. irregular verb conjugations).
+- No OCR in v0.1: scanned, blank, or image-only PDFs yield no extracted text (status `no_text`) and are findable only by name and receipt context.
+- Corrupted or encrypted files report `failed` status with the underlying error reason and remain findable by name.
+- Non-text binary formats (e.g. images, audio, video, proprietary formats) are indexed by filename and receipt context only without reading payload bytes.
 
 ## Backup and restore
 

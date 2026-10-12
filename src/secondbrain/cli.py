@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sqlite3
 import sys
 from functools import partial
 from pathlib import Path
@@ -20,6 +21,7 @@ from secondbrain.errors import (
 from secondbrain.lock import WriterLock
 from secondbrain.open_cmd import open_item
 from secondbrain.root import bootstrap_root, resolve_root, validate_root
+from secondbrain import search
 from secondbrain.verify import verify_repository
 
 SUBCOMMANDS: tuple[str, ...] = (
@@ -32,7 +34,6 @@ SUBCOMMANDS: tuple[str, ...] = (
 )
 
 STUB_COMMANDS: tuple[str, ...] = (
-    "find",
     "backup",
     "restore",
 )
@@ -141,6 +142,31 @@ def build_parser(json_mode: bool = False) -> argparse.ArgumentParser:
         "verify",
         help="Check all receipts and objects",
         parents=[common],
+    )
+
+    find_parser = subparsers.add_parser(
+        "find",
+        help="Search names, context and supported text",
+        parents=[common],
+    )
+    find_parser.add_argument(
+        "text",
+        type=str,
+        nargs="?",
+        default="",
+        help="Search query text",
+    )
+    find_parser.add_argument(
+        "--reindex",
+        action="store_true",
+        default=False,
+        help="Rebuild index from scratch",
+    )
+    find_parser.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help="Maximum number of results to return",
     )
 
     for name in STUB_COMMANDS:
@@ -474,6 +500,151 @@ def main(argv: Sequence[str] | None = None) -> int:
                 prefix="Integrity Error: ",
             )
         except (UsageIOError, OSError, IOError) as exc:
+            emit_error(
+                is_json=is_json,
+                error=str(exc),
+                path="",
+                results=[],
+                exit_code=2,
+            )
+
+    elif args.command == "find":
+        cli_root = getattr(args, "root", None)
+        try:
+            root = resolve_root(cli_root)
+            validate_root(root)
+        except RootRefusedError as exc:
+            emit_error(
+                is_json=is_json,
+                error=str(exc),
+                path=str(cli_root or ""),
+                results=[],
+                exit_code=2,
+                prefix="",
+            )
+        except (UsageIOError, OSError, IOError) as exc:
+            emit_error(
+                is_json=is_json,
+                error=str(exc),
+                path=str(cli_root or ""),
+                results=[],
+                exit_code=2,
+            )
+
+        limit = getattr(args, "limit", None)
+        if limit is not None and limit <= 0:
+            emit_error(
+                is_json=is_json,
+                error=f"--limit must be greater than 0, got {limit}",
+                path="",
+                results=[],
+                exit_code=2,
+            )
+
+        query = getattr(args, "text", "") or ""
+        reindex = getattr(args, "reindex", False)
+        if not query and not reindex:
+            emit_error(
+                is_json=is_json,
+                error="Search query text is required unless --reindex is specified",
+                path="",
+                results=[],
+                exit_code=2,
+            )
+
+        try:
+            if reindex and not query:
+                index_mode, integrity_errors = search.ensure_index_current(root, force_reindex=True)
+                if integrity_errors:
+                    emit_error(
+                        is_json=is_json,
+                        error=integrity_errors[0]["error"],
+                        path=integrity_errors[0]["path"],
+                        results=[],
+                        errors=integrity_errors,
+                        exit_code=1,
+                        prefix="Integrity Error: ",
+                    )
+                if index_mode == "like":
+                    print(
+                        "Notice: SQLite trigram tokenizer not available; falling back to LIKE search.",
+                        file=sys.stderr,
+                    )
+                if is_json:
+                    print(
+                        json.dumps(
+                            {
+                                "status": "ok",
+                                "index_mode": index_mode,
+                                "results": [],
+                                "errors": [],
+                            },
+                            indent=2,
+                        )
+                    )
+                else:
+                    print("Index rebuilt successfully.")
+                sys.exit(0)
+
+            results, index_mode, integrity_errors = search.find_items(
+                root=root,
+                query=query,
+                limit=limit,
+                force_reindex=reindex,
+            )
+
+            if integrity_errors:
+                emit_error(
+                    is_json=is_json,
+                    error=integrity_errors[0]["error"],
+                    path=integrity_errors[0]["path"],
+                    results=[],
+                    errors=integrity_errors,
+                    exit_code=1,
+                    prefix="Integrity Error: ",
+                )
+
+            if index_mode == "like":
+                print(
+                    "Notice: SQLite trigram tokenizer not available; falling back to LIKE search.",
+                    file=sys.stderr,
+                )
+
+            if is_json:
+                out = {
+                    "status": "ok",
+                    "index_mode": index_mode,
+                    "results": results,
+                    "errors": [],
+                }
+                print(json.dumps(out, indent=2))
+            else:
+                for res in results:
+                    err_suffix = (
+                        f": {res['extraction_error']}"
+                        if res.get("extraction_error")
+                        else ""
+                    )
+                    print(
+                        f"{res['id']}  {res['name']}  {res['snippet']}  [{res['extraction_status']}{err_suffix}]"
+                    )
+            sys.exit(0)
+
+        except LockError as exc:
+            emit_error(
+                is_json=is_json,
+                error=str(exc),
+                path=str(root),
+                results=[],
+                exit_code=2,
+            )
+        except (
+            UsageIOError,
+            OSError,
+            IOError,
+            sqlite3.OperationalError,
+            sqlite3.DatabaseError,
+        ) as exc:
             emit_error(
                 is_json=is_json,
                 error=str(exc),

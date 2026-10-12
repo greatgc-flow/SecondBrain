@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "secondbrain"
+version = "0.0.1"
+description = "Personal knowledge and evidence preservation tool"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pypdf",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-xdist",
+    "pytest-timeout",
+]
+
+[project.scripts]
+sb = "secondbrain.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+norecursedirs = ["legacy", ".git", "venv", "build", "dist"]

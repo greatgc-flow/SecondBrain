@@ -76,6 +76,7 @@ verified cap-20261012T000000Z-ba7816bf; opened D:\Recovered\cache\open\cap-20261
 Capture a file or recursively capture each regular file in a folder without touching the source.
 Unreadable/locked files produce per-file errors and nonzero exit; completed captures remain valid.
 Open checks the hash before copying and launching a working copy; edits never change the object.
+The staged working copy is set read-only (os.chmod / FILE_ATTRIBUTE_READONLY) before launch as a convenience marker to deter accidental modification, not a security boundary.
 `sb open <id> --print-path` only prints the verified working-copy path for headless/AI use.
 Verify checks receipt format, referenced hashes and object names; reports missing, corrupt and orphan files.
 
@@ -129,8 +130,10 @@ A single-writer lock prevents concurrent publication; backup holds it to keep th
 Atomic publish: write a temp file on the TARGET volume, flush and close, then atomic replace; publish object BEFORE receipt.
 Retry Windows sharing violations with backoff (sync clients/indexers briefly lock files), then fail closed if still locked.
 Interruptions preserve completed acquisitions; a leftover temp file is harmless and removed on the next run.
-Atomic publication does not promise protection from every hardware/power-loss failure; verify exposes inconsistencies.
 Hash mismatch, missing bytes, malformed receipts or orphan files exit 1; non-empty restore targets and IO/lock errors exit 2.
+In case of mixed IO and integrity failures during verify, both categories are reported; exit code 2 takes precedence if any IO error occurs (incomplete or locked reads prevent conclusive verification), else exit code 1.
+Verify is a point-in-time check and should be re-run when capture is idle. When a writer lock is observed or the scan was not stable during verification, unreferenced objects are reported with severity `possible_concurrent_activity` (exit 0 for that class alone, listed in JSON and text) rather than false orphan integrity failures.
+
 
 ## Non-claims and acceptance
 

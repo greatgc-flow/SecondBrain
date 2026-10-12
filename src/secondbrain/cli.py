@@ -130,6 +130,12 @@ def build_parser(json_mode: bool = False) -> argparse.ArgumentParser:
         default=False,
         help="Print verified working-copy path without launching viewer",
     )
+    open_parser.add_argument(
+        "--force-launch",
+        action="store_true",
+        default=False,
+        help="Force launching executable or script file associations",
+    )
 
     subparsers.add_parser(
         "verify",
@@ -371,6 +377,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                         f"OK receipts={report['receipts']} objects={report['objects']} "
                         f"missing=0 corrupt=0 orphan=0"
                     )
+                    for ca in report.get("concurrent_activity", []):
+                        severity = ca.get("severity", "possible_concurrent_activity")
+                        print(f"  [{severity}] {ca.get('path', ca.get('id'))}: {ca.get('message', '')}")
                 sys.exit(0)
             else:
                 if is_json:
@@ -382,7 +391,13 @@ def main(argv: Sequence[str] | None = None) -> int:
                     )
                     for prob in report.get("problems", []):
                         print(f"  [{prob['code']}] {prob['path']}: {prob['error']}", file=sys.stderr)
-                sys.exit(1)
+                    for ca in report.get("concurrent_activity", []):
+                        severity = ca.get("severity", "possible_concurrent_activity")
+                        print(f"  [{severity}] {ca.get('path', ca.get('id'))}: {ca.get('message', '')}", file=sys.stderr)
+                    for err in report.get("io_errors", []):
+                        print(f"  [io_error] {err['path']}: {err['error']}", file=sys.stderr)
+                exit_code = 2 if len(report.get("io_errors", [])) > 0 else 1
+                sys.exit(exit_code)
         except IntegrityError as exc:
             emit_error(
                 is_json=is_json,
@@ -424,8 +439,14 @@ def main(argv: Sequence[str] | None = None) -> int:
                 exit_code=2,
             )
 
+        force_launch = getattr(args, "force_launch", False)
         try:
-            res = open_item(args.id, root, print_path=args.print_path)
+            res = open_item(
+                args.id,
+                root,
+                print_path=args.print_path,
+                force_launch=force_launch,
+            )
             if is_json:
                 out = {
                     "status": "ok",

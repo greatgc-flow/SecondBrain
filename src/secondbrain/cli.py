@@ -18,7 +18,9 @@ from secondbrain.errors import (
     UsageIOError,
 )
 from secondbrain.lock import WriterLock
+from secondbrain.open_cmd import open_item
 from secondbrain.root import bootstrap_root, resolve_root, validate_root
+from secondbrain.verify import verify_repository
 
 SUBCOMMANDS: tuple[str, ...] = (
     "capture",
@@ -31,8 +33,6 @@ SUBCOMMANDS: tuple[str, ...] = (
 
 STUB_COMMANDS: tuple[str, ...] = (
     "find",
-    "open",
-    "verify",
     "backup",
     "restore",
 )
@@ -112,6 +112,29 @@ def build_parser(json_mode: bool = False) -> argparse.ArgumentParser:
         "target",
         type=str,
         help="File or folder to capture",
+    )
+
+    open_parser = subparsers.add_parser(
+        "open",
+        help="Verify and open, or only print the verified path",
+        parents=[common],
+    )
+    open_parser.add_argument(
+        "id",
+        type=str,
+        help="Receipt ID or SHA-256 prefix (>= 8 hex)",
+    )
+    open_parser.add_argument(
+        "--print-path",
+        action="store_true",
+        default=False,
+        help="Print verified working-copy path without launching viewer",
+    )
+
+    subparsers.add_parser(
+        "verify",
+        help="Check all receipts and objects",
+        parents=[common],
     )
 
     for name in STUB_COMMANDS:
@@ -311,6 +334,129 @@ def main(argv: Sequence[str] | None = None) -> int:
                 is_json=is_json,
                 error=str(exc),
                 path=str(target),
+                results=[],
+                exit_code=2,
+            )
+
+    elif args.command == "verify":
+        cli_root = getattr(args, "root", None)
+        try:
+            root = resolve_root(cli_root)
+            validate_root(root)
+        except RootRefusedError as exc:
+            emit_error(
+                is_json=is_json,
+                error=str(exc),
+                path=str(cli_root or ""),
+                results=[],
+                exit_code=2,
+                prefix="",
+            )
+        except (UsageIOError, OSError, IOError) as exc:
+            emit_error(
+                is_json=is_json,
+                error=str(exc),
+                path=str(cli_root or ""),
+                results=[],
+                exit_code=2,
+            )
+
+        try:
+            report = verify_repository(root)
+            if report["status"] == "ok":
+                if is_json:
+                    print(json.dumps(report, indent=2))
+                else:
+                    print(
+                        f"OK receipts={report['receipts']} objects={report['objects']} "
+                        f"missing=0 corrupt=0 orphan=0"
+                    )
+                sys.exit(0)
+            else:
+                if is_json:
+                    print(json.dumps(report, indent=2))
+                else:
+                    print(
+                        f"FAIL receipts={report['receipts']} objects={report['objects']} "
+                        f"missing={report['missing']} corrupt={report['corrupt']} orphan={report['orphan']}"
+                    )
+                    for prob in report.get("problems", []):
+                        print(f"  [{prob['code']}] {prob['path']}: {prob['error']}", file=sys.stderr)
+                sys.exit(1)
+        except IntegrityError as exc:
+            emit_error(
+                is_json=is_json,
+                error=str(exc),
+                path=str(root),
+                results=[],
+                exit_code=1,
+                prefix="Integrity Error: ",
+            )
+        except (UsageIOError, OSError, IOError) as exc:
+            emit_error(
+                is_json=is_json,
+                error=str(exc),
+                path=str(root),
+                results=[],
+                exit_code=2,
+            )
+
+    elif args.command == "open":
+        cli_root = getattr(args, "root", None)
+        try:
+            root = resolve_root(cli_root)
+            validate_root(root)
+        except RootRefusedError as exc:
+            emit_error(
+                is_json=is_json,
+                error=str(exc),
+                path=str(cli_root or ""),
+                results=[],
+                exit_code=2,
+                prefix="",
+            )
+        except (UsageIOError, OSError, IOError) as exc:
+            emit_error(
+                is_json=is_json,
+                error=str(exc),
+                path=str(cli_root or ""),
+                results=[],
+                exit_code=2,
+            )
+
+        try:
+            res = open_item(args.id, root, print_path=args.print_path)
+            if is_json:
+                out = {
+                    "status": "ok",
+                    "id": res["id"],
+                    "path": res["path"],
+                    "sha256": res["sha256"],
+                    "opened": res["opened"],
+                    "results": [res],
+                    "errors": [],
+                }
+                print(json.dumps(out, indent=2))
+            else:
+                if args.print_path:
+                    print(res["path"])
+                else:
+                    print(f"verified {res['id']}; opened {res['path']}")
+            sys.exit(0)
+        except IntegrityError as exc:
+            emit_error(
+                is_json=is_json,
+                error=str(exc),
+                path="",
+                results=[],
+                exit_code=1,
+                prefix="Integrity Error: ",
+            )
+        except (UsageIOError, OSError, IOError) as exc:
+            emit_error(
+                is_json=is_json,
+                error=str(exc),
+                path="",
                 results=[],
                 exit_code=2,
             )

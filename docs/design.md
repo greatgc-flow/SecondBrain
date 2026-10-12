@@ -15,15 +15,16 @@ Ubuntu CI uses a local filesystem test root.
 ```text
 D:\SecondBrain\
   objects/ab/<64-character-sha256>  original bytes; prefix = first two hash characters
-  receipts/v1/<id>.json            immutable receipt per acquisition
+  receipts/v1/<lowercase-id>.json  immutable receipt per acquisition
   config.json                     settings with exactly one backup_root
   cache/index.db                  derived, rebuildable SQLite FTS5 index
-  cache/open/<id>/<original_name>  disposable working copies
+  cache/open/<lowercase-id>/<name> disposable working copies; NFC name
 ```
 
 Plain objects, receipts and configuration are the source of truth; the database is not.
-Configure `config.json` with `{"backup_root":"D:\\GoogleDrive\\SecondBrainBackup"}` before backup.
-First use creates the layout; no initialization, configuration or reindex command is added.
+The first command creates the layout and `<root>/config.json` with `{"backup_root":null}`.
+`sb backup [--backup-root PATH]` sets or overrides `backup_root` and stores it; an unset root is a usage error.
+No initialization, configuration or reindex command is added.
 
 ## Receipt: six fields, versioned
 
@@ -31,7 +32,7 @@ First use creates the layout; no initialization, configuration or reindex comman
 
 ```json
 {
-  "id": "cap-20261012-001",
+  "id": "cap-20261012T000000Z-ba7816bf",
   "sha256": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
   "original_name": "contract.txt",
   "source_path": "C:\\Inbox\\contract.txt",
@@ -41,36 +42,41 @@ First use creates the layout; no initialization, configuration or reindex comman
 ```
 
 IDs identify acquisitions, not hashes; identical bytes share one object but each acquisition gets a new receipt.
+IDs are stateless `cap-<YYYYMMDDTHHMMSSZ>-<first 8 hex of sha256>` using UTC; no counters or directory scans.
+Two acquisitions of identical bytes use different times, or an added `-2` suffix on a same-second collision.
+Normalise file names and search queries to Unicode NFC; keep the original name only as receipt data.
+SHA-256 hex and receipt paths are always lowercase because NTFS is case-insensitive.
 Record original name, source path, observed local collection time with timezone and tool version at first capture.
 This is local context, not verified creation time, authorship or complete custody history.
 
 ## End-to-end scenarios
 
 Commands/output are illustrative v0.1 interfaces; IDs, hashes and dates are sample values.
-Start with local `C:\Inbox\contract.txt` and the backup configuration above.
+Start with local `C:\Inbox\contract.txt`; set the backup folder on the first backup below.
 
 ```text
 > sb capture "C:\Inbox\contract.txt"
-captured id=cap-20261012-001 name=contract.txt object=new
+captured id=cap-20261012T000000Z-ba7816bf name=contract.txt object=new
 > sb capture "C:\Inbox"
 captured=2 reused_objects=1 failed=0
 > sb find "contract"
-cap-20261012-001  contract.txt  contract.txt [filename match]
-> sb open cap-20261012-001
-verified cap-20261012-001; opened D:\SecondBrain\cache\open\cap-20261012-001\contract.txt
+cap-20261012T000000Z-ba7816bf  contract.txt  contract.txt [filename match]
+> sb open cap-20261012T000000Z-ba7816bf
+verified cap-20261012T000000Z-ba7816bf; opened D:\SecondBrain\cache\open\cap-20261012t000000z-ba7816bf\contract.txt
 > sb verify
 OK receipts=3 objects=2 missing=0 corrupt=0 orphan=0
-> sb backup
-OK root=D:\GoogleDrive\SecondBrainBackup added_objects=2 added_receipts=3 manifest=20261012T001000Z-001.json
+> sb backup --backup-root "D:\GoogleDrive\SecondBrainBackup"
+OK root=D:\GoogleDrive\SecondBrainBackup added_objects=2 added_receipts=3 manifest=20261012T001000Z.json
 > sb restore "D:\GoogleDrive\SecondBrainBackup" --to "D:\Recovered"
 OK restored_receipts=3 restored_objects=2; verify missing=0 corrupt=0 orphan=0; index rebuilt
-> sb --root "D:\Recovered" open cap-20261012-001
-verified cap-20261012-001; opened D:\Recovered\cache\open\cap-20261012-001\contract.txt
+> sb --root "D:\Recovered" open cap-20261012T000000Z-ba7816bf
+verified cap-20261012T000000Z-ba7816bf; opened D:\Recovered\cache\open\cap-20261012t000000z-ba7816bf\contract.txt
 ```
 
 Capture a file or recursively capture each regular file in a folder without touching the source.
 Unreadable/locked files produce per-file errors and nonzero exit; completed captures remain valid.
 Open checks the hash before copying and launching a working copy; edits never change the object.
+`sb open <id> --print-path` only prints the verified working-copy path for headless/AI use.
 Verify checks receipt format, referenced hashes and object names; reports missing, corrupt and orphan files.
 
 ## Search
@@ -89,8 +95,7 @@ One user-managed backup root mirrors objects and versioned receipts, with config
 Append-only: never delete, prune or overwrite differing bytes; content addressing makes originals incremental by nature.
 Hash-check source and destination on every new write, including receipts/configuration; validate reused destination files.
 Store configuration per manifest so settings changes preserve old backups; manifests list paths and hashes.
-Publish the dated manifest last after its entire set verifies; exclude caches and working copies.
-If `notes/` exists, mirror dated versions referenced by the manifest; no note editor/integration is provided.
+Publish the dated manifest last, atomically, after its entire set verifies; exclude caches and working copies.
 Works inside Google Drive/OneDrive synced folders; the owner's sync client handles upload/download.
 A reported link count of zero there is a warning, not failure; unavailable bytes or failed hashes still fail.
 Files are plain and NOT encrypted: the cloud provider and anyone with folder access can read them.
@@ -104,28 +109,28 @@ Incomplete manifests are not restore points; a failed restore remains explicitly
 
 ```text
 sb --help
-Usage: sb [--root PATH] COMMAND [--json]
+Usage: sb [--root PATH] [--json] COMMAND [ARGS]
   capture <file-or-folder>          Preserve bytes and acquisition receipt
   find <text>                      Search names, context and supported text
-  open <id>                        Verify and open a working copy
+  open <id> [--print-path]         Verify and open, or only print the verified path
   verify                           Check all receipts and objects
-  backup                           Mirror to configured backup_root
+  backup [--backup-root PATH]      Set/store root override and mirror to backup_root
   restore <backup-root> --to <dir>  Restore into an empty local directory
 Options: --root PATH (default D:\SecondBrain), --json, --help
-Exit: 0 success; nonzero on errors or verification problems
+Exit (all commands): 0 ok; 1 integrity problem (missing/corrupt/orphan); 2 usage/IO error (including locked files)
 ```
 
 Every command supports `--json`: one structured stdout result with status, results and errors; diagnostics use stderr.
-`sb find "contract" --json` yields `{"status":"ok","results":[{"id":"cap-20261012-001","name":"contract.txt","snippet":"contract.txt [filename match]"}]}`.
+`sb --json find "contract"` yields `{"status":"ok","results":[{"id":"cap-20261012T000000Z-ba7816bf","name":"contract.txt","snippet":"contract.txt [filename match]"}]}`.
 
 ## Failure behaviour
 
 A single-writer lock prevents concurrent publication; backup holds it to keep the manifest consistent.
-Write temporary files on the destination filesystem, flush and atomically publish; publish object before receipt.
-Interruptions preserve completed acquisitions; rerun handles unpublished files/unfinished objects without inventing receipts.
-Retries of an interrupted acquisition with a published receipt do not duplicate it; a fresh capture records a new acquisition.
+Atomic publish: write a temp file on the TARGET volume, flush and close, then atomic replace; publish object BEFORE receipt.
+Retry Windows sharing violations with backoff (sync clients/indexers briefly lock files), then fail closed if still locked.
+Interruptions preserve completed acquisitions; a leftover temp file is harmless and removed on the next run.
 Atomic publication does not promise protection from every hardware/power-loss failure; verify exposes inconsistencies.
-Hash mismatch, missing bytes, malformed receipts, occupied restore destination or lock conflict gives a clear error and nonzero exit.
+Hash mismatch, missing bytes, malformed receipts or orphan files exit 1; non-empty restore targets and IO/lock errors exit 2.
 
 ## Non-claims and acceptance
 
@@ -136,6 +141,7 @@ Interrupt each publication stage and safely rerun; check receipt-per-acquisition
 Check expected search hits against the Korean benchmark; rebuild the index without losing source records.
 Tampering must block open/fail verify; missing, corrupt and orphan files must be reported.
 Backup/restore into an empty directory must verify all hashes; test a Drive-synced backup folder and link-count-zero warnings.
+Abort backup mid-way: no partial manifest remains (written last, atomically), and a re-run completes; restore refuses a non-empty target.
 Windows and Ubuntu CI must pass offline; the application performs no network operations.
 
 ## Later

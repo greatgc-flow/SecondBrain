@@ -1,3 +1,35 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+**/*.pyc
+**/__pycache__/
+
+# Caches
+.pytest_cache/
+**/.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+**/.coverage
+
+# Environments
+.venv/
+**/.venv/
+venv/
+**/venv/
+ENV/
+env/
+
+# Distribution / packaging
+dist/
+**/dist/
+build/
+**/build/
+*.egg-info/
+**/*.egg-info/
+
 # Secrets and personal evidence (never commit)
 .env
 .env.*
@@ -12,14 +44,7 @@
 10_Evidence/
 **/Vault/
 **/.kit_state/
-**/__pycache__/
-**/.pytest_cache/
-**/*.pyc
-**/.coverage
-**/.venv/
-**/venv/
-**/dist/
-**/build/
+
 # Historical archives remain local; publish only reviewed release artifacts
 history/
 *.zip

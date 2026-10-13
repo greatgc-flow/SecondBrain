@@ -127,6 +127,12 @@ One user-managed backup root mirrors objects and versioned receipts, with config
 Append-only: never delete, prune or overwrite differing bytes; content addressing makes originals incremental by nature.
 Hash-check source and destination on every new write, including receipts/configuration; validate reused destination files.
 Store configuration per manifest so settings changes preserve old backups; manifests list paths and hashes.
+Receipts must strictly follow the canonical layout path `receipts/v1/<id>.json` in manifests, backups, and restores.
+Backup builds the complete roster (receipts, objects, and configuration) atomically under the source `WriterLock`.
+Unreferenced (orphan) objects in the source store at snapshot time are included in the backup roster to prevent payload loss.
+Post-restore verification tolerates unreferenced (orphan) objects: an informational warning is emitted, but restore succeeds with PASS as long as no objects are missing or corrupt and receipts are valid.
+Reused and new backup payload files reject hardlink aliases: files with `nlink > 1` or sharing file identity with any source file are rejected with an integrity error.
+Backup validates the source store layout (`objects` and `receipts/v1`) before acquiring locks or creating directories, refusing nonexistent or invalid stores (exit 2) without publishing empty manifests.
 Publish the dated manifest last, atomically, after its entire set verifies; exclude caches and working copies.
 Works inside Google Drive/OneDrive synced folders; the owner's sync client handles upload/download.
 A reported link count of zero there is a warning, not failure; unavailable bytes or failed hashes still fail.
@@ -135,7 +141,7 @@ No backup engine, restic/Kopia integration, rclone, cloud API, credentials or ap
 Local backup success means verified local writes, not confirmed cloud upload or provider durability.
 Restore selects the latest complete manifest, requires an empty destination and validates/copies all listed files atomically.
 Run full verification and rebuild the index before success; use `--root` to access the restored root.
-Incomplete manifests are not restore points; a failed restore remains explicitly incomplete, never reported as success.
+Incomplete manifests are not restore points; a failed restore remains explicitly incomplete, keeping `.sb-restore.marker` on failure so `verify`, `open`, and `find` refuse the incomplete root.
 
 ## CLI: six commands
 

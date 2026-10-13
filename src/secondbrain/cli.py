@@ -22,6 +22,8 @@ from secondbrain.lock import WriterLock
 from secondbrain.open_cmd import open_item
 from secondbrain.root import bootstrap_root, resolve_root, validate_root
 from secondbrain import search
+from secondbrain.backup import backup_repository
+from secondbrain.restore import restore_repository
 from secondbrain.verify import verify_repository
 
 SUBCOMMANDS: tuple[str, ...] = (
@@ -33,10 +35,7 @@ SUBCOMMANDS: tuple[str, ...] = (
     "restore",
 )
 
-STUB_COMMANDS: tuple[str, ...] = (
-    "backup",
-    "restore",
-)
+STUB_COMMANDS: tuple[str, ...] = ()
 
 
 class JsonArgumentParser(argparse.ArgumentParser):
@@ -167,6 +166,42 @@ def build_parser(json_mode: bool = False) -> argparse.ArgumentParser:
         type=int,
         default=None,
         help="Maximum number of results to return",
+    )
+
+    backup_parser = subparsers.add_parser(
+        "backup",
+        help="Set/store root override and mirror to backup_root",
+        parents=[common],
+    )
+    backup_parser.add_argument(
+        "--backup-root",
+        type=str,
+        default=None,
+        help="Path to user-managed backup root folder",
+    )
+
+    restore_parser = subparsers.add_parser(
+        "restore",
+        help="Restore into an empty local directory",
+        parents=[common],
+    )
+    restore_parser.add_argument(
+        "backup_root",
+        type=str,
+        help="Path to user-managed backup root folder",
+    )
+    restore_parser.add_argument(
+        "--to",
+        required=True,
+        type=str,
+        dest="to_dir",
+        help="Empty target directory for restored repository",
+    )
+    restore_parser.add_argument(
+        "--manifest",
+        type=str,
+        default=None,
+        help="Name or path of specific manifest to restore (default: newest)",
     )
 
     for name in STUB_COMMANDS:
@@ -645,6 +680,112 @@ def main(argv: Sequence[str] | None = None) -> int:
             sqlite3.OperationalError,
             sqlite3.DatabaseError,
         ) as exc:
+            emit_error(
+                is_json=is_json,
+                error=str(exc),
+                path="",
+                results=[],
+                exit_code=2,
+            )
+
+    elif args.command == "backup":
+        cli_root = getattr(args, "root", None)
+        try:
+            root = resolve_root(cli_root)
+            validate_root(root)
+        except RootRefusedError as exc:
+            emit_error(
+                is_json=is_json,
+                error=str(exc),
+                path=str(cli_root or ""),
+                results=[],
+                exit_code=2,
+                prefix="",
+            )
+        except (UsageIOError, OSError, IOError) as exc:
+            emit_error(
+                is_json=is_json,
+                error=str(exc),
+                path=str(cli_root or ""),
+                results=[],
+                exit_code=2,
+            )
+
+        backup_root_arg = getattr(args, "backup_root", None)
+        backup_root_path = Path(backup_root_arg) if backup_root_arg else None
+        store_flag = backup_root_path is not None
+
+        try:
+            res = backup_repository(
+                data_root=root,
+                backup_root=backup_root_path,
+                store_backup_root=store_flag,
+                tool_version=__version__,
+            )
+            if is_json:
+                print(json.dumps(res, indent=2))
+            else:
+                print(
+                    f"OK backup_root={res['backup_root']} manifest={res['manifest']} "
+                    f"objects={res['total_objects']} (copied {res['copied_objects']}, reused {res['reused_objects']}) "
+                    f"receipts={res['total_receipts']} (copied {res['copied_receipts']}, reused {res['reused_receipts']})"
+                )
+            sys.exit(0)
+        except IntegrityError as exc:
+            emit_error(
+                is_json=is_json,
+                error=str(exc),
+                path="",
+                results=[],
+                exit_code=1,
+                prefix="Integrity Error: ",
+            )
+        except LockError as exc:
+            emit_error(
+                is_json=is_json,
+                error=str(exc),
+                path=str(root),
+                results=[],
+                exit_code=2,
+            )
+        except (UsageIOError, OSError, IOError) as exc:
+            emit_error(
+                is_json=is_json,
+                error=str(exc),
+                path="",
+                results=[],
+                exit_code=2,
+            )
+
+    elif args.command == "restore":
+        backup_root_path = Path(args.backup_root)
+        to_path = Path(args.to_dir)
+        manifest_arg = getattr(args, "manifest", None)
+
+        try:
+            res = restore_repository(
+                backup_root=backup_root_path,
+                target_dir=to_path,
+                manifest_name=manifest_arg,
+            )
+            if is_json:
+                print(json.dumps(res, indent=2))
+            else:
+                print(
+                    f"PASS restored to {res['restored_root']} from manifest {res['manifest']} "
+                    f"(receipts={res['receipts']} objects={res['objects']})"
+                )
+            sys.exit(0)
+        except IntegrityError as exc:
+            emit_error(
+                is_json=is_json,
+                error=str(exc),
+                path="",
+                results=[],
+                exit_code=1,
+                prefix="Integrity Error: ",
+            )
+        except (UsageIOError, OSError, IOError) as exc:
             emit_error(
                 is_json=is_json,
                 error=str(exc),

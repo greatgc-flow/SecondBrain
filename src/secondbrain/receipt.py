@@ -32,6 +32,33 @@ ALLOWED_RECEIPT_FIELDS = {
     "collected_at",
     "tool_version",
 }
+RECEIPT_LAYOUT_PREFIX = "receipts/v1/"
+RECEIPT_PATH_PATTERN = re.compile(r"^receipts/v1/([a-zA-Z0-9_\-.]+)\.json$")
+
+
+def receipt_rel_path(receipt_id: str) -> str:
+    """Return the canonical relative layout path for a receipt."""
+    return f"receipts/v1/{receipt_id}.json"
+
+
+def validate_receipt_path(path_str: str) -> str:
+    """Validate relative receipt path against canonical layout: receipts/v1/<id>.json.
+
+    Returns the normalized relative path string.
+    Raises IntegrityError if the path does not match canonical layout.
+    """
+    if not isinstance(path_str, str) or not path_str:
+        raise IntegrityError(f"Invalid receipt path: must be a non-empty string, got {path_str!r}")
+    norm = path_str.replace("\\", "/")
+    m = RECEIPT_PATH_PATTERN.match(norm)
+    if not m:
+        raise IntegrityError(
+            f"Invalid receipt path '{path_str}': receipts must be at real layout path 'receipts/v1/<id>.json'"
+        )
+    rec_id = m.group(1)
+    if rec_id != rec_id.lower():
+        raise IntegrityError(f"Receipt filename must be strictly lowercase: '{path_str}'")
+    return norm
 
 
 def is_reparse_point(path: Path) -> bool:

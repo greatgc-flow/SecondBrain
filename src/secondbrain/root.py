@@ -132,11 +132,19 @@ def is_remote_drive(path: Path) -> bool:
         return False
 
 
-def validate_root(root: Path) -> None:
+def validate_root(root: Path, allow_restore_marker: bool = False) -> None:
     """Validate active root per ADR 0002. Refuses cloud-synced or non-NTFS roots on Windows.
 
     Detection is best-effort (warn, don't fight). Warns also on accepted roots when uncertain.
     """
+    marker_path = root / ".sb-restore.marker"
+    if not allow_restore_marker and marker_path.exists():
+        raise RootRefusedError(
+            f"Warning (ADR 0002): Refusing root '{root}'. "
+            "Repository contains incomplete restore marker '.sb-restore.marker'. "
+            "Restore operation failed or is still in progress."
+        )
+
     is_synced, sync_reason = is_cloud_synced_path(root)
     if is_synced:
         raise RootRefusedError(

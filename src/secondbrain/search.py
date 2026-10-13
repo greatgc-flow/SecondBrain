@@ -20,6 +20,7 @@ import pypdf
 
 from secondbrain.errors import IntegrityError, UsageIOError
 from secondbrain.lock import WriterLock
+from secondbrain.root import validate_root
 
 # Extractor and schema versions
 EXTRACTOR_VERSION: str = "1.0"
@@ -906,13 +907,14 @@ def build_index_atomic(
 
 
 def ensure_index_current(
-    root: Path, force_reindex: bool = False
+    root: Path, force_reindex: bool = False, allow_restore_marker: bool = False
 ) -> tuple[str, list[dict[str, str]]]:
     """Ensure index is current without holding WriterLock during extraction (P1-1, P1-2, P1-5).
 
     Returns:
         (index_mode, integrity_errors)
     """
+    validate_root(root, allow_restore_marker=allow_restore_marker)
     caps = probe_sqlite_capabilities()
     has_trigram = caps["trigram"]
     index_mode = "trigram" if has_trigram else "like"

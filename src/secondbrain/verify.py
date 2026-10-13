@@ -453,7 +453,7 @@ def scan_root_temp_files(root: Path) -> list[dict[str, Any]]:
     return items
 
 
-def verify_repository(root: Path) -> dict[str, Any]:
+def verify_repository(root: Path, allow_restore_marker: bool = False) -> dict[str, Any]:
     """Verify repository integrity: objects, receipts, temp files. Read-only.
 
     Differentiates integrity problems (exit 1) from IO errors / locked files (exit 2).
@@ -462,7 +462,7 @@ def verify_repository(root: Path) -> dict[str, Any]:
     if not root.exists() or not root.is_dir():
         raise UsageIOError(f"Root directory does not exist or is not a directory: {root}")
 
-    validate_root(root)
+    validate_root(root, allow_restore_marker=allow_restore_marker)
 
     objects_dir = root / "objects"
     receipts_dir = root / "receipts"
@@ -501,6 +501,22 @@ def verify_repository(root: Path) -> dict[str, Any]:
             concurrent_activity.append(item)
         else:
             problems.append(item)
+
+    if receipts_dir.is_dir() and not is_reparse_point(receipts_dir):
+        try:
+            for entry in os.scandir(receipts_dir):
+                if entry.name != "v1" and not is_tool_temp_file(Path(entry.path)):
+                    problems.append(
+                        {
+                            "code": "invalid_receipt",
+                            "path": str(entry.path),
+                            "id": entry.name,
+                            "error": f"Invalid item in receipts directory outside receipts/v1: {entry.name}",
+                            "message": f"Invalid item in receipts directory outside receipts/v1: {entry.name}",
+                        }
+                    )
+        except OSError:
+            pass
 
     # 3. Scan root temp files
     root_tmp_items = scan_root_temp_files(root)

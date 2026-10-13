@@ -149,6 +149,8 @@ def check_isolation(path_a: Path, path_b: Path) -> None:
 
 def is_nlink_zero(path: Path) -> bool:
     """Check if st_nlink is 0 on path (virtual drive / Google Drive FS)."""
+    if os.environ.get("_SB_SIMULATE_NLINK_ZERO") == "1":
+        return True
     try:
         st = os.stat(str(path))
         return getattr(st, "st_nlink", 1) == 0
@@ -630,6 +632,10 @@ def backup_repository(
                 )
                 copied_objects += 1
                 needed_objects[sha256] = size
+                if os.environ.get("_SB_TEST_BACKUP_TERMINATE_STAGE") == "mid_objects" and copied_objects > 0:
+                    if marker_path := os.environ.get("_SB_TEST_BACKUP_MARKER"):
+                        Path(marker_path).write_text("mid_objects", encoding="utf-8")
+                    os._exit(51)
 
         # 6. Mirror receipts
         backup_receipts_dir = resolved_backup_root / "receipts" / "v1"
@@ -675,6 +681,10 @@ def backup_repository(
                     backup_root=resolved_backup_root, data_root=resolved_data_root,
                 )
                 copied_receipts += 1
+                if os.environ.get("_SB_TEST_BACKUP_TERMINATE_STAGE") == "mid_receipts" and copied_receipts > 0:
+                    if marker_path := os.environ.get("_SB_TEST_BACKUP_MARKER"):
+                        Path(marker_path).write_text("mid_receipts", encoding="utf-8")
+                    os._exit(52)
 
             receipt_entries_info.append({
                 "kind": "receipt",
@@ -793,6 +803,10 @@ def backup_repository(
         manifest_path = manifests_dir / chosen_name
         check_isolation(manifest_path, resolved_data_root)
         reject_reparse_ancestors(manifest_path, resolved_backup_root, role="backup manifest")
+        if os.environ.get("_SB_TEST_BACKUP_TERMINATE_STAGE") == "before_manifest":
+            if marker_path := os.environ.get("_SB_TEST_BACKUP_MARKER"):
+                Path(marker_path).write_text("before_manifest", encoding="utf-8")
+            os._exit(53)
         stage_and_verify_bytes(manifest_bytes, manifest_path, expected_sha=manifest_sha)
 
     summary = {

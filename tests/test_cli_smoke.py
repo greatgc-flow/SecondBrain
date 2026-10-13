@@ -70,3 +70,18 @@ def test_cli_no_args_exits_2(capsys: pytest.CaptureFixture[str]) -> None:
         main([])
     assert exc_info.value.code == 2
 
+
+def test_python_m_secondbrain_execution() -> None:
+    """Regression test: executing python -m secondbrain must invoke CLI via __main__.py."""
+    import subprocess
+    import sys
+
+    res = subprocess.run(
+        [sys.executable, "-m", "secondbrain", "--version"],
+        capture_output=True,
+        text=True,
+    )
+    assert res.returncode == 0
+    assert __version__ in res.stdout
+
+

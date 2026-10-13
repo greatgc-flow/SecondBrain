@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import time
 import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
@@ -96,6 +97,17 @@ def capture_file(source_path: Path, root: Path, tool_version: str) -> dict[str, 
                 hasher.update(chunk)
                 out_fp.write(chunk)
                 bytes_copied += len(chunk)
+                if marker_path := os.environ.get("_SB_TEST_MID_WRITE_MARKER"):
+                    marker_bytes = int(os.environ.get("_SB_TEST_MID_WRITE_MARKER_BYTES", "65536"))
+                    if bytes_copied >= marker_bytes:
+                        out_fp.flush()
+                        mp = Path(marker_path)
+                        if not mp.exists():
+                            mp.write_text(str(bytes_copied), encoding="utf-8")
+                            time.sleep(float(os.environ.get("_SB_TEST_MID_WRITE_PAUSE", "10.0")))
+                if os.environ.get("_SB_TEST_TERMINATE_STAGE") == "mid_write" and bytes_copied > 0:
+                    out_fp.flush()
+                    os._exit(44)
             out_fp.flush()
             os.fsync(out_fp.fileno())
 

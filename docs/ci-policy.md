@@ -10,7 +10,7 @@
 | Docs-only PR or push | No CI run | Manual review, document/link inspection. **No green CI claim**. Branch protection check requirements must be reconsidered before requiring this path-filtered check. |
 | Push to `main` modifying `src/**`, `tests/**`, `scripts/**`, `pyproject.toml`, or `.github/workflows/**` | **Automatic** one Linux Python 3.12 job | Protect direct pushes and merged code. A PR merge may run smoke twice; trade-off accepted. Other branches and docs-only pushes do not run CI. |
 | Manual `workflow_dispatch` (default `full_matrix=false`) | One Linux Py3.12 Job | Same current tests through the same local verifier |
-| Manual `workflow_dispatch` with `full_matrix=true` | **4 jobs**, Linux and Windows × Py3.12/3.13, at most 2 simultaneous jobs | Same local verifier on each OS/version; explicit pre-release/Windows-compatibility gate |
+| Manual `workflow_dispatch` with `full_matrix=true` | **6 jobs**, Linux and Windows × Py3.11/3.12/3.13, at most 2 simultaneous jobs | Cover Python 3.11 minimum declared in `pyproject.toml`; same local verifier on each OS/version. Use only at milestone/pre-release gates. |
 
 ## Quality and cost guardrails
 
@@ -27,3 +27,7 @@
 - PR #47 (M1 capture) previously had unstable checks; it must not be treated as tested/merge-ready until a **new** real-runner successful check on that candidate is observed. A skipped/blocked job is not PASS.
 
 **Status vocabulary:** `POLICY_APPLIED` ≠ `RUNNER_ASSIGNED` ≠ `TESTS_PASSED`. None of the latter two is asserted for this update.
+
+## R57 — declared Python minimum compatibility coverage
+
+`pyproject.toml` declares `requires-python = ">=3.11"`. Earlier full manual CI covered only Python 3.12 and 3.13, leaving the minimum version untested. The `full_matrix=true` manual gate now explicitly tests **Linux + Windows × Python 3.11/3.12/3.13 (six jobs)**, with at most two concurrent jobs. This spends more time only when the owner explicitly dispatches the full matrix; default main-push/PR smoke remains a single Linux/Python 3.12 job. Python versions outside that declared tested matrix remain NOT_VERIFIED. No claim that the October 2026 Private runners actually ran or passed.

@@ -2,6 +2,7 @@
 """Single-command SecondBrain local/CI check. Does not modify source data."""
 from __future__ import annotations
 
+import platform
 import subprocess
 import sys
 from pathlib import Path
@@ -41,7 +42,8 @@ def main() -> int:
         print(f"EXECUTION ERROR: {exc}", file=sys.stderr)
         status = "FAIL"
     print(f"{status}: {label}", flush=True)
-    print("NOT_VERIFIED: Windows/other Python matrix unless run on those runners.")
+    print(f"EXECUTED_ENVIRONMENT: OS={platform.system()} Python={sys.version.split()[0]}", flush=True)
+    print("NOT_VERIFIED: all other OS/Python combinations and untested external integrations.", flush=True)
     print(f"OVERALL={status} | HEAD={head} | working_tree={tree}", flush=True)
     return 0 if status == "PASS" else 1
 

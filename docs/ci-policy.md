@@ -23,7 +23,7 @@
 - The 2026-10 monthly Private included quota is exhausted. Do not repeatedly manually run an unassignable job, raise paid budget, add payment methods or make repository Public without explicit informed owner approval. Check included balance next month, then make one manual smoke + one full matrix for a significant milestone.
 - Historical 4-job CI on all push/PR events is superseded by this operational policy only; the older successful/failing execution logs are preserved in GitHub.
 
-- The verifier records the Git HEAD and dirty/clean state and reports PASS/FAIL for actual tests; unrun operating systems/versions are explicitly NOT_VERIFIED. Tests run using the active Python interpreter, requiring prior `python -m pip install -e ".[dev]"`. No automatic dependency/network installation happens inside the local verifier.
+- The verifier records the Git HEAD, working-tree state, executing OS/Python version and PASS/FAIL for actual tests; all other operating systems/versions are NOT_VERIFIED. Tests passing on Windows do not imply Linux was tested, and vice versa. Tests run using the active Python interpreter, requiring prior `python -m pip install -e ".[dev]"`. No automatic dependency/network installation happens inside the local verifier.
 - PR #47 (M1 capture) previously had unstable checks; it must not be treated as tested/merge-ready until a **new** real-runner successful check on that candidate is observed. A skipped/blocked job is not PASS.
 
 **Status vocabulary:** `POLICY_APPLIED` ≠ `RUNNER_ASSIGNED` ≠ `TESTS_PASSED`. None of the latter two is asserted for this update.

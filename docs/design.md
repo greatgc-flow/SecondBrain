@@ -1,38 +1,39 @@
 # SecondBrain v0.1 design
 
-SecondBrain preserves personal files on one local computer without changing their sources.  
-The owner captures, finds, opens and verifies originals with recorded acquisition context.  
-One user-managed backup folder supports a verified restore into an empty local root.
+SecondBrain preserves personal files on one local computer without changing their sources.
+The owner captures, finds, opens and verifies originals with recorded acquisition context.
+One user-managed backup folder supports a verified restore into an absent local root.
 
-This is a proposed contract, not implemented functionality. The owner's `sb_plan_v21.md` controls scope.
+## Status and scope
 
-## Root and source of truth
+- The current phase and gate are recorded in [status.md](status.md) (at this writing `DESIGN_REVIEW`; this document does not fix the phase). This is a target contract for v0.1, not implemented functionality; no implementation is asserted. Readiness is recorded separately in status.md, and the owner's explicit go is needed before TDD starts.
+- Installed version today is `0.0.1`. The v0.1 target requires `secondbrain.__version__` and the build metadata to agree; that is a future packaging gate and needs no code edit now. `0.1.0` in examples is illustrative.
+- Scope is unchanged: local `capture`, `find`, `open`, `verify`, `backup`, `restore`. Global options are `--json` and `--root`; `--print-path` (open), `--backup-root` (backup) and `--to` (restore) are the only command options. No other flags.
+- The former external plan (`sb_plan_v21.md`) is absent; its hash is UNKNOWN (provenance gap in [collaboration.md](collaboration.md)). The accepted authority is this document plus [decisions.md](decisions.md) and the owner's current broad permission to improve earlier decisions.
+- Where an older sentence contradicts a decision in [decisions.md](decisions.md) (0009-0013), the decision wins and the sentence is not normative.
+- Integrity and recorded context only: no authenticity, admissibility, independent timestamp, custody or legal-weight claim.
 
-Default: `D:\SecondBrain`, local NTFS outside sync folders; configurable with global `--root`.
-Reject known synced active roots with an explanatory warning; detection is best effort, not a guarantee.
-Ubuntu CI uses a local filesystem test root.
+## Root and on-disk authority
 
-```text
-D:\SecondBrain\
-  objects/ab/<64-character-sha256>  original bytes; prefix = first two hash characters
-  receipts/v1/<lowercase-id>.json  immutable receipt per acquisition
-  config.json                     settings with exactly one backup_root
-  cache/index.db                  derived, rebuildable SQLite FTS5 index
-  cache/open/<lowercase-id>/<name> disposable working copies; NFC name
-```
+Default root on Windows: `D:\SecondBrain`, unsynced local NTFS outside sync folders. On Ubuntu an explicit `--root` is required and must be an unsynced local filesystem that supports the required OS locks and atomic no-replace operations; otherwise the command exits 2 with `unsupported_platform`. Known synced roots are rejected with an explanatory warning (best effort, not a guarantee).
+
+| Path under root | Class | Content | Recovery |
+|---|---|---|---|
+| `objects/ab/<sha256>` | authority, immutable | original bytes; `ab` = first two lowercase hex chars | verify; restore from backup |
+| `receipts/v1/<id>.json` | authority, immutable | six-field receipt; filename = id | verify; restore |
+| `config.json` | authority, mutable | `{"backup_root": null \| "path"}` | rewrite by `backup`; restore from manifest config |
+| `writer.lock` | coordination | persistent lock file, never unlinked | n/a |
+| `cache/index.db` | derived | SQLite FTS5 index | rebuilt automatically |
+| `cache/open/<id>/<n>/<name>` | derived, disposable | working copies, never deleted by the tool | user may delete |
+| `tmp/` stage files | transient | staged bytes owned by the running command | see Failure states |
 
 Plain objects, receipts and configuration are the source of truth; the database is not.
-The first command creates the layout and `<root>/config.json` with `{"backup_root":null}`.
-`sb backup [--backup-root PATH]` sets or overrides `backup_root` and stores it; an unset root is a usage error.
-No initialization, configuration or reindex command is added.
 
-## Receipt: six fields, versioned
-
-`receipts/v1/` identifies format version 1 without a seventh field; `tool_version` identifies the tool release.
+## Receipt: six fields
 
 ```json
 {
-  "id": "cap-20261012T000000Z-ba7816bf",
+  "id": "cap-20261012t000000z-ba7816bf",
   "sha256": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
   "original_name": "contract.txt",
   "source_path": "C:\\Inbox\\contract.txt",
@@ -41,115 +42,153 @@ No initialization, configuration or reindex command is added.
 }
 ```
 
-IDs identify acquisitions, not hashes; identical bytes share one object but each acquisition gets a new receipt.
-IDs are stateless `cap-<YYYYMMDDTHHMMSSZ>-<first 8 hex of sha256>` using UTC; no counters or directory scans.
-Two acquisitions of identical bytes use different times, or an added `-2` suffix on a same-second collision.
-Normalise file names and search queries to Unicode NFC; keep the original name only as receipt data.
-SHA-256 hex and receipt paths are always lowercase because NTFS is case-insensitive.
-Record original name, source path, observed local collection time with timezone and tool version at first capture.
-This is local context, not verified creation time, authorship or complete custody history.
+- `receipts/v1/` names format version 1; `tool_version` names the release. There is no seventh field.
+- `id` is `cap-<yyyymmdd>t<hhmmss>z-<first 8 hex of sha256>`, UTC, all lowercase. A same-second, same-prefix collision gets suffix `-2`, `-3`, ... chosen by retrying the no-replace publish of `<id>.json`. There is no persistent counter and no directory scan.
+- The receipt filename is `<id>.json`, lowercase, and equals `id`. SHA-256 hex is lowercase everywhere.
+- `collected_at` is zoned ISO 8601 from the local clock. All six fields are observed local context at first capture, not verified creation time, authorship or custody.
+- `original_name` is acquisition data and preserved exactly as the source reported it. Search queries and the working-copy name are NFC-normalized and made safe (see Path safety); the original name is never rewritten.
+- IDs identify acquisitions: identical bytes share one object, each acquisition gets its own receipt. Retrying after an unknown outcome may create a new acquisition; exactly-once capture is not claimed.
 
-## End-to-end scenarios
+## Lock model
 
-Commands/output are illustrative v0.1 interfaces; IDs, hashes and dates are sample values.
-Start with local `C:\Inbox\contract.txt`; set the backup folder on the first backup below.
+- **Writer lock:** `<root>/writer.lock`, created on first use, never unlinked. A nonblocking OS-released lock (`msvcrt.locking` / `fcntl.flock`); released by the OS if the process dies. No PID, age or timestamp based stale breaking.
+- **Coherent reads:** `find`, `open` and `verify` take the same lock, nonblocking, while they read authority files and refresh the index, so no stale silent result is returned during a write. `open` releases it before launching the viewer.
+- **Backup:** acquire the destination lock `<backup_root>/backup.lock` first, then the source writer lock, and hold both until completion. Fixed order prevents deadlock.
+- **Restore:** locks only the sibling staging directory it exclusively created.
+- A lock that cannot be taken immediately fails with exit 2; there is no waiting and no retry loop beyond Windows sharing-violation backoff.
+- `sb --help` and usage errors never create or modify anything. Restore accesses only its backup input, the destination parent and its owned staging; it never initializes the global active root. Every other data command initializes its active root (layout and `config.json`) under that root's writer lock. Nothing is written to any source.
 
-```text
-> sb capture "C:\Inbox\contract.txt"
-captured id=cap-20261012T000000Z-ba7816bf name=contract.txt object=new
-> sb capture "C:\Inbox"
-captured=2 reused_objects=1 failed=0
-> sb find "contract"
-cap-20261012T000000Z-ba7816bf  contract.txt  contract.txt [filename match]
-> sb open cap-20261012T000000Z-ba7816bf
-verified cap-20261012T000000Z-ba7816bf; opened D:\SecondBrain\cache\open\cap-20261012t000000z-ba7816bf\contract.txt
-> sb verify
-OK receipts=3 objects=2 missing=0 corrupt=0 orphan=0
-> sb backup --backup-root "D:\GoogleDrive\SecondBrainBackup"
-OK root=D:\GoogleDrive\SecondBrainBackup added_objects=2 added_receipts=3 manifest=20261012T001000Z.json
-> sb restore "D:\GoogleDrive\SecondBrainBackup" --to "D:\Recovered"
-OK restored_receipts=3 restored_objects=2; verify missing=0 corrupt=0 orphan=0; index rebuilt
-> sb --root "D:\Recovered" open cap-20261012T000000Z-ba7816bf
-verified cap-20261012T000000Z-ba7816bf; opened D:\Recovered\cache\open\cap-20261012t000000z-ba7816bf\contract.txt
-```
+## Publication of immutable files
 
-Capture a file or recursively capture each regular file in a folder without touching the source.
-Unreadable/locked files produce per-file errors and nonzero exit; completed captures remain valid.
-Open checks the hash before copying and launching a working copy; edits never change the object.
-`sb open <id> --print-path` only prints the verified working-copy path for headless/AI use.
-Verify checks receipt format, referenced hashes and object names; reports missing, corrupt and orphan files.
+Objects, receipts, config snapshots and manifests share one procedure:
 
-## Search
+1. Write the complete bytes to a staging file on the target volume, flush, fsync, close.
+2. Atomically publish to the final name with **no-replace** semantics (hard link or rename that fails if the target exists). Never open the final name directly with `O_EXCL` (a crash would leave a visible partial file).
+3. Publish the object **before** the receipt.
+4. If the final name already exists: for objects, verify its hash and reuse it; for receipts, take the next suffix.
+5. Remove only staging files that this command created and still owns. Cleanup requires retained ownership and identity evidence (recorded at creation) that the current path still names the file this command created; a matching name or a held lock is insufficient. Old temp files are never swept by name, location or lock. A failed stage is retained and reported.
 
-SQLite FTS5 searches names, receipt context and extracted UTF-8 `.txt`/`.md` and text-based PDF text (`pypdf`).
-Start with `unicode61` tokenization; automatically rebuild missing/stale indexes from plain files.
-Return acquisition ID, name and snippet; report extraction failures while retaining filename/context search.
-No OCR, embeddings, semantic matching or Korean morphological analyzer in v0.1.
-Korean spacing and particles affect matches; partial words and two-character substrings are not guaranteed hits.
-Document a Korean benchmark: names, spaced/unspaced phrases, particles, two-character queries, expected/actual hits and extraction failures.
-Report measured limits rather than universal Korean support; scanned PDFs have no extracted text.
+Orphans (objects without a receipt, left by an interrupted capture) are preserved and reported: `verify` exits 1, `backup` rejects them. Atomic publish does not promise protection from every power-loss failure; `verify` exposes inconsistencies.
 
-## Backup and restore
+## Path safety
 
-One user-managed backup root mirrors objects and versioned receipts, with configuration and dated manifests.
-Append-only: never delete, prune or overwrite differing bytes; content addressing makes originals incremental by nature.
-Hash-check source and destination on every new write, including receipts/configuration; validate reused destination files.
-Store configuration per manifest so settings changes preserve old backups; manifests list paths and hashes.
-Publish the dated manifest last, atomically, after its entire set verifies; exclude caches and working copies.
-Works inside Google Drive/OneDrive synced folders; the owner's sync client handles upload/download.
-A reported link count of zero there is a warning, not failure; unavailable bytes or failed hashes still fail.
-Files are plain and NOT encrypted: the cloud provider and anyone with folder access can read them.
-No backup engine, restic/Kopia integration, rclone, cloud API, credentials or application network access.
-Local backup success means verified local writes, not confirmed cloud upload or provider durability.
-Restore selects the latest complete manifest, requires an empty destination and validates/copies all listed files atomically.
-Run full verification and rebuild the index before success; use `--root` to access the restored root.
-Incomplete manifests are not restore points; a failed restore remains explicitly incomplete, never reported as success.
+- Reject overlapping `source`, `root`, `backup_root` and `restore --to` paths (one contained in or equal to another).
+- Reject actual redirects: symlinks, junctions, mount-point or other redirecting reparse tags, linked directories during traversal, and special files (devices, sockets, FIFOs). Hydrated NTFS cloud-tag regular files (for example OneDrive/Drive placeholders already hydrated) are accepted with ordinary opened-file semantics for **both** capture sources and backup inputs; offline or unavailable bytes exit 2. This is not a blanket rejection of all reparse points. The active root itself must still be an unsynced local root: unsynced local NTFS on Windows, or an unsynced local filesystem with the required locks and atomic no-replace support on Ubuntu (otherwise exit 2 `unsupported_platform`).
+- Working-copy and restore names are derived NFC, and rejected or replaced if unsafe: path separators, control characters, Windows reserved device names (`CON`, `NUL`, `COM1`, ...), alternate data stream `:`, trailing dot or space. A derived name falling back to `file` plus the id is allowed; the receipt keeps `original_name`.
+- Source coherence: read through one opened regular-file handle; compare its identity, size and mtime before and after reading, hash the bytes actually staged, and confirm the pathname still names that same file before publication. Any change fails that file with `source_changed`. This detects ordinary mutation only; no snapshot or hostile-TOCTOU claim.
 
 ## CLI: six commands
 
 ```text
-sb --help
 Usage: sb [--root PATH] [--json] COMMAND [ARGS]
   capture <file-or-folder>          Preserve bytes and acquisition receipt
   find <text>                      Search names, context and supported text
   open <id> [--print-path]         Verify and open, or only print the verified path
   verify                           Check all receipts and objects
-  backup [--backup-root PATH]      Set/store root override and mirror to backup_root
-  restore <backup-root> --to <dir>  Restore into an empty local directory
-Options: --root PATH (default D:\SecondBrain), --json, --help
-Exit (all commands): 0 ok; 1 integrity problem (missing/corrupt/orphan); 2 usage/IO error (including locked files)
+  backup [--backup-root PATH]      Set/store root and mirror to backup_root
+  restore <backup-root> --to <dir>  Restore into an absent local directory
 ```
 
-Every command supports `--json`: one structured stdout result with status, results and errors; diagnostics use stderr.
-`sb --json find "contract"` yields `{"status":"ok","results":[{"id":"cap-20261012T000000Z-ba7816bf","name":"contract.txt","snippet":"contract.txt [filename match]"}]}`.
+| Command | Input | Output (default) | `--json` `results[]` item |
+|---|---|---|---|
+| `capture` | file or folder | `captured id=<id> name=<n> object=new\|reused`; summary for folders | `{id, sha256, original_name, object, warnings[]}` |
+| `find` | one text argument | `<id>  <name>  <snippet>` lines | `{id, name, snippet, warnings[]}` |
+| `open` | id | verified working-copy path message; `--print-path` prints the path only | `{id, path, warnings[]}` |
+| `verify` | none | `OK receipts=N objects=N missing=N corrupt=N orphan=N invalid=N` | one singleton summary `{receipts, objects, missing, corrupt, orphan, invalid, warnings}` |
+| `backup` | optional root | `OK added_objects=N added_receipts=N manifest=<name>` | `{manifest, added_objects, added_receipts, warnings}` |
+| `restore` | backup root, `--to` | `OK restored_receipts=N restored_objects=N` | `{restored_receipts, restored_objects, warnings}` |
 
-## Failure behaviour
+### Envelope, warnings and exit codes
 
-A single-writer lock prevents concurrent publication; backup holds it to keep the manifest consistent.
-Atomic publish: write a temp file on the TARGET volume, flush and close, then atomic replace; publish object BEFORE receipt.
-Retry Windows sharing violations with backoff (sync clients/indexers briefly lock files), then fail closed if still locked.
-Interruptions preserve completed acquisitions; a leftover temp file is harmless and removed on the next run.
-Atomic publication does not promise protection from every hardware/power-loss failure; verify exposes inconsistencies.
-Hash mismatch, missing bytes, malformed receipts or orphan files exit 1; non-empty restore targets and IO/lock errors exit 2.
+- `--json` prints exactly one object: `{"status":"ok"|"error","results":[],"errors":[]}`; `ok` requires zero errors, `error` at least one. No exception text reaches stdout.
+- The authoritative shapes are [schemas/cli-output.v1.schema.json](schemas/cli-output.v1.schema.json) (per-command result `$defs` and per-command envelopes, error-code enum, warning-code enum), [schemas/manifest.v1.schema.json](schemas/manifest.v1.schema.json), [schemas/receipt.v1.schema.json](schemas/receipt.v1.schema.json) and [schemas/config.v1.schema.json](schemas/config.v1.schema.json). This document does not duplicate the code lists. Schemas are structural only; the semantic checks are listed in their `$comment` fields.
+- Result cardinality: `open`, `verify`, `backup` and `restore` return at most one result and exactly one when `status` is `ok`; on `error` they return 0 or 1. A completed `verify` inspection yields exactly one summary even with problems; a lock or pre-inspection failure yields none. `capture` and `find` return zero or more.
+- All six result types carry `warnings[]`. Human-readable diagnostics go to stderr; under `--json`, warnings are structured per-result `warnings[]` and nothing else reaches stdout. A successful result keeps `status:"ok"` and `errors:[]`.
+- Exit precedence **2 > 1 > 0**. `1`: missing, corrupt, orphan or schema problems. `2`: usage, lock, IO, source-change, unsafe-path, config-persist or unsupported-platform errors. Successful results are retained alongside errors, including a completed backup result whose final config save failed (`status:"error"`, code `config_persist_failed`).
+- Folder capture is recursive, sorted by path, and partial: successful files are published, failures go to `errors[]`, and any failed item forces exit 2 even if other items had integrity (exit 1) problems. An empty folder exits 0 with zero results.
 
-## Non-claims and acceptance
+## Capture
 
-Integrity and recorded context only: no authenticity, admissibility, independent timestamp or custody certification claim.
-No litigation-readiness claim or proof against a rewritten archive.
-Capture 100 mixed files: Korean names, spaces, long paths, duplicates, empty and locked files; errors must be explicit.
-Interrupt each publication stage and safely rerun; check receipt-per-acquisition semantics and single-writer exclusion.
-Check expected search hits against the Korean benchmark; rebuild the index without losing source records.
-Tampering must block open/fail verify; missing, corrupt and orphan files must be reported.
-Backup/restore into an empty directory must verify all hashes; test a Drive-synced backup folder and link-count-zero warnings.
-Abort backup mid-way: no partial manifest remains (written last, atomically), and a re-run completes; restore refuses a non-empty target.
-Windows and Ubuntu CI must pass offline; the application performs no network operations.
+Stat the source, read and hash while staging, re-stat; publish the object (or verify and reuse an existing one), then the receipt. Source files are never modified. Unreadable or locked files give a per-file error; completed captures stay valid.
+
+## Open
+
+Verify the object hash, then copy into a fresh unique directory `cache/open/<id>/<n>/` (n = 1, 2, ...), then hash the copy and compare before launching. Edits happen on the copy and never reach the object; earlier copies are never overwritten or deleted. `--print-path` prints the path only (with `--json`, a structured result). An OS launch failure exits 2.
+
+## Search
+
+- SQLite FTS5, `unicode61`, over names, receipt context and extracted UTF-8 `.txt`/`.md` and text-based PDF text (`pypdf`). No OCR, embeddings or Korean morphological analysis.
+- The query is NFC-normalized and split into literal tokens; embedded FTS quotes are escaped, each token quoted, joined with AND. Raw FTS operators (`OR`, `NEAR`, `*`, `"`, `:`) are never interpreted. A query with no searchable tokens returns zero results.
+- Results are deterministically sorted (rank, then id). The default limit is a bounded 100 with an explicit `search_truncated` warning (stderr for humans, the last result's `warnings[]` in JSON); no extra flag.
+- Index freshness uses a fingerprint over a deterministic sequence of receipt paths and receipt **byte** digests, assuming immutable objects. A missing, stale or corrupt index is rebuilt into a separate database and published safely under the authority lock; a rebuild or publication failure exits 2. `verify` and `open` remain the integrity checks; the index never proves integrity.
+- Text and PDF extraction run in a bounded subprocess. Initial assumptions, not benchmark proof: 32 MiB input, 4 MiB extracted text, 10 s, 256 MiB memory. If these limits cannot be enforced on the platform, extraction is skipped with an `extraction_skipped` warning and name/context search is retained. Capture itself is unrestricted. An extraction error is a warning; names and context stay searchable. The numbers may be revisited through the benchmark, not through a runtime framework.
+- Korean spacing, particles and two-character queries are not guaranteed hits; the benchmark reports measured limits.
+
+## Backup tree and schema
+
+```text
+<backup_root>/
+  objects/ab/<sha256>
+  receipts/v1/<id>.json
+  configs/<sha256>.json
+  manifests/<yyyymmdd>t<hhmmss>z[-N].json
+```
+
+Manifest JSON: `{"schema_version":1,"created_utc":"...","tool_version":"...","entries":[{"kind":"object|receipt|config","path":"...","sha256":"...","size":N}]}`. Rules:
+
+- Exactly one `config` entry; the object entries are exactly the objects referenced by the receipt entries (set equality), and every receipt entry's `path` equals `receipts/v1/<id>.json`.
+- Strict JSON: duplicate keys, a BOM, `NaN`/`Infinity` and unknown fields are invalid. Path semantics: no absolute paths, no `..`, no case aliases (two paths equal under case folding).
+- Append-only: never delete, prune or overwrite differing bytes.
+- Manifest names: lowercase `t` and `z`, a valid UTC calendar timestamp that **must equal** the UTC date-time portion of `created_utc` (seconds precision), and an optional canonical integer suffix `-N` with N ≥ 2 (no `-1`, no leading zeros). An unsuffixed name sorts as 1. Publication retries suffixes numerically on collision.
+- That name-versus-`created_utc` match is a **semantic** check on the external file name; JSON Schema cannot express it and the manifest schema gives no assurance about it.
+- Unexpected entries in `manifests/` (including a malformed or mismatched manifest name) are integrity errors (exit 1), never silently ignored. Only explicitly defined coordination files (`backup.lock`, outside `manifests/`) and this command's own retained staging files are excluded from that rule.
+
+### Backup sequence
+
+1. Validate the explicit candidate destination without mutation.
+2. Acquire the destination lock, then the source lock. Under those locks read the configuration and derive the effective config snapshot. If the destination came from configuration, revalidate that it still matches; otherwise exit 2. Reject orphans.
+3. Copy or reuse each object, receipt and the config snapshot; verify every copy by hash, reuse included.
+4. Publish the manifest **last**, no-replace, atomic.
+5. Persist the local `config.json` (the backup root) and only then release both locks.
+
+If the final config save fails, exit 2, return the completed backup result alongside a `config_persist_failed` error, and state explicitly that a complete **local** backup exists. A locally valid backup does NOT confirm cloud sync or provider durability.
+
+The newest manifest is chosen by parsed timestamp then numeric suffix (`-10` > `-2`), never lexicographic. If the newest manifest is corrupt, exit 1 with no fallback to an older one; there is no `--manifest` flag. Documented recovery: build an isolated mirror containing the byte-exact selected manifest plus all its payloads; the original backup stays untouched.
+
+Cloud-synced backup folders are allowed: hydrated regular files are accepted, a reported link count of zero is a warning, directory redirects are rejected, unavailable bytes exit 2. Files are plain, NOT encrypted. No backup engine, credentials or application network access. Provider drills are NOT_VERIFIED.
+
+## Restore
+
+`--to` must be **absent** (an existing empty directory is no longer accepted). Steps:
+
+1. Select and fully validate the manifest (schema, hashes of all files, set equality).
+2. Create a sibling staging directory, exclusively owned by this command and retained on failure.
+3. Copy payloads and receipts; restore the sole `configs/<sha256>.json` entry as staging `config.json`, preserving its exact bytes. Verify, rebuild the index, run full verification in staging.
+4. Activate with an atomic **no-replace** rename: Linux `renameat2(RENAME_NOREPLACE)` or a tested equivalent; Windows a rename that refuses an existing target. No check-then-replace. If neither is available, exit 2.
+
+Successful activation is the commit point. A crash right after it may leave a complete destination without a reported success; a rerun then refuses that existing destination and never removes or replaces it automatically. A failed restore is never reported as success. Use `--root` to open the restored root.
+
+## Failure states
+
+| State | Detected by | Result |
+|---|---|---|
+| Missing/corrupt object, malformed receipt | `verify`, `open` | exit 1 |
+| Orphan object | `verify` (preserved), `backup` (rejected) | exit 1 |
+| Lock held, IO error, unsupported rename | any | exit 2 |
+| Unknown outcome after a crash | rerun `verify` | may yield a second acquisition on retry |
+| Failed stage left behind | reported, never swept | exit 2 or warning |
+| Interrupted backup | no manifest published | rerun completes |
+| Non-absent restore target | `restore` | exit 2 |
+
+## Acceptance (to be run after implementation; none claimed now)
+
+- 100 synthetic mixed files: Korean names, spaces, long paths, duplicates, empty and locked files; explicit errors.
+- Interrupt each publication stage; rerun safely; check receipt-per-acquisition and lock exclusion (concurrent capture and backup).
+- Korean benchmark: names, spaced and unspaced phrases, particles, two-character queries, expected versus actual hits, extraction failures.
+- Tampering blocks `open` and fails `verify`; missing, corrupt, orphan reported.
+- Backup then restore to an absent path verifies all hashes; a Drive-synced backup folder and link-count-zero warning; mid-way abort leaves no partial manifest; restore refuses an existing target.
+- Platforms: Windows and Ubuntu CI offline; the application does no network operation.
 
 ## Later
 
-- MCP: read-only access restricted to items the owner marks AI-visible.
-- Web capture: SingleFile-based acquisition.
-- Import: email and messenger exports.
-- Inbox: acquisition from other devices.
-- OCR: scanned text and transcription.
-- Evidence tier: custody, TSA, packaging and lawyer-reviewed exhibits.
-- Encryption: optional protection for backup files.
+MCP (read-only, owner-marked items), web capture, email and messenger import, other-device inbox, OCR, evidence tier (custody, TSA), optional backup encryption.

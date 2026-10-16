@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:secondbrain:schema:receipt:v1",
+  "title": "SecondBrain acquisition receipt v1",
+  "description": "Six-field immutable receipt stored at receipts/v1/<id>.json. Status: DESIGN_REVIEW contract; no implementation is asserted.",
+  "$comment": "Structural checks only. A conforming parser and semantic validator must additionally: (1) reject duplicate JSON keys, a BOM, NaN/Infinity and non-UTF-8 input before schema validation; (2) require the file name to equal '<id>.json' and the file to live under receipts/v1/; (3) require the id's hash8 to equal the first 8 characters of sha256; (4) require the id timestamp to be a valid UTC calendar date and time; (5) require the object objects/<sha256[0:2]>/<sha256> to exist and hash to sha256 (cross-link); (6) require collected_at to parse as a real zoned date-time (valid month/day/hour/offset). original_name is acquisition metadata preserved exactly as reported (Unicode kept raw, no NFC rewriting); it may contain characters unsafe as a file name and must NEVER be used as an output path. Working-copy and restore basenames are derived separately and must reject separators, control characters, Windows reserved device names, ':' alternate data streams and trailing dot or space. source_path is recorded context only and is never used as a restore or write path.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "sha256", "original_name", "source_path", "collected_at", "tool_version"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^cap-[0-9]{8}t[0-9]{6}z-[0-9a-f]{8}(?:-(?:[2-9]|[1-9][0-9]+))?$",
+      "description": "Lowercase acquisition id: cap-<yyyymmdd>t<hhmmss>z-<hash8>, optional collision suffix starting at -2 with no leading zeros."
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "Lowercase SHA-256 hex of the original bytes."
+    },
+    "original_name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Name of the source as observed at capture, preserved exactly."
+    },
+    "source_path": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Source path as observed at capture. Metadata only."
+    },
+    "collected_at": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})$",
+      "description": "RFC 3339 local collection time; the pattern requires an explicit Z or numeric offset."
+    },
+    "tool_version": {
+      "type": "string",
+      "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)(?:-(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$",
+      "description": "Semantic version of the tool release that wrote the receipt, e.g. 0.0.1. Must match secondbrain.__version__ and build metadata at packaging time."
+    }
+  }
+}

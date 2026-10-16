@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:secondbrain:schema:manifest:v1",
+  "title": "SecondBrain backup manifest v1",
+  "description": "manifests/<yyyymmdd>t<hhmmss>z[-N].json. Status: DESIGN_REVIEW contract; no implementation is asserted.",
+  "$comment": "Structural checks only. A conforming parser and semantic validator must additionally: (1) reject duplicate JSON keys, a BOM, NaN/Infinity and non-UTF-8 input before schema validation; (2) enforce that created_utc is a real calendar date-time (format is an annotation unless a format checker is enabled); (3) require entry paths to be unique and to have no case aliases (equal under case folding); paths are relative with no absolute form, drive letter, backslash or '.'/'..' segments (the patterns exclude them, the check is repeated for defense); (4) for object entries require the two-hex directory to equal the first two characters of the file digest, and sha256 to equal that digest; (5) for config entries require the file digest to equal sha256; (6) for receipt entries require the id in the path to have a valid UTC calendar timestamp, and its hash8 to match the first 8 characters of the referenced receipt's sha256; (7) require set closure: the object entries are exactly the objects referenced by the receipt entries; (8) require the file's own name to be a valid manifest name and exactly one config entry (also expressed below with contains/minContains/maxContains); (9) verify every payload hash and size against the stored files; (10) choose the newest manifest by parsed timestamp then numeric suffix, never lexicographically.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "created_utc", "tool_version", "entries"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "created_utc": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?Z$"
+    },
+    "tool_version": { "$ref": "#/$defs/semver" },
+    "entries": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/entry" },
+      "contains": { "type": "object", "properties": { "kind": { "const": "config" } }, "required": ["kind"] },
+      "minContains": 1,
+      "maxContains": 1
+    }
+  },
+  "$defs": {
+    "semver": {
+      "type": "string",
+      "pattern": "^(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)(?:-(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "size": { "type": "integer", "minimum": 0 },
+    "entry": {
+      "oneOf": [
+        { "$ref": "#/$defs/objectEntry" },
+        { "$ref": "#/$defs/receiptEntry" },
+        { "$ref": "#/$defs/configEntry" }
+      ]
+    },
+    "objectEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "path", "sha256", "size"],
+      "properties": {
+        "kind": { "const": "object" },
+        "path": { "type": "string", "pattern": "^objects/[0-9a-f]{2}/[0-9a-f]{64}$" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "size": { "$ref": "#/$defs/size" }
+      }
+    },
+    "receiptEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "path", "sha256", "size"],
+      "properties": {
+        "kind": { "const": "receipt" },
+        "path": { "type": "string", "pattern": "^receipts/v1/cap-[0-9]{8}t[0-9]{6}z-[0-9a-f]{8}(?:-(?:[2-9]|[1-9][0-9]+))?\\.json$" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "size": { "$ref": "#/$defs/size" }
+      }
+    },
+    "configEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "path", "sha256", "size"],
+      "properties": {
+        "kind": { "const": "config" },
+        "path": { "type": "string", "pattern": "^configs/[0-9a-f]{64}\\.json$" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "size": { "$ref": "#/$defs/size" }
+      }
+    }
+  }
+}

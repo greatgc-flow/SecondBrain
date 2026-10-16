@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:secondbrain:schema:cli-output:v1",
+  "title": "SecondBrain sb --json output v1",
+  "description": "Single JSON object printed to stdout by every command under --json. Status: DESIGN_REVIEW contract; no implementation is asserted.",
+  "$comment": "The root envelope has no command field, so the root schema alone cannot identify the command: results items are anyOf the six typed result defs. A caller that knows which command it ran MUST validate against the matching per-command envelope in $defs (envelope_capture, envelope_find, envelope_open, envelope_verify, envelope_backup, envelope_restore, referenced as 'urn:secondbrain:schema:cli-output:v1#/$defs/<name>') and so require a homogeneous result type; grammar alone does not prove command semantics. Semantic checks outside the schema: duplicate JSON keys and BOM/NaN are rejected by the parser; exit code must follow precedence 2 > 1 > 0 (codes usage, io, lock, unsupported_platform, source_changed, unsafe_path, config_persist_failed map to 2; missing, corrupt, orphan, invalid_schema to 1); open, verify, backup and restore envelopes allow at most one result, and require exactly one when status is 'ok'; status 'error' permits 0 or 1 result (verify: a completed inspection yields exactly 1 summary even with problems, while a lock or pre-inspection failure yields 0); status 'error' may still carry successful results (partial folder capture, or a backup whose manifest was published but whose config save failed with config_persist_failed). Warnings go to stderr only and never to stdout outside the JSON object; machine-readable warnings are per-result warnings[]. Nothing here requires network resolution of the $id or $ref values.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status", "results", "errors"],
+  "properties": {
+    "status": { "enum": ["ok", "error"] },
+    "results": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          { "$ref": "#/$defs/captureResult" },
+          { "$ref": "#/$defs/findResult" },
+          { "$ref": "#/$defs/openResult" },
+          { "$ref": "#/$defs/verifyResult" },
+          { "$ref": "#/$defs/backupResult" },
+          { "$ref": "#/$defs/restoreResult" }
+        ]
+      }
+    },
+    "errors": { "type": "array", "items": { "$ref": "#/$defs/error" } }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "ok" } }, "required": ["status"] },
+      "then": { "properties": { "errors": { "maxItems": 0 } } },
+      "else": { "properties": { "errors": { "minItems": 1 } } }
+    }
+  ],
+  "$defs": {
+    "id": { "type": "string", "pattern": "^cap-[0-9]{8}t[0-9]{6}z-[0-9a-f]{8}(?:-(?:[2-9]|[1-9][0-9]+))?$" },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "count": { "type": "integer", "minimum": 0 },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "path", "message"],
+      "properties": {
+        "code": {
+          "enum": ["usage", "io", "lock", "unsupported_platform", "missing", "corrupt", "orphan", "invalid_schema", "source_changed", "unsafe_path", "config_persist_failed"]
+        },
+        "path": { "type": ["string", "null"] },
+        "message": { "type": "string", "minLength": 1 }
+      }
+    },
+    "warning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message"],
+      "properties": {
+        "code": {
+          "enum": ["extraction_skipped", "extraction_failed", "search_truncated", "retained_temp", "cloud_link_count_zero", "local_only_backup", "synced_root_detected", "name_replaced"]
+        },
+        "message": { "type": "string", "minLength": 1 },
+        "path": { "type": "string" }
+      }
+    },
+    "warnings": { "type": "array", "items": { "$ref": "#/$defs/warning" } },
+    "captureResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "sha256", "original_name", "object", "warnings"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "original_name": { "type": "string", "minLength": 1 },
+        "object": { "enum": ["new", "reused"] },
+        "warnings": { "$ref": "#/$defs/warnings" }
+      }
+    },
+    "findResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "snippet", "warnings"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string", "minLength": 1 },
+        "snippet": { "type": "string" },
+        "warnings": { "$ref": "#/$defs/warnings" }
+      }
+    },
+    "openResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "path", "warnings"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "path": { "type": "string", "minLength": 1 },
+        "warnings": { "$ref": "#/$defs/warnings" }
+      }
+    },
+    "verifyResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["receipts", "objects", "missing", "corrupt", "orphan", "invalid", "warnings"],
+      "properties": {
+        "receipts": { "$ref": "#/$defs/count" },
+        "objects": { "$ref": "#/$defs/count" },
+        "missing": { "$ref": "#/$defs/count" },
+        "corrupt": { "$ref": "#/$defs/count" },
+        "orphan": { "$ref": "#/$defs/count" },
+        "invalid": { "$ref": "#/$defs/count" },
+        "warnings": { "$ref": "#/$defs/warnings" }
+      }
+    },
+    "backupResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["manifest", "added_objects", "added_receipts", "warnings"],
+      "properties": {
+        "manifest": { "type": "string", "pattern": "^[0-9]{8}t[0-9]{6}z(?:-(?:[2-9]|[1-9][0-9]+))?\\.json$" },
+        "added_objects": { "$ref": "#/$defs/count" },
+        "added_receipts": { "$ref": "#/$defs/count" },
+        "warnings": { "$ref": "#/$defs/warnings" }
+      }
+    },
+    "restoreResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["restored_receipts", "restored_objects", "warnings"],
+      "properties": {
+        "restored_receipts": { "$ref": "#/$defs/count" },
+        "restored_objects": { "$ref": "#/$defs/count" },
+        "warnings": { "$ref": "#/$defs/warnings" }
+      }
+    },
+    "envelope_capture": { "allOf": [{ "$ref": "#" }, { "properties": { "results": { "items": { "$ref": "#/$defs/captureResult" } } } }] },
+    "envelope_find": { "allOf": [{ "$ref": "#" }, { "properties": { "results": { "items": { "$ref": "#/$defs/findResult" } } } }] },
+    "envelope_open": { "allOf": [{ "$ref": "#" }, { "properties": { "results": { "items": { "$ref": "#/$defs/openResult" }, "maxItems": 1 } }, "if": { "properties": { "status": { "const": "ok" } }, "required": ["status"] }, "then": { "properties": { "results": { "minItems": 1 } } } }] },
+    "envelope_verify": { "allOf": [{ "$ref": "#" }, { "properties": { "results": { "items": { "$ref": "#/$defs/verifyResult" }, "maxItems": 1 } }, "if": { "properties": { "status": { "const": "ok" } }, "required": ["status"] }, "then": { "properties": { "results": { "minItems": 1 } } } }] },
+    "envelope_backup": { "allOf": [{ "$ref": "#" }, { "properties": { "results": { "items": { "$ref": "#/$defs/backupResult" }, "maxItems": 1 } }, "if": { "properties": { "status": { "const": "ok" } }, "required": ["status"] }, "then": { "properties": { "results": { "minItems": 1 } } } }] },
+    "envelope_restore": { "allOf": [{ "$ref": "#" }, { "properties": { "results": { "items": { "$ref": "#/$defs/restoreResult" }, "maxItems": 1 } }, "if": { "properties": { "status": { "const": "ok" } }, "required": ["status"] }, "then": { "properties": { "results": { "minItems": 1 } } } }] }
+  }
+}

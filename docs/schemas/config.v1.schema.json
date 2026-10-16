@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:secondbrain:schema:config:v1",
+  "title": "SecondBrain config v1",
+  "description": "Root config.json and backup configs/<sha256>.json snapshot content. Status: DESIGN_REVIEW contract; no implementation is asserted.",
+  "$comment": "Structural checks only. A conforming parser and semantic validator must additionally: (1) reject duplicate JSON keys, a BOM, NaN/Infinity and non-UTF-8 input before schema validation; (2) treat an absent backup_root as invalid (null means 'not set', absence is an error); (3) before use, validate a string backup_root as an acceptable path: it must not overlap the root, any source, or a restore target, must not be a directory redirect, and must pass the path-safety rules in design.md; (4) for a configs/<sha256>.json snapshot, require the file name to equal the SHA-256 of its exact bytes and the manifest to list exactly one config entry.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["backup_root"],
+  "properties": {
+    "backup_root": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "string", "minLength": 1 }
+      ],
+      "description": "Backup root path, or null when not yet set."
+    }
+  }
+}

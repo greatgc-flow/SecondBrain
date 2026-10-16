@@ -51,3 +51,6 @@ history/
 *.7z
 *.tar
 *.gz
+
+# Local peer coordination state
+/.peerhub/

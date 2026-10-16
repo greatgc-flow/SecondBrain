@@ -36,7 +36,7 @@ Method: SHA-256 of the compact JSON map of relative path to file SHA-256, keys s
 |---|---|---|---|
 | `cx` | AGREE | Independently recomputed the exact digest | `rec-25155660e03d`, stream `secondbrain:council:cx` |
 | `ag` | AGREE | Independently recomputed the exact digest | `rec-08a5a7abe2bc`, stream `secondbrain:council:ag` |
-| `cc` (author) | AGREE | Content assent, `rec-c69779f0979f`; `cc` computed no hash. The digest identity is verified externally by `cx` and `ag`, and `cc` accepts the candidate identified by that digest | `rec-c69779f0979f`, stream `secondbrain:docs:cc:2` |
+| `cc` (author) | AGREE | Content assent `rec-c69779f0979f`; final acceptance of the full 9-file digest `rec-d75efe76cd41`. `cc` computed no hash; the digest identity is verified externally by `cx` and `ag` | `rec-c69779f0979f`, `rec-d75efe76cd41`, stream `secondbrain:docs:cc:2` |
 
 The earlier `cx` BLOCK on candidate `8f8d11fa…` and the earlier `ag` AGREE on that candidate are **superseded**; only the current digest counts.
 
@@ -59,7 +59,9 @@ The earlier `cx` BLOCK on candidate `8f8d11fa…` and the earlier `ag` AGREE on 
 
 ## Git
 
-Actual state: one merged ancestor branch archived and deleted; 42 remote heads retained before the current doc-branch push; PR46/PR47 and the S1-S5 prototype preserved. Details: [git-inventory.md](git-inventory.md). The doc-branch commit/push and the DRAFT PR are **PENDING** at this moment; no commit or PR URL is recorded.
+Actual state: one merged ancestor branch archived and deleted; 42 remote heads retained before the doc-branch push; PR46/PR47 and the S1-S5 prototype preserved. Details: [git-inventory.md](git-inventory.md).
+
+Initial delivery (reviewed): commit `e952781883f4d688535a991c2b0721841ce347aa` on `docs/v01-design-readiness-20261016` (remote equals local), DRAFT [PR48](https://github.com/greatgc-flow/SecondBrain/pull/48). `ag` delivery evidence `rec-9d6a59f31f79` (stream `secondbrain:council:ag`): core digest unchanged (`dc4a1dd6…`), the four schemas are draft 2020-12 structurally valid, 81 relative Markdown links across 11 docs with 0 broken, `git diff --check` pass, 15 explicit doc/`AGENTS.md` files committed (nothing under `src/`, `tests/`, `scripts/`, `.github/` or `pyproject.toml`), no CI trigger, no merge. The earlier 15 stub baseline and 27 contract cases are not product assurance. This is the initial delivery commit, not a claim about the current HEAD: this metadata follow-up commit changes HEAD, and its self-referential sync does not block the core freeze.
 
 ## Workflow and quota
 
@@ -68,5 +70,5 @@ Actual state: one merged ancestor branch archived and deleted; 42 remote heads r
 
 ## Next
 
-1. `ag` verifies the core files, links and diff whitespace, commits the 15 doc files plus `AGENTS.md` only, pushes `docs/v01-design-readiness-20261016`, and creates a DRAFT PR without merge or CI dispatch.
-2. WAIT for the owner's explicit TDD go. No implementation until then.
+1. WAIT for the owner's explicit TDD go. No implementation, merge or CI dispatch until then.
+2. Before any future work: refresh quota evidence and check the live Git HEAD and PR48 state.

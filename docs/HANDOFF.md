@@ -17,7 +17,7 @@ Rules: [AGENTS.md](../AGENTS.md), [collaboration.md](collaboration.md). Contract
 
 ## State
 
-- The 9-file core candidate (digest in status.md) has explicit AGREE from `cx` (`rec-25155660e03d`), `ag` (`rec-08a5a7abe2bc`) and `cc` (`rec-c69779f0979f`, content assent with external digest verification). Gate: DESIGN_FROZEN / PRE_TDD_READY. Earlier candidate `8f8d11fa…` votes are superseded.
+- The 9-file core candidate (digest in status.md) has explicit AGREE from `cx` (`rec-25155660e03d`), `ag` (`rec-08a5a7abe2bc`) and `cc` (`rec-c69779f0979f`, final acceptance `rec-d75efe76cd41`; digest verified externally by `cx` and `ag`). Gate: DESIGN_FROZEN / PRE_TDD_READY. Earlier candidate `8f8d11fa…` votes are superseded.
 - Implementation is **not authorized and not started**; the owner's TDD go does not exist yet. Operational gates (real cloud, OS/Python matrix, drills) are NOT_VERIFIED. No merge now.
 
 ## Safe Git policy
@@ -30,8 +30,8 @@ Streams: `cx` `secondbrain:council:cx`; `ag` `secondbrain:council:ag`; `cc` `sec
 
 ## Next actions
 
-1. `ag`: verify the core files, links and diff whitespace; commit the 15 doc files plus `AGENTS.md` only; push `docs/v01-design-readiness-20261016`; create a DRAFT PR with no merge and no CI dispatch. Commit and PR URL are PENDING and not recorded.
-2. Then WAIT for the owner's explicit TDD go. Do nothing in `src/`, `tests/`, `scripts/`, `.github/` or `pyproject.toml` before it.
+1. Publication is complete: initial reviewed delivery commit `e952781883f4d688535a991c2b0721841ce347aa` on `docs/v01-design-readiness-20261016`, DRAFT [PR48](https://github.com/greatgc-flow/SecondBrain/pull/48); evidence in [status.md](status.md). A later metadata follow-up commit changes HEAD, so check the live HEAD and PR state before any work.
+2. WAIT for the owner's explicit TDD go. Do nothing in `src/`, `tests/`, `scripts/`, `.github/` or `pyproject.toml` before it. Refresh quota evidence before future work.
 
 ## Resume prompt (one line, for a new chat)
 

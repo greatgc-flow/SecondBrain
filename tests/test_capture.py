@@ -335,6 +335,7 @@ def test_root_refusal_cloud_synced(tmp_path: Path, capsys: pytest.CaptureFixture
     assert "onedrive" in combined or "cloud" in combined
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="filesystem-type refusal is Windows-only (ADR 0002)")
 def test_root_refusal_non_ntfs(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     """Test that non-NTFS active roots are refused on Windows with ADR 0002 warning."""
     root = tmp_path / "SecondBrain"

@@ -5,6 +5,7 @@ These documents define intended behaviour; they do not assert that the new CLI i
 
 | Document | Purpose |
 | --- | --- |
+| [USAGE.md](USAGE.md) | Install, six commands, exit codes, troubleshooting, and the JSON contract for AI agents. |
 | [design.md](design.md) | Product, six-command walkthrough, files/receipts, search limits, recovery, failures and acceptance. |
 | [ci-policy.md](ci-policy.md) | Cost-aware private CI: PR smoke, manual full Windows/Linux matrix, limits and verification. |
 | [decisions.md](decisions.md) | Eight short ADRs explaining the restart and deliberately small scope. |

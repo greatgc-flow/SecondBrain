@@ -4,6 +4,7 @@ SecondBrain preserves personal files on one local computer without changing thei
 The owner captures, finds, opens, and verifies originals with recorded acquisition context.
 One user-managed backup folder supports a verified restore into an empty local root.
 
+Full usage guide for people and AI agents: [docs/USAGE.md](docs/USAGE.md).
 See [docs/design.md](docs/design.md) and [docs/decisions.md](docs/decisions.md) for architecture and design records.
 
 ## Quickstart

@@ -1,4 +1,6 @@
-# CI usage policy (private repository)
+# CI usage policy
+
+> **Update 2026-10-17:** the repository is now public, so the private-allowance limits below no longer apply. Keep the cost-aware triggers; the full matrix may be dispatched freely at milestones. The first full-matrix run caught a Python 3.13-only API use (fixed in v0.1.1).
 
 **Effective:** 2026-10-15. Private GitHub Actions included allowance is shared with other private repositories. In Oct 2026 the personal Free allowance was exhausted (account report confirmed $12.00 of discounted Private runner usage across SecondBrain, LK and Lovely; net charge $0). A new workflow cannot allocate a runner until included time resets or separately approved paid overage is available. No budget/payment change is part of this PR.
 

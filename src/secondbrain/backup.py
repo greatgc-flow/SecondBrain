@@ -47,6 +47,14 @@ RESERVED_WINDOWS_NAMES = frozenset({
 })
 
 
+def _is_regular_file(path: Path) -> bool:
+    """True for a regular file that is not a link (Path.is_file(follow_symlinks=) needs Python 3.13)."""
+    try:
+        return stat.S_ISREG(os.lstat(path).st_mode)
+    except OSError:
+        return False
+
+
 def validate_relative_path(path_str: str) -> Path:
     """Validate relative path: no .., absolute, drive letters, NTFS streams, reserved names.
 
@@ -601,7 +609,7 @@ def backup_repository(
             reject_reparse_ancestors(src_obj, resolved_data_root, role="source object")
 
             validate_payload_file(src_obj, role="source object", root=resolved_data_root)
-            if not src_obj.is_file(follow_symlinks=False):
+            if not _is_regular_file(src_obj):
                 raise IntegrityError(f"Referenced object does not exist or is not a regular file: {src_obj}")
 
             # Ensure source object in data root is not corrupted
@@ -658,7 +666,7 @@ def backup_repository(
             reject_reparse_ancestors(src_rec, resolved_data_root, role="source receipt")
 
             validate_payload_file(src_rec, role="source receipt", root=resolved_data_root)
-            if not src_rec.is_file(follow_symlinks=False):
+            if not _is_regular_file(src_rec):
                 raise IntegrityError(f"Receipt file does not exist or is not a regular file: {src_rec}")
             src_rec_sha = compute_file_sha256(src_rec)
             src_rec_size = src_rec.stat().st_size
@@ -705,7 +713,7 @@ def backup_repository(
         if os.path.lexists(str(src_cfg)):
             reject_reparse_ancestors(src_cfg, resolved_data_root, role="source config")
             validate_payload_file(src_cfg, role="source config", root=resolved_data_root)
-            if not src_cfg.is_file(follow_symlinks=False):
+            if not _is_regular_file(src_cfg):
                 raise IntegrityError(f"Config file is not a regular file: {src_cfg}")
             cfg_sha = compute_file_sha256(src_cfg)
             cfg_size = src_cfg.stat().st_size

@@ -76,3 +76,13 @@ No legal-weight default or authenticity/admissibility claim is made.
 `sb_law.md` is preliminary, non-authoritative discussion, not a legal specification.
 Reason: the owner explicitly chose simple capture/search/recovery first.
 Other deferred items appear only as one-line entries in [design.md](design.md).
+
+## 0009 — No M2 build now; MCP read-only is the only candidate
+
+Decision (2026-10-17, assistant analysis for the owner; no peer round was held): do not start M2 now.
+Reason: v0.1 already meets its stated goal (capture, verify, find, open, backup, restore). The deferred items rank as follows.
+- Read-only MCP server: the only item with clear value for AI use. It is gated by the owner decision that AI sees only items the owner marks AI-visible. That needs a marker design (receipt field vs. sidecar list), which touches the six-field receipt contract, plus a new dependency. Do this next, only after the owner picks the marker design.
+- Web capture, email/messenger import, OCR, cross-device inbox: each adds heavy dependencies or formats for a need not yet observed. Wait for a concrete user case.
+- Evidence tier (custody, TSA, exhibits): legal review required first; out of scope.
+- Backup encryption: the owner chose one plain-file folder; revisit only if the backup folder moves to an untrusted location.
+Trigger to reopen: the owner chooses the AI-visible marker design, or a real capture failure shows a gap in v0.1.

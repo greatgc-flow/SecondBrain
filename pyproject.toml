@@ -4,19 +4,19 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "secondbrain"
-version = "0.0.1"
+version = "0.1.0"
 description = "Personal knowledge and evidence preservation tool"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "pypdf",
+    "pypdf>=6",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest",
-    "pytest-xdist",
-    "pytest-timeout",
+    "pytest>=9",
+    "pytest-xdist>=3",
+    "pytest-timeout>=2",
 ]
 
 [project.scripts]

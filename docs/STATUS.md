@@ -1,5 +1,7 @@
 # SecondBrain Status
 
+**Release v0.1.0 (2026-10-17).** M1 shipped as a GitHub release (wheel + sdist); not published to PyPI. Open backlog: see "Deferred" below.
+
 **Checkpoint 2026-10-13 (M1 done).** All five steps of milestone M1 (S1 through S5) have been implemented, hardened, and verified with an end-to-end acceptance suite.
 
 ## Milestone M1 Done Criteria Checklist

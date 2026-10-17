@@ -65,3 +65,9 @@ All items below pass automated test suites on both Windows and Linux:
 - Cross-device inbox.
 - OCR / speech transcription.
 - Legal evidence tier and sealing.
+
+## Handoff 2026-10-17 (v0.1.0 released)
+
+- Released v0.1.0 on GitHub (wheel + sdist); not on PyPI. Verified only on Windows / Python 3.14.8 (183 tests, `python scripts/verify.py`). Linux and Python 3.11-3.13 are NOT_VERIFIED because the private-repo Actions allowance is exhausted (see `ci-policy.md`); run the `full_matrix=true` dispatch once the allowance resets and record the run URL.
+- Repo cleaned: only `main` remains (local and remote). Legacy R7-R13 history is kept at tag `legacy-r13-final` and `archive/20261016/dev/r13l-snapshot-consistency-20261010`.
+- Backlog: Linux/Py3.11-3.13 matrix run; M2 scope (see Deferred above) needs an owner decision; no PyPI publication authorized.

@@ -6,6 +6,7 @@ These documents define intended behaviour; they do not assert that the new CLI i
 | Document | Purpose |
 | --- | --- |
 | [design.md](design.md) | Product, six-command walkthrough, files/receipts, search limits, recovery, failures and acceptance. |
+| [ci-policy.md](ci-policy.md) | Cost-aware private CI: PR smoke, manual full Windows/Linux matrix, limits and verification. |
 | [decisions.md](decisions.md) | Eight short ADRs explaining the restart and deliberately small scope. |
 | [Repository README](../README.md) | Restart pointer followed by the frozen earlier project description. |
 

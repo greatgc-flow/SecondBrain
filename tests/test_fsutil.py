@@ -155,8 +155,8 @@ def test_at37_converter_child_is_guarded(root, subprocess_spy):
 
 def test_subprocess_spy_allows_module_entrypoint(subprocess_spy):
     process = subprocess.run([sys.executable, "-m", "secondbrain"], capture_output=True, text=True)
-    assert process.returncode == 1  # Slice 0 placeholder; no CLI behavior asserted here.
-    assert "not implemented" in process.stderr
+    assert process.returncode == 2  # slice 8: the real CLI rejects a missing command; the spy only needs to allow the launch
+    assert "usage" in process.stderr
 
 
 def test_at36_reparse_descendant_refused_before_any_delete(root, monkeypatch):

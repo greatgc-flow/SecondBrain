@@ -273,7 +273,10 @@ def test_missing_inbox_is_io_error_without_creating_layout(tmp_path):
 
 
 def test_at35_long_destination_is_rejected_before_claim(root, tool):
-    source = drop(root, "가" * 200 + ".txt")
+    root = root / ("long-root-" + "a" * 120)
+    source = drop(root, "가" * 80 + ".txt")
+    assert all(len(part.encode("utf-8")) <= 255 for part in source.parts)
+    assert len(str(root / "raws" / ("0" * 16) / "src" / source.name)) > 240
     result = ingest.ingest(root)
     assert [e["code"] for e in result["errors"]] == ["path_too_long"]
     assert source.exists() and not stages(root) and not tool.convert

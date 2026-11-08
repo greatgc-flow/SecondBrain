@@ -152,9 +152,6 @@ nonzero exits. More cross-product synthetic reports remain Slice 3 work.
 
 ## Per-file observations
 
-Each JSON block below is the exact selected five fields from its raw report.
-Probe links include full SHA256 source identity, media identity, errors and options.
-
 ### `characterize/renamed-audio.pdf` (2085 bytes)
 
 [Input](characterize/renamed-audio.pdf) · [raw report](reports/characterize--renamed-audio.pdf.json) · [probe](reports/characterize--renamed-audio.pdf.probe.json)
@@ -701,3 +698,4 @@ Gate 1b remains pending orchestrator + ag approval of the resolution below.
    `renamed-audio.pdf` pin (null/failed, `FileConversionException`) is adopted into AT-12.
 6. **Environment limitations stand.** AT-37 no-audio-extras and the six-job matrix are
    certified by CI, not by this Windows/3.15 measurement.
+7. **XML [S3/N3].** XML, including RSS/Atom, stays literal plain text; feed-specific conversion is disabled.

@@ -1,6 +1,7 @@
 """DESIGN r9 §3: table cross-product, real report shape, and staged adapter."""
 from copy import deepcopy
 from hashlib import sha256
+from itertools import product
 import json
 from pathlib import Path
 import re
@@ -127,7 +128,7 @@ def test_at06_every_characterized_real_report(path):
 
 
 # One explicit expectation per table row, plus meaningful boundaries/shortcuts.
-# No second classifier or full cross product is used as an oracle.
+# Detailed reasons and boundary behavior stay in these representative cases.
 ROW_CASES = [
     pytest.param(".pdf", {"size": 0}, (None, "failed", "empty_file"), id="row-01-empty"),
     pytest.param(".mp3", {}, ("unsupported", "unsupported", "extension_not_allowed"), id="row-02-audio"),
@@ -155,6 +156,57 @@ ROW_CASES = [
     pytest.param(".pdf", {"conversion_error": "conversion", "report_error": "report_failed"}, (None, "failed", "FileConversionException"), id="conversion-before-report"),
     pytest.param(".pdf", {"report": "row-09.json", "unit_count": 10000, "native": True}, (None, "failed", "too_many_units"), id="unit-overflow"),
 ]
+
+
+def test_at05_full_domain_is_mece():
+    """One lightweight MECE check; the §3 predicates and outputs are table data.
+
+    AT-05's domain fixes successful prechecks and a produced report: rows 1/6
+    remain in ROW_CASES. Plain-text inputs never carry a report. Downstream
+    axes still vary after shortcuts, to check that earlier rows exclude them.
+    """
+    from markitdown import UnsupportedFormatException, MissingDependencyException, FileConversionException
+    errors = {None: None, "unsupported": UnsupportedFormatException("unsupported"),
+              "dependency": MissingDependencyException("dependency"),
+              "conversion": FileConversionException("conversion"), "other": ValueError("other")}
+    convertible = {"ext": (".pdf", ".docx", ".md", ".txt")}
+    reported = {"ext": (".pdf", ".docx", ".md"), "exception": (None,)}
+    recommended = {**reported, "decision": ("ocr_recommended", "review")}
+    # Each row contains OR clauses; fields within a clause are AND conditions.
+    # Wildcard fields are absent. Expected outputs are declared, never computed.
+    rows = [
+        (2, [{"ext": (".mp3",)}], ("unsupported", "unsupported")),
+        (3, [{"ext": (".png",)}], ("ocr-required", "awaiting-approval")),
+        (4, [{**convertible, "exception": ("unsupported", "dependency")}], ("unsupported", "unsupported")),
+        (5, [{**convertible, "exception": ("conversion", "other")}], (None, "failed")),
+        (7, [{**recommended, "candidates": (False,)}], (None, "failed")),
+        (8, [{**recommended, "candidates": (True,), "units": (True,), "native": (False,)}], ("ocr-required", "awaiting-approval")),
+        (9, [{**recommended, "candidates": (True,), "units": (True,), "native": (True,)}], ("mixed", "awaiting-approval")),
+        (10, [{**recommended, "candidates": (True,), "units": (False,)}], ("unknown", "awaiting-approval")),
+        (11, [{"ext": (".txt",), "exception": (None,)},
+              {**reported, "decision": ("no_candidates",), "coverage": ("complete", "not_applicable")}], ("text-only", "ready")),
+        (12, [{**reported, "decision": ("unknown",)},
+              {**reported, "decision": ("no_candidates",), "coverage": ("partial", "none")}], ("unknown", "awaiting-approval")),
+    ]
+    names = ("ext", "exception", "decision", "coverage", "candidates", "units", "native")
+    domain = product((".pdf", ".docx", ".md", ".txt", ".png", ".mp3"), errors,
+                     ("ocr_recommended", "review", "no_candidates", "unknown"),
+                     ("complete", "partial", "none", "not_applicable"), (False, True), (False, True), (False, True))
+    checked = 0
+    for values in domain:
+        case = dict(zip(names, values))
+        matches = [(number, declared) for number, clauses, declared in rows
+                   if any(all(case[name] in accepted for name, accepted in clause.items()) for clause in clauses)]
+        assert len(matches) == 1, (case, matches)
+        triage = None if case["ext"] == ".txt" else {
+            "decision": case["decision"], "coverage": {"state": case["coverage"], "pages_total": 1, "pages_inspected": 1},
+            "scope": "inspected", "image_occurrences": 1, "issues": [],
+            "candidates": [{"id": "p1", "kind": "page", "page": 1, "priority": "high"}] if case["candidates"] else []}
+        result = convert.classify(case["ext"], conversion_error=errors[case["exception"]], triage=triage,
+                                  native=case["native"], units={"u0001": {}} if case["units"] else {}, date=DATE)
+        assert (result["class"], result["state"]) == matches[0][1], (case, matches[0], result)
+        checked += 1
+    assert checked == 3840
 
 
 @pytest.mark.parametrize("ext,options,expected", ROW_CASES)
@@ -511,6 +563,7 @@ def test_renamed_audio_never_reaches_optional_backends(root, monkeypatch, option
     audio_calls = []
     def guesses(self, *, file_stream, base_guess):
         # Simulate a sniffer recognizing MP3 behind the allowed PDF extension.
+        # This private 0.3.5 hook must be reviewed when upgrading markitdown-gc.
         return [base_guess, StreamInfo(extension=".mp3", mimetype="audio/mpeg")]
     def audio(self, *args, **kwargs):
         audio_calls.append(True)

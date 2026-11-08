@@ -10,3 +10,14 @@ Interpretations: (1) explicit charset also passed as `StreamInfo(charset=…)` b
 - [LOW L3] `import re` inside a loop in the real-tool test; `checked_path(output.parent, output)` in `run_report` is a no-op containment check (caller passes staging paths; harmless).
 
 VOTE: APPROVE conditional on M1 fixed before merge (ag re-checks the diff). L1–L3 optional in the same commit.
+
+## Re-check — commit 172e7a2 (static; pytest still blocked by my sandbox)
+
+Fixed as asked: **M1** plain-text set always gets `StreamInfo(extension, mimetype="text/plain", charset=<effective|None>)`, `params.charset` untouched; `.log` test is now deterministic and the whole-set real test simulates a host with no MIME mapping instead of smuggling `charset="utf-8"`. **L1** `invalid.json`/`exit1.txt` go through `run_report`. **L2** four probes carry `design_row_class_state_reason_r9` and both tests read it; the r8 label is no longer asserted. **L3** `re` at module top; `run_report` now uses the `checked_path` result and has a reparse test. `.gitattributes` `tests/fixtures/** -text` plus a digest test over every probe/artifact is a sound addition (sanctioned infrastructure outside the slice list).
+
+New issues only:
+- [MEDIUM N1] The fix commit also deleted the AT-05 cross product and replaced it with 25 hand-picked rows, boundaries and precedence cases. The cases are good, but DESIGN AT-05 says "for every (…) exactly one §3 row matches", and my review called the product justified and not blocking, so this is an unrequested conformance regression (B8 traceability). Restore an exhaustive product over the downstream axes for one convertible ext only (decision × coverage × candidates × units × native = 128 cases, table predicates as oracle), keep the 25 representative cases, and leave the shortcut exts out of the product (the redundancy I noted).
+- [LOW N2] Single-backend registration (`enable_builtins=False` + one converter chosen by extension) is a deviation from DESIGN §3's literal `MarkItDown(enable_plugins=False)` call and from the slice-1 characterization environment. I ACCEPT it as hardening consistent with allow-list-by-construction (sniffed audio can no longer reach optional backends), on two conditions: the real-tool parity test over all 32 fixtures (incl. `.hwp` and `.hwpx` both via `HwpConverter`) is green on the orchestrator's cross-OS run, and I amend DESIGN §3/§6 to say so. `test_renamed_audio_never_reaches_optional_backends` patches a private `_get_stream_info_guesses`; acceptable as a regression guard, note the brittleness.
+- [LOW N3] `.xml` now always renders as plain text (previously an RSS/Atom feed would have gone through the feed converter); deterministic and fine, worth one line in EXPECTED.md's resolution notes later.
+
+VOTE: APPROVE conditional on N1 restored before merge (ag re-checks); N2 accepted under the stated conditions; N3 informational.

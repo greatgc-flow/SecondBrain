@@ -28,9 +28,13 @@ def fails(root, code, function, *args, **kwargs):
 
 @pytest.fixture
 def fake_render(monkeypatch):
+    calls = []
+
     def render(item, key, unit, target, dpi):
+        calls.append((key, dpi))
         Path(target).write_bytes(f"image {key} dpi {dpi}".encode())
     monkeypatch.setattr(ocr, "_render", render)
+    return calls
 
 
 def units_item(root, statuses, state="ocr-in-progress", filename="doc.pdf", **kwargs):
@@ -124,8 +128,24 @@ def test_commands_ask_grouping_of_three_with_stream_names(root, fake_render):
     commands = (work(root, item) / "COMMANDS.txt").read_text(encoding="utf-8")
     asks = [l for l in commands.splitlines() if l.startswith("peerhub ask cx")]
     assert len(asks) == 3
-    assert [len(re.findall(r'Open (.*?)\. Transcribe', a)[0].split('", "')) for a in asks] == [3, 3, 1]
+    assert [len(re.findall(r'Open (.*?)\. Transcribe', a)[0].split(", ")) for a in asks] == [3, 3, 1]
     assert [re.search(r"--stream (\S+)", a)[1] for a in asks] == [f"ocr-{item.meta['id']}-{n}" for n in (1, 2, 3)]
+    files = [l for l in commands.splitlines() if " Files: " in l]
+    assert len(files) == 3 + 3  # three transcription asks and three verify groups (7 units)
+    assert f'"{work(root, item) / "u0001.png"}"' in files[0]
+
+
+def test_commands_peerhub_lines_have_no_inner_quotes(root, fake_render):
+    item = units_item(root, ["pending"] * 4, state="awaiting-approval")
+    ocr.approve(root, item.meta["id"])
+    commands = (work(root, item) / "COMMANDS.txt").read_text(encoding="utf-8")
+    lines = [l for l in commands.splitlines() if l.startswith("peerhub ask")]
+    assert len(lines) == 4  # 2 asks + 2 verify groups
+    for line in lines:
+        match = re.fullmatch(r'peerhub ask (cx|cc) -p \1\.effort -w "[^"]+" --stream \S+ "([^"\$`]+)"', line)
+        assert match, line
+        assert "u0001.png" in line or "u0004.png" in line  # relative names inside the -w folder
+        assert str(work(root, item)) not in match[2]
 
 
 def test_at19_assets_and_rasters_copied_byte_equal(root, subprocess_spy):
@@ -348,6 +368,101 @@ def test_at25_fault_after_copy_before_meta_then_record_again(root, fault_after):
     loaded = load_item(item.path)
     assert not loaded.warnings and len(loaded.meta["ocr"]["units"]["u0001"]["attempts"]) == 1
     assert (item.path / "ocr" / "u0001.a1.md").read_bytes() == b"text"
+
+
+def test_effective_dpi_is_persisted_listed_and_inherited_by_record(root, fake_render):
+    item = units_item(root, ["pending"] * 31, state="awaiting-approval")
+    item_id = item.meta["id"]
+    ocr.approve(root, item_id, yes_large=True, dpi=300)
+    assert "--dpi 300" in (work(root, item) / "COMMANDS.txt").read_text(encoding="utf-8")
+    for n in range(1, 31):
+        put(root, item, f"u{n:04}", f"text {n}")
+    ocr.record(root, item_id, "cx", "m")  # no --dpi: inherits 300
+    attempts = [u["attempts"][0]["recorded"]["params"]["dpi"] for u in load_item(item.path).meta["ocr"]["units"].values() if u["attempts"]]
+    assert attempts == [300] * 30
+    fake_render.clear()
+    ocr.approve(root, item_id)  # second batch renders at the same dpi
+    assert fake_render == [("u0031", 300)]
+    put(root, item, "u0031", "last")
+    ocr.record(root, item_id, "cx", "m", dpi=150)  # an explicit value wins
+    assert load_item(item.path).meta["ocr"]["units"]["u0031"]["attempts"][0]["recorded"]["params"]["dpi"] == 150
+
+
+def test_record_without_any_approve_dpi_defaults_to_200(root):
+    item = units_item(root, ["approved"])
+    put(root, item, "u0001", "text")
+    ocr.record(root, item.meta["id"], "cx", "m")
+    assert load_item(item.path).meta["ocr"]["units"]["u0001"]["attempts"][0]["recorded"]["params"]["dpi"] == 200
+
+
+def test_multi_batch_flow_ignores_already_recorded_units(root, fake_render):
+    item = units_item(root, ["pending"] * 31, state="awaiting-approval")
+    item_id = item.meta["id"]
+    ocr.approve(root, item_id, yes_large=True)
+    for n in range(1, 31):
+        put(root, item, f"u{n:04}", f"text {n}")
+    assert len(ocr.record(root, item_id, "cx", "m")["recorded"]) == 30
+    assert (work(root, item) / "u0001.md").exists()  # leftover scratch of a recorded unit
+    fake_render.clear()
+    assert ocr.approve(root, item_id)["approved"] == ["u0031"]
+    assert fake_render == [("u0031", 200)]  # recorded units are not re-rendered
+    commands = (work(root, item) / "COMMANDS.txt").read_text(encoding="utf-8")
+    asks = [l for l in commands.splitlines() if l.startswith("peerhub ask cx")]
+    assert len(asks) == 1 and "Open u0031.png." in asks[0] and "u0001" not in asks[0]
+    put(root, item, "u0031", "text 31")
+    assert ocr.record(root, item_id, "cx", "m")["recorded"] == ["u0031"]  # leftovers of recorded units are ignored
+    units = load_item(item.path).meta["ocr"]["units"]
+    assert all(len(u["attempts"]) == 1 for u in units.values())
+
+
+def test_transcript_view_follows_record_and_verify(root):
+    item = units_item(root, ["approved", "approved"])
+    item_id = item.meta["id"]
+    converted = (item.path / "converted.md").read_text(encoding="utf-8")
+    put(root, item, "u0001", "first text")
+    put(root, item, "u0002", "second text")
+    ocr.record(root, item_id, "cx", "m")
+    assert transcript.view(load_item(item.path)) == converted  # recorded text is not in the view
+    ocr.verify(root, item_id, "cc", "m", ok=["u0001"], mismatch=["u0002"])
+    view = transcript.view(load_item(item.path))
+    assert "first text" in view and "## OCR u0001 (source p1;" in view and "second text" not in view
+    put(root, item, "u0002", "second text, corrected")
+    ocr.record(root, item_id, "cx", "m")
+    assert "corrected" not in transcript.view(load_item(item.path))  # recorded again, still unverified
+    assert ocr.verify(root, item_id, "cc", "m", ok=["u0002"])["result"] == "finalized"
+    final = transcript.view(load_item(item.path))
+    assert final.index("first text") < final.index("second text, corrected") and "## OCR u0002 (source p2;" in final
+    assert "second text\n" not in final.replace("second text, corrected", "")
+
+
+def test_at17_large_boundary_is_21_units(root, fake_render):
+    twenty = units_item(root, ["pending"] * 20, state="awaiting-approval", filename="twenty.pdf")
+    twentyone = units_item(root, ["pending"] * 21, state="awaiting-approval", filename="twentyone.pdf")
+    fails(root, "large_requires_ack", ocr.approve, root, twentyone.meta["id"])
+    assert len(ocr.approve(root, twenty.meta["id"])["approved"]) == 20
+    assert not load_item(twenty.path).meta["ocr"]["large_ack"]
+
+
+def test_fault_in_approve_before_meta_then_retry_succeeds(root, fake_render, monkeypatch):
+    item = units_item(root, ["pending", "pending"], state="awaiting-approval")
+    original, armed = ocr.write_json_atomic, [True]
+
+    def failing(path, value):
+        if armed.pop() if armed else False:
+            raise OSError("fault before meta.json")
+        original(path, value)
+    monkeypatch.setattr(ocr, "write_json_atomic", failing)
+    with pytest.raises(SbError) as error:
+        ocr.approve(root, item.meta["id"])
+    assert error.value.code == "io_error"
+    assert status(item) == {"u0001": "pending", "u0002": "pending"} and (work(root, item) / "u0001.png").is_file()
+    assert ocr.approve(root, item.meta["id"])["approved"] == ["u0001", "u0002"]
+    assert load_item(item.path).meta["state"] == "ocr-in-progress"
+
+
+def test_at22_literal_pending_key_is_rejected(root):
+    item = units_item(root, ["recorded", "pending"])
+    fails(root, "invalid_request", ocr.verify, root, item.meta["id"], "cc", "m", ok=["u0002"])
 
 
 def test_reparse_scratch_dir_refused_on_cleanup(root, monkeypatch):

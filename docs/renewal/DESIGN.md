@@ -259,11 +259,11 @@ units(a/r/v/total) coverage filename`), then "OCR approval needed" (awaiting ite
 
 ## 9. Test plan
 
-pytest; CI matrix Windows + Ubuntu x Python 3.11, 3.12, 3.13; generated text compared byte-wise across OS. Session fixture replaces
-`socket.socket`; subprocess spy permits only `markitdown-gc`; a check asserts the audio extra is not importable. Fixtures are tiny committed
-binaries under `tests/fixtures/`. **Characterization gate**: `tests/fixtures/EXPECTED.md` records the real conversion text and report JSON
-per fixture, peer-reviewed before implementation (§12 gate 1b); misplaced fixtures are moved then. Classification: mocked outcomes x
-synthetic reports (exhaustive) + real-tool integration.
+pytest; CI matrix Windows + Ubuntu x Python 3.11, 3.13, 3.15; generated text compared byte-wise across OS. Session fixture replaces
+`socket.socket`; the subprocess spy records every call and permits only `markitdown-gc` and the `sb` console script / `python -m secondbrain`
+(end-to-end tests; converter call counts inside the child are asserted from its ledgers); the audio extra must not be importable. Fixtures
+are tiny committed binaries under `tests/fixtures/`. **Characterization gate**: `tests/fixtures/EXPECTED.md` records the real conversion text
+and report JSON per fixture, peer-reviewed before implementation (§12 gate 1b); misplaced fixtures are moved then. Classification: mocked outcomes x synthetic reports (exhaustive) + real-tool integration.
 
 Fixtures: `text/plain.txt, korean-cp949.txt, doc.docx, table.xlsx, note.hwp (HWP5), note.hwpx, nfd-이름.txt, empty-table.docx`; `ocr/scan.pdf,
 photo.png (EXIF), image-only.docx, alt-text-only.docx`; `mixed/two-pages.pdf, same-page.pdf, slides.pptx, image.hwp, image.hwpx, image.xlsx`;
@@ -338,7 +338,7 @@ Invariants I1–I8 list their tests in §4. Reverse check: every AT-01…AT-37 c
 ## 12. Release and closure gate
 
 - **Discard boundary**: delete v0.1 package modules and v0.1 docs (`docs/design.md`, `docs/decisions.md`, `docs/USAGE.md`); keep tag `v0.1.1`
-  and `docs/renewal/`. `pyproject` declares Python >= 3.11, < 3.14; CI runs 3.11, 3.12, 3.13 on Windows and Ubuntu.
+  and `docs/renewal/`. `pyproject` declares Python >= 3.11, < 3.16 (markitdown-gc 0.3.5 requires >= 3.10, < 3.16; local dev is 3.15.2); CI runs 3.11, 3.13, 3.15 on Windows and Ubuntu.
 - **Gates**: (1a) unanimous peer APPROVE of this design; (1b) `EXPECTED.md` characterization reviewed (incl. the report adapter and
   `characterize/*` outcomes), fixtures placed accordingly; (2) TDD implementation; (3) unanimous APPROVE of the implementation review.
 - **Rubric** per §11 row and invariant: 0 = no/failing test; 50 = listed case missing/skipped; 100 = all listed tests pass on all six CI

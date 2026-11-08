@@ -1,6 +1,6 @@
-# SecondBrain v1 — Design r8 (TDD-ready draft, 2026-11-09)
+# SecondBrain v1 — Design r9 (TDD-ready, 2026-11-09)
 
-Status: DRAFT r8 after round-7 reviews (`RESPONSE_r7.md`). Binding inputs: `BRIEF.md` (+ addendum: layout/scenarios may change if
+Status: r8 (unanimously approved) + gate 1b characterization resolutions (`RESPONSE_gate1b.md`; changes marked **[1b]**). Binding inputs: `BRIEF.md` (+ addendum: layout/scenarios may change if
 justified). Tool contract: `_mdgc_guide.txt` (markitdown-gc 0.3.5). Owner rules: VerySimpleGuide, Windows primary, English.
 
 ## 1. Scope and non-goals
@@ -59,7 +59,7 @@ under the root and must not be a reparse point. Inbox files are moved (never del
 | `class`, `reason` | `text-only, ocr-required, mixed, unknown, unsupported, null`; str or null | class null iff `state == failed`; reason = §3 code |
 | `state` | `ready, awaiting-approval, ocr-in-progress, unsupported, failed` | pairs: text-only->ready; ocr-required/mixed->awaiting-approval, ocr-in-progress, ready; unknown->awaiting-approval, ready; unsupported->unsupported |
 | `conversion` | `{activity, sha256, media: [{file, sha256}]}` or null | non-null iff `converted.md` is referenced; media files listed with digests |
-| `triage` | `{decision, coverage:{state, pages_total, pages_inspected}, scope, image_occurrences, candidates:[{id, kind, page, priority}], issues:[str]}` or null | null iff raster or no valid report (§3) |
+| `triage` | `{decision, coverage:{state, pages_total, pages_inspected}, scope, image_occurrences, candidates:[{id, kind, page, priority}], issues:[str]}` or null | null iff raster, plain-text set **[1b]**, or no valid report (§3) |
 | `has_native_text` | bool or null | null iff `converted.md` absent |
 | `ocr` | `{disposition: none, approved, declined; large_ack: bool; units: {uNNNN: unit}}` | units non-empty iff class in {ocr-required, mixed}; disposition `approved` iff any unit status != pending |
 | unit | `{source: str, kind: page, asset, raster; status: pending, approved, recorded, verified; attempts: [attempt]}` | `pending/approved`: last attempt (if any) has `result == mismatch`; `recorded`: last attempt has `result == null`; `verified`: last attempt `result == ok` |
@@ -76,14 +76,17 @@ is null when `sb` did not observe it (peer tools). Methods: `convert` (markitdow
 Steps run in order inside staging; each step runs only if the previous one allows it; each step's output is valid only when `stage.json`
 records it (artifact rule, §2); a resume redoes a step only when it has no output at all (conversion is reconciled, never redone, §4).
 1. **Pre-checks**: size > 0 (`empty_file`), `ext` rule, path length. **Allow-list**: converter reached only for `.pdf .docx .pptx .xlsx .hwp
-   .hwpx` (triage-supported) and the text set `.txt .md .csv .log .html .htm .json .xml`; **rasters** (`.png .jpg .jpeg .gif .bmp .tif .tiff
-   .webp`) -> row 3 (no conversion, no triage); any other ext -> row 2, so audio/video never reach the converter by construction.
+   .hwpx` (triage-supported), the **markup set** `.md .html .htm` (converted and triaged; 0.3.5 reports `media_not_inspected` -> row 12) and
+   the **plain-text set** `.txt .csv .log .json .xml` (converted with the effective charset, **triage skipped**, `triage` null -> row 11 after a
+   successful conversion) **[1b]**; **rasters** (`.png .jpg .jpeg .gif .bmp .tif .tiff .webp`) -> row 3 (no conversion, no triage); any other
+   ext -> row 2, so audio/video never reach the converter by construction.
 2. **Conversion (ledger-first)**: `stage.json` records `conversion: {activity, sha256: null}` (effective charset, extraction flag); then
    `MarkItDown(enable_plugins=False).convert(abs_path, charset=…, extract_media=<staging>/media if ext in {.docx .pptx .xlsx .hwp .hwpx})`,
    `abs_path` a resolved local regular file (never a URI string); output -> `converted.md` (tmp+replace); then digests recorded. Typed
    exceptions decide rows 4–5. Renamed media behind an allowed ext: outcome recorded at the characterization gate (failed or unknown; never
    transcribed, extra absent; no `unsupported` guarantee). Media is always kept (original bytes, deduplicated by the tool).
-3. **Triage**: `markitdown-gc <abs_path> --ocr-report -o <staging>/report.json`; exit != 0 -> `report_failed`. **Adapter** (observed 0.3.5
+3. **Triage** (not run for the plain-text set, which has no media to inspect and whose triage has no charset option **[1b]**):
+   `markitdown-gc <abs_path> --ocr-report -o <staging>/report.json`; exit != 0 -> `report_failed`. **Adapter** (observed 0.3.5
    fields; anything else -> `report_invalid`): `schema_version == 1`; `decision` in `{ocr_recommended, review, no_candidates, unknown}`;
    `coverage.state` in `{complete, partial, none, not_applicable}`, `coverage.pages_total`/`pages_inspected` int|null; `summary.scope` str,
    `summary.image_occurrences` int; `candidates[]` objects with unique str `id`, `kind`, `page` int|null, `priority` (PDF ids `^p[1-9][0-9]*$`,
@@ -106,7 +109,7 @@ records it (artifact rule, §2); a resume redoes a step only when it has no outp
 | 8 | decision in {ocr_recommended, review}, units non-empty, not has_native_text | ocr-required | awaiting-approval | – |
 | 9 | decision in {ocr_recommended, review}, units non-empty, has_native_text | mixed | awaiting-approval | – |
 | 10 | decision in {ocr_recommended, review}, units empty | unknown | awaiting-approval | `no_units` |
-| 11 | no_candidates, coverage in {complete, not_applicable} | text-only | ready | `empty_document` if not has_native_text |
+| 11 | plain-text set (conversion succeeded, triage skipped) **[1b]**; or no_candidates, coverage in {complete, not_applicable} | text-only | ready | `empty_document` if not has_native_text |
 | 12 | decision unknown, or no_candidates with coverage in {partial, none} | unknown | awaiting-approval | first `issues[].code` (e.g. `media_not_inspected`) |
 
 `unknown` = inspection incomplete or nothing to OCR; native text kept; resolved by `decline` or by re-ingesting images as rasters. Rows 8–9 with `partial` coverage proceed with the listed candidates; coverage stays in meta and the wiki banner permanently.
@@ -184,7 +187,7 @@ contract `work/<id>/uNNNN.md` (UTF-8, verbatim, `[illegible]`, `[no text]`); the
 image independently, reports `ok`/`mismatch` per unit; digits, dates, ids must match exactly.
 
 **Record.** `ocr record ID --peer P --model M [--dpi N]`: candidate files = `work/<id>/uNNNN.md` for `approved` units. Validation (all-or-nothing):
-UTF-8, <= 1 MiB, digest differs from every earlier attempt of that unit (`stale_output`), at least one file (`missing_output`). Then per unit: copy to `raws/<id>/ocr/uNNNN.a<n>.md`, append attempt (`recorded` activity), status `recorded`.
+UTF-8 and <= 1 MiB (else `invalid_request` **[1b]**), digest differs from every earlier attempt of that unit (`stale_output`), at least one file (`missing_output`). Then per unit: copy to `raws/<id>/ocr/uNNNN.a<n>.md`, append attempt (`recorded` activity), status `recorded`.
 
 **Verify.** `ocr verify ID --peer V --model M [--ok L] [--mismatch L]`: validation (all-or-nothing, before any write): union non-empty,
 lists disjoint, keys exist, every listed unit is `recorded` (`invalid_request`), V canonical and != `recorded.peer` of each listed unit (`same_peer`). Then `ok` ->
@@ -211,7 +214,9 @@ prerequisite (USAGE; review evidence only): peers run with a profile that reads 
 has no other filesystem or network access. (2) Everything `sb` imports is validated: whitelisted paths (`work/<id>/uNNNN.md`,
 `work/<id>/llm/summary.{md,json}`), UTF-8, size caps, JSON schema, digests, peer independence; imported text is stored and rendered as data
 (fenced), never interpreted. (3) Network: none is required. Only allow-listed extensions reach the converter; it is called with local regular
-paths, plugins disabled, audio extras absent; CI blocks in-process sockets. `sb` does not claim the converter can never open a socket.
+paths, plugins disabled, audio extras absent. **"No network" means no external connection and no DNS** (`socket.connect/connect_ex`,
+`socket.create_connection`, `socket.getaddrinfo`, `socket.gethostbyname*`); socket construction and loopback bind are allowed, because importing
+the tool runs urllib3's import-time `_has_ipv6` capability probe **[1b]**. CI enforces exactly that guard (§9). `sb` does not claim the converter can never open a socket.
 
 ## 7. Wiki (deterministic tier)
 
@@ -259,40 +264,44 @@ units(a/r/v/total) coverage filename`), then "OCR approval needed" (awaiting ite
 
 ## 9. Test plan
 
-pytest; CI matrix Windows + Ubuntu x Python 3.11, 3.13, 3.15; generated text compared byte-wise across OS. Session fixture replaces
-`socket.socket`; the subprocess spy records every call and permits only `markitdown-gc` and the `sb` console script / `python -m secondbrain`
-(end-to-end tests; converter call counts inside the child are asserted from its ledgers); the audio extra must not be importable. Fixtures
-are tiny committed binaries under `tests/fixtures/`. **Characterization gate**: `tests/fixtures/EXPECTED.md` records the real conversion text
+pytest; CI matrix Windows + Ubuntu x Python 3.11, 3.13, 3.15; generated text compared byte-wise across OS. **Network guard [1b]**: a session
+fixture patches `socket.socket.connect`/`connect_ex`, `socket.create_connection`, `socket.getaddrinfo` and `socket.gethostbyname*` to raise;
+socket construction and loopback bind stay allowed (§6). Converter children get the same guard through a `sitecustomize.py` directory prepended
+to `PYTHONPATH` by the subprocess spy. The spy records every call and permits only `markitdown-gc` and the `sb` console script / `python -m
+secondbrain` (end-to-end tests; converter call counts inside the child are asserted from its ledgers); the audio extra must not be importable.
+Fixtures are tiny committed binaries (< 50 KB each) under `tests/fixtures/`; oversize inputs (1 MiB + 1 bytes, 8001 chars) are generated at
+runtime in `tmp_path`, never committed **[1b]**. **Characterization gate**: `tests/fixtures/EXPECTED.md` records the real conversion text
 and report JSON per fixture, peer-reviewed before implementation (§12 gate 1b); misplaced fixtures are moved then. Classification: mocked outcomes x synthetic reports (exhaustive) + real-tool integration.
 
 Fixtures: `text/plain.txt, korean-cp949.txt, doc.docx, table.xlsx, note.hwp (HWP5), note.hwpx, nfd-이름.txt, empty-table.docx`; `ocr/scan.pdf,
 photo.png (EXIF), image-only.docx, alt-text-only.docx`; `mixed/two-pages.pdf, same-page.pdf, slides.pptx, image.hwp, image.hwpx, image.xlsx`;
 `unknown/with-image.md, page.html, malformed.md`; `unsupported/legacy.doc, data.xyz, clip.mp3`; `characterize/renamed-audio.pdf`; `failed/corrupt.pdf,
-encrypted.hwp, zero-bytes.txt`; `reports/` one per §3 row + `invalid, missing-coverage, wrong-types, dup-ids, bad-page-id (.json), exit1.txt`;
-`peer-output/u0001.md, illegible.md, oversize.md, hostile-instructions.md`; `llm/valid.{md,json}, bad-digest.json, missing-key.json, hostile.md`.
+encrypted.hwp, zero-bytes.txt`; `reports/` one per §3 row (`row-NN.json`) + `invalid, missing-coverage, wrong-types, dup-ids, bad-page-id (.json), exit1.txt`
++ `sample-ocr-report-png.json` (same JSON value as `docs/renewal/_sample_ocr_report_png.json`, re-serialized);
+`peer-output/u0001.md, illegible.md, hostile-instructions.md`; `llm/valid.{md,json}, bad-digest.json, missing-key.json, hostile.md`.
 
 Acceptance tests (Given / When / Then) with requirement ids [§11]:
 - AT-01 [B1,B10] G `inbox/sub/기획서.pdf` (hash taken by the test) W ingest T `raws/<id>/src/기획서.pdf` byte-equal, inbox empty, `filename` exact, `filename_nfc` NFC, exit 0.
 - AT-02 [B9] G AT-01 item; same bytes as `inbox/copy.pdf` W ingest T no new dir, `aliases==["copy.pdf"]`, `alias_added`, staging empty, conversion spy 0.
 - AT-03 [B1] G same bytes, same name again W ingest T meta unchanged (bytes), `duplicate`, inbox and staging empty.
 - AT-04 [X1] G committed `raws/<id>` with different `sha256`, equal prefix W ingest T `id_collision`, exit 1, bytes kept in the flagged `tmp-*`; `status` warns `staged_collision`; next ingest leaves it untouched.
-- AT-05 [B7,B8] For every (raster/non-raster, exception/none, decision, coverage, candidates empty/non-empty, units empty/non-empty, has_native_text) W `classify()` T exactly one §3 row matches and equals the table.
-- AT-06 [B7] G `_sample_ocr_report_png.json` and each `reports/*` T adapter output field-exact for the real sample; malformed files -> `report_invalid`/`report_failed`, `converted.md` kept, `triage` null.
+- AT-05 [B7,B8] For every (raster/plain-text/markup/container ext, exception/none, decision, coverage, candidates empty/non-empty, units empty/non-empty, has_native_text) W `classify()` T exactly one §3 row matches and equals the table; plain-text inputs never carry a report.
+- AT-06 [B7] G `reports/sample-ocr-report-png.json` and each `reports/*` T adapter output field-exact for the real sample; malformed files -> `report_invalid`/`report_failed`, `converted.md` kept, `triage` null.
 - AT-07 [B8] `has_native_text` on image-only, `[IMAGE]`, comment, table delimiters, alt text, Korean, digits, malformed Markdown T expected booleans.
-- AT-08 [B1,B7] G each `text/*` W ingest (`--charset cp949` for `korean-cp949.txt`) T text-only/ready; Korean content present in `converted.md`; `conversion.activity.params.charset == "cp949"`; `empty-table.docx` reason `empty_document`.
+- AT-08 [B1,B7] G each `text/*` W ingest (`--charset cp949` for `korean-cp949.txt`) T text-only/ready; Korean content present in `converted.md`; `conversion.activity.params.charset == "cp949"`; `empty-table.docx` reason `empty_document`; for `.txt` items the report spy is 0 and `triage` null, for the others `triage.decision == "no_candidates"`.
 - AT-09 [B5,B8] G each `ocr/*` T ocr-required, awaiting-approval, units as expected; `photo.png`: one unit `self`, conversion and report spies 0, `conversion`/`triage`/`has_native_text` null.
 - AT-10 [B5,B8] G each `mixed/*` T mixed; `media/` present for containers; W decline/verify to ready T coverage banner persists when coverage != complete.
 - AT-11 [B8] G `unknown/*` and a container report with candidates but zero extracted images T unknown, awaiting-approval, reason set; W approve T exit 2 `no_units`; W decline T ready/declined.
-- AT-12 [B7,G4] G `unsupported/*` T unsupported, conversion spy 0, reason `extension_not_allowed` (`.mp3`, `.xyz`, `.doc`); G `characterize/renamed-audio.pdf` T either (`failed`, class null) or (`unknown`, `awaiting-approval`), pinned per `EXPECTED.md`; conversion spy <= 1; no socket use.
+- AT-12 [B7,G4] G `unsupported/*` T unsupported, conversion spy 0, reason `extension_not_allowed` (`.mp3`, `.xyz`, `.doc`); G `characterize/renamed-audio.pdf` T either (`failed`, class null) or (`unknown`, `awaiting-approval`), pinned per `EXPECTED.md` (`failed`, `FileConversionException` on 0.3.5); conversion spy <= 1; the network guard (§9) is never triggered.
 - AT-13 [B7,I2] G `failed/*` T failed, `error.code`, exit 1; W `--retry` T `retried`, still failed; conversion re-attempted only for items without `converted.md` (no completed output), never for items that have it.
 - AT-14 [B9,I2] G `mixed/slides.pptx`, conversion ok, report exit 1 (mock) W ingest then `--retry` with report ok T mixed, units = assets, `media/` and `converted.md` unchanged, conversion spy exactly 1.
 - AT-15 [X3] For each (command, state) cell of §4 W command T writes limited to the cell's letter; `–` cells exit 2 `state_not_allowed`.
 - AT-16 [B5] G items in all states + one corrupt dir + one orphan file W `status --json` T fields complete (pages/images/coverage/units), counts, `corrupt_meta` error, `orphan` warning, exit 1, no writes.
 - AT-17 [B6,G1] G item with 25 units W approve T exit 2 `large_requires_ack`; W `--yes-large` T 25 approved. G 31 units W approve (ack) T 30 approved, 1 pending; W approve again T 31 approved; W record all, verify all T ready.
-- AT-18 [G1] G `mixed/two-pages.pdf` approved T `u0001.png` exists, keys numeric order for ids p2,p10; COMMANDS.txt has prompt `ocr-v1`, quoted absolute unit paths, asks <= 3, pilot 5, stream names, verify section.
+- AT-18 [G1] G `mixed/two-pages.pdf` approved T one unit `u0001` with `source == "p2"`, `u0001.png` rendered from page 2; COMMANDS.txt has prompt `ocr-v1`, quoted absolute unit paths, asks <= 3, pilot 5, stream names, verify section. G a synthetic PDF report with candidates `p10, p2, p1` (`pages_total` 10) W unit enumeration T keys `u0001..u0003` = `p1, p2, p10` (numeric, not lexical).
 - AT-19 [I2,G1] G `mixed/slides.pptx, image.hwp, image.hwpx, image.xlsx` W ingest then approve T assets byte-equal to the committed source images; approve invokes no conversion (spy 1 total).
 - AT-20 [B9] G approved unit with `work/<id>/u0001.md` W record `--dpi 300` T `ocr/u0001.a1.md` equal, attempt provenance complete, `params.dpi == 300`.
-- AT-21 [I4] G `work/<id>/u9999.md`, `../x.md`, and a file for a `pending` unit W record T none copied, request proceeds for valid units only if they exist, else `missing_output`.
+- AT-21 [I4] G `work/<id>/u9999.md`, `../x.md`, and a file for a `pending` unit W record T none copied, request proceeds for valid units only if they exist, else `missing_output`. G a runtime-generated `u0001.md` of exactly 1 MiB T accepted; of 1 MiB + 1 bytes, or invalid UTF-8 T exit 2 `invalid_request`, nothing written (not even for other valid units).
 - AT-22 [G2,I5,B9] G two recorded units W verify `--peer CX --ok u0001` T exit 2 `same_peer`, no writes; W `--peer cc` with no lists, with `--ok u0001 --mismatch u0001`, or with a `pending` key T `invalid_request`, no writes; W `--peer cc --ok u0001` T `verified` activity, result ok, state still in-progress.
 - AT-23 [I4,G2] W verify `--mismatch u0001` T status approved, attempt 1 result mismatch, file kept, scratch deleted; W record identical bytes T `stale_output`; W record new bytes + verify ok T a2 verified, state ready, `work/<id>` removed.
 - AT-24 [B5] G awaiting item W decline T ready/declined, no OCR files; view equals `converted.md`.
@@ -308,7 +317,7 @@ Acceptance tests (Given / When / Then) with requirement ids [§11]:
 - AT-34 [X3] W every `--json` command incl. bad flag T one JSON object, `ok == (exit == 0)`, codes from §8, items sorted, warnings present where specified.
 - AT-35 [B10] G 200-char Korean name under a long root T `path_too_long` before any move, inbox intact; G `nfd-이름.txt` T kept NFD on disk under `src/`, `filename_nfc` NFC, index sorted by it; G a name the volume rejects on rename (simulated OSError) T `io_error`, inbox intact.
 - AT-36 [B10,I8] G symlink/junction and `.hidden` in inbox W ingest T skipped with warnings, not deleted; deletion targets under a reparse point are refused.
-- AT-37 [G4] Offline: full suite passes with sockets blocked; a control test calling `convert("http://x")` fails.
+- AT-37 [G4] Offline: full suite passes with the §9 connect/DNS guard active in-process and in converter children; a control test calling `convert("http://x")` trips the guard; importing `markitdown` does not.
 
 ## 10. Open questions for peers
 

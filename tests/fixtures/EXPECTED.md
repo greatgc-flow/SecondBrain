@@ -1,7 +1,7 @@
 # Slice 1 characterization — markitdown-gc 0.3.5
 
-Status: evidence prepared; **gate 1b is NOT approved**. Orchestrator + ag review
-and the owner decisions below are still required. No v1 implementation is present.
+Status: evidence prepared; owner decisions resolved in "Gate 1b resolution" (end of
+file) and DESIGN r9. Orchestrator + ag approval still required. No v1 implementation is present.
 
 ## Method and environment
 
@@ -214,7 +214,7 @@ Diagnostic conversion/triage is bypassed by sb's earlier guard.
 
 Conversion: [exact text](reports/llm--bad-digest.json.converted.md), 204 bytes; SHA256 `2a2638b5a15470c97fe79461a543ad5ac3030460f897badd3b1ca64dfd6f5869`.
 Excerpt (JSON string): `"{\n \"date\": \"2026-11-09T00:00:00Z\",\n \"kind\": \"summary\",\n \"model\": \"synthetic-model\",\n \"peer\": \"cx\",\n \"source_digest\": \"00000000000000000000000000000000000000000000000000000000000000"`.
-DESIGN row **12** -> **unknown/awaiting-approval**; reason `unsupported_format`; units 0.
+DESIGN r8 literal row **12** (`unsupported_format`); r9 row **11** -> text-only/ready (`.json` is plain-text set, triage skipped); units 0.
 Native text: `true`; extracted assets: 0.
 Adapter-only data; the class/state describes hypothetical ingest, not its peer/LLM acceptance.
 
@@ -242,7 +242,7 @@ Adapter-only data; the class/state describes hypothetical ingest, not its peer/L
 
 Conversion: [exact text](reports/llm--missing-key.json.converted.md), 118 bytes; SHA256 `21aaf5d791c18e00f107fe1bceb6ccba7a3422c82f6e77e823d41aa7b87269a8`.
 Excerpt (JSON string): `"{\n \"date\": \"2026-11-09T00:00:00Z\",\n \"kind\": \"summary\",\n \"model\": \"synthetic-model\",\n \"peer\": \"cx\",\n \"version\": null\n}\n"`.
-DESIGN row **12** -> **unknown/awaiting-approval**; reason `unsupported_format`; units 0.
+DESIGN r8 literal row **12** (`unsupported_format`); r9 row **11** -> text-only/ready (`.json` is plain-text set, triage skipped); units 0.
 Native text: `true`; extracted assets: 0.
 Adapter-only data; the class/state describes hypothetical ingest, not its peer/LLM acceptance.
 
@@ -256,7 +256,7 @@ Adapter-only data; the class/state describes hypothetical ingest, not its peer/L
 
 Conversion: [exact text](reports/llm--valid.json.converted.md), 204 bytes; SHA256 `9956c8e52efb4d185c5a6d51cefb9529ba64ac308121143ea3540ea0a985866a`.
 Excerpt (JSON string): `"{\n \"date\": \"2026-11-09T00:00:00Z\",\n \"kind\": \"summary\",\n \"model\": \"synthetic-model\",\n \"peer\": \"cx\",\n \"source_digest\": \"59c7bcbced49378eac2525e7ae385ea04bfd468e8a8b79ef2652279cd12516"`.
-DESIGN row **12** -> **unknown/awaiting-approval**; reason `unsupported_format`; units 0.
+DESIGN r8 literal row **12** (`unsupported_format`); r9 row **11** -> text-only/ready (`.json` is plain-text set, triage skipped); units 0.
 Native text: `true`; extracted assets: 0.
 Adapter-only data; the class/state describes hypothetical ingest, not its peer/LLM acceptance.
 
@@ -494,7 +494,7 @@ Native text: `false`; extracted assets: 0.
 
 Conversion: [exact text](reports/text--korean-cp949.txt.converted.md), 62 bytes; SHA256 `82e881e07445068f86be55d48363df1a6e085c07f45f738e83c3422ba09fb88f`.
 Excerpt (JSON string): `"합성 문서입니다.\n청구 번호 12345, 금액 42000원.\n"`.
-DESIGN row **12** -> **unknown/awaiting-approval**; reason `unsupported_format`; units 0.
+DESIGN r8 literal row **12** -> unknown/awaiting-approval (`unsupported_format`); **r9 row 11 -> text-only/ready**, reason `null`, `triage` null (plain-text set skips triage; see Gate 1b resolution 1). The report below is diagnostic only.
 Native text: `true`; extracted assets: 0.
 
 
@@ -661,4 +661,43 @@ was checked against the source, and every extracted media digest equals an
 embedded source payload. PDF renderability and NFD spelling were checked locally.
 No product source, test module, rubric score, design or plan was changed.
 The generator/probe scripts are scratch work under `work/characterize/`.
-Gate 1b remains pending owner resolution and orchestrator + ag approval.
+Gate 1b remains pending orchestrator + ag approval of the resolution below.
+
+## Gate 1b resolution (design owner, 2026-11-09; DESIGN r9, edits marked [1b])
+
+1. **CP949 / plain text (contradiction 1).** The text allow-list is split (DESIGN §3 step 1).
+   Plain-text set `.txt .csv .log .json .xml`: converted with the effective charset, triage
+   skipped (the triage CLI has no charset option and nothing to inspect), `triage` null,
+   row 11 text-only/ready after a successful conversion (§2 `triage` rule, §3 step 3, row 11).
+   Markup set `.md .html .htm`: converted and triaged; 0.3.5 reports `media_not_inspected`,
+   so row 12 unknown stands and the `unknown/*` fixtures and AT-11 are unchanged. Effect on
+   this file: `text/korean-cp949.txt` becomes text-only/ready (AT-08 now holds for every
+   `text/*`); `text/plain.txt` and `nfd-이름.txt` keep text-only/ready (observed
+   `not_applicable` is no longer consulted); the hypothetical ingest of `llm/*.json` moves to
+   row 11; `.md` fixtures keep row 12. AT-05 gains the ext-kind axis; AT-08 asserts report
+   spy 0 for `.txt`. No fixture moves.
+2. **No network (contradiction 2).** DESIGN §6 (3): "no network" = no external connection
+   and no DNS (`connect`, `connect_ex`, `create_connection`, `getaddrinfo`, `gethostbyname*`).
+   Socket construction and loopback bind are allowed, so urllib3's import-time `_has_ipv6`
+   probe is permitted. §9 replaces the `socket.socket` substitution with that guard, applied
+   in-process and to converter children via a `sitecustomize.py` on `PYTHONPATH`. AT-12 says
+   "guard never triggered", AT-37 adds "importing `markitdown` does not trip the guard".
+   The observed blocked stacks are consistent with this definition.
+3. **Oversize peer output (contradiction 3).** `peer-output/oversize.md` is removed from the
+   §9 fixture list; §9 fixes the 50 KB fixture cap and generates oversize inputs at runtime.
+   AT-21 adds: exactly 1 MiB accepted; 1 MiB + 1 bytes or invalid UTF-8 -> exit 2
+   `invalid_request`, nothing written (§5 Record now names the code). The LLM oversize body
+   in AT-28 is likewise generated (8001 chars).
+4. **AT-18 p10.** `two-pages.pdf` has one candidate (`p2`), so AT-18 now asserts a single
+   unit `u0001` with `source == "p2"` rendered from page 2; numeric ordering is asserted on a
+   synthetic report with candidates `p10, p2, p1` and `pages_total` 10 (respects the §3
+   page bound).
+5. **Consistency check (§3 rows, §9 list).** All 36 source/peer/LLM fixtures and all 19
+   `reports/*` files are present and placed per §9; every per-file row above matches §3 r9
+   (rows 1, 2, 3, 5, 8, 9, 11, 12 observed; 4, 6, 7, 10 covered synthetically). Two notes:
+   `reports/sample-ocr-report-png.json` is the same JSON value as
+   `docs/renewal/_sample_ocr_report_png.json` but re-serialized (sorted keys, indent 1), which
+   is fine for AT-06's field-exact adapter test; AT-06 now cites the fixture path. The
+   `renamed-audio.pdf` pin (null/failed, `FileConversionException`) is adopted into AT-12.
+6. **Environment limitations stand.** AT-37 no-audio-extras and the six-job matrix are
+   certified by CI, not by this Windows/3.15 measurement.

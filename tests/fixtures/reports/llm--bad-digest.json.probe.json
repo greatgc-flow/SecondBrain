@@ -9,6 +9,7 @@
   "has_native_text": true,
   "sha256": "2a2638b5a15470c97fe79461a543ad5ac3030460f897badd3b1ca64dfd6f5869"
  },
+ "design_revision": "r8",
  "design_row_class_state_reason": [
   12,
   "unknown",

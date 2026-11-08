@@ -9,6 +9,7 @@
   "has_native_text": true,
   "sha256": "c8ff7ee1ca5c548e4494588a6fb64f978bb6d342268d9f01e99bdfb243621991"
  },
+ "design_revision": "r8",
  "design_row_class_state_reason": [
   9,
   "mixed",

@@ -6,6 +6,7 @@
   "exception": "FileConversionException",
   "message": "File conversion failed after 1 attempts: AudioConverter: FileNotFoundError: [WinError 2] 지정된 파일을 찾을 수 없습니다\n - AudioConverter threw FileNotFoundError with message: [WinError 2] 지정된 파일을 찾을 수 없습니다\n"
  },
+ "design_revision": "r8",
  "design_row_class_state_reason": [
   2,
   "unsupported",

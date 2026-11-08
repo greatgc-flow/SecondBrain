@@ -7,6 +7,7 @@ __pycache__/
 
 # Caches
 .pytest_cache/
+.pytest-tmp/
 **/.pytest_cache/
 .mypy_cache/
 .ruff_cache/
@@ -42,6 +43,7 @@ build/
 *.db
 00_Inbox/
 10_Evidence/
+work/
 **/Vault/
 **/.kit_state/
 

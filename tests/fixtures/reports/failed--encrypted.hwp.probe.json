@@ -6,6 +6,7 @@
   "exception": "FileConversionException",
   "message": "File conversion failed after 1 attempts: HwpConverter: ValueError: Encrypted files are not supported\n - HwpConverter threw ValueError with message: Encrypted files are not supported\n"
  },
+ "design_revision": "r8",
  "design_row_class_state_reason": [
   5,
   null,

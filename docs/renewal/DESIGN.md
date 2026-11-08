@@ -81,8 +81,14 @@ records it (artifact rule, §2); a resume redoes a step only when it has no outp
    successful conversion) **[1b]**; **rasters** (`.png .jpg .jpeg .gif .bmp .tif .tiff .webp`) -> row 3 (no conversion, no triage); any other
    ext -> row 2, so audio/video never reach the converter by construction.
 2. **Conversion (ledger-first)**: `stage.json` records `conversion: {activity, sha256: null}` (effective charset, extraction flag); then
-   `MarkItDown(enable_plugins=False).convert(abs_path, charset=…, extract_media=<staging>/media if ext in {.docx .pptx .xlsx .hwp .hwpx})`,
-   `abs_path` a resolved local regular file (never a URI string); output -> `converted.md` (tmp+replace); then digests recorded. Typed
+   initialize `MarkItDown(enable_builtins=False, enable_plugins=False)` and register only the backend selected by the allowed extension
+   **[S3/N2]**: PDF -> `PdfConverter`; DOCX/PPTX/XLSX -> their document converters; HWP5 and HWPX -> `HwpConverter`;
+   HTML/HTM -> `HtmlConverter`; CSV -> `CsvConverter`; TXT/LOG/JSON/XML/MD -> `PlainTextConverter`. No other backend is registered.
+   Call `convert(abs_path, charset=…, extract_media=<staging>/media if ext in {.docx .pptx .xlsx .hwp .hwpx})`.
+   The plain-text set always also receives `StreamInfo(extension=ext, mimetype="text/plain", charset=effective_charset)`; other inputs
+   receive `StreamInfo(extension=ext, charset=effective_charset)` only when charset is explicit **[S3/N2]**. The bare `charset` keyword
+   is ineffective in 0.3.5; the hint makes it effective and removes host MIME-registry dependence. Activity params remain unchanged.
+   `abs_path` is a resolved local regular file (never a URI string); output -> `converted.md` (tmp+replace); then digests recorded. Typed
    exceptions decide rows 4–5. Renamed media behind an allowed ext: outcome recorded at the characterization gate (failed or unknown; never
    transcribed, extra absent; no `unsupported` guarantee). Media is always kept (original bytes, deduplicated by the tool).
 3. **Triage** (not run for the plain-text set, which has no media to inspect and whose triage has no charset option **[1b]**):
@@ -214,9 +220,17 @@ prerequisite (USAGE; review evidence only): peers run with a profile that reads 
 has no other filesystem or network access. (2) Everything `sb` imports is validated: whitelisted paths (`work/<id>/uNNNN.md`,
 `work/<id>/llm/summary.{md,json}`), UTF-8, size caps, JSON schema, digests, peer independence; imported text is stored and rendered as data
 (fenced), never interpreted. (3) Network: none is required. Only allow-listed extensions reach the converter; it is called with local regular
-paths, plugins disabled, audio extras absent. **"No network" means no external connection and no DNS** (`socket.connect/connect_ex`,
+paths, plugins disabled, audio extras absent. Only the extension-selected backend is registered (§3); sniffed content cannot fall through
+to audio, ExifTool/image, feed, Azure or other optional backends, so installed extras cannot change classification **[S3/N2]**.
+**"No network" means no external connection and no DNS** (`socket.connect/connect_ex`,
 `socket.create_connection`, `socket.getaddrinfo`, `socket.gethostbyname*`); socket construction and loopback bind are allowed, because importing
 the tool runs urllib3's import-time `_has_ipv6` capability probe **[1b]**. CI enforces exactly that guard (§9). `sb` does not claim the converter can never open a socket.
+
+**S3/N2 parity evidence:** [CI run 42516899868](https://github.com/greatgc-flow/SecondBrain/actions/runs/42516899868) passed all six
+Windows/Ubuntu × Python 3.11/3.13/3.15 jobs for PR #56 head `172e7a2` (tested merge `ee767ec`). The real-tool parity test covers the
+complete 28-file ingest fixture corpus, including both HWP variants, plus five runtime plain-text cases; the eight peer/LLM fixtures
+are adapter data. Ubuntu 3.11 and Windows 3.15 logs each show 396 passed. This certifies that adapter version, before the subsequent
+MECE-test/documentation amendment. Its private `_get_stream_info_guesses` regression hook is specific to 0.3.5; review it on upgrades.
 
 ## 7. Wiki (deterministic tier)
 
@@ -288,7 +302,7 @@ Acceptance tests (Given / When / Then) with requirement ids [§11]:
 - AT-05 [B7,B8] For every (raster/plain-text/markup/container ext, exception/none, decision, coverage, candidates empty/non-empty, units empty/non-empty, has_native_text) W `classify()` T exactly one §3 row matches and equals the table; plain-text inputs never carry a report.
 - AT-06 [B7] G `reports/sample-ocr-report-png.json` and each `reports/*` T adapter output field-exact for the real sample; malformed files -> `report_invalid`/`report_failed`, `converted.md` kept, `triage` null.
 - AT-07 [B8] `has_native_text` on image-only, `[IMAGE]`, comment, table delimiters, alt text, Korean, digits, malformed Markdown T expected booleans.
-- AT-08 [B1,B7] G each `text/*` W ingest (`--charset cp949` for `korean-cp949.txt`) T text-only/ready; Korean content present in `converted.md`; `conversion.activity.params.charset == "cp949"`; `empty-table.docx` reason `empty_document`; for `.txt` items the report spy is 0 and `triage` null, for the others `triage.decision == "no_candidates"`.
+- AT-08 [B1,B7] G each `text/*` and runtime plain-text-set inputs W ingest (`--charset cp949` for `korean-cp949.txt`) T text-only/ready; Korean content present in `converted.md`; `conversion.activity.params.charset == "cp949"`; `empty-table.docx` reason `empty_document`; for all `.txt .csv .log .json .xml` inputs the report spy is 0 and `triage` null, for the other text fixtures `triage.decision == "no_candidates"`.
 - AT-09 [B5,B8] G each `ocr/*` T ocr-required, awaiting-approval, units as expected; `photo.png`: one unit `self`, conversion and report spies 0, `conversion`/`triage`/`has_native_text` null.
 - AT-10 [B5,B8] G each `mixed/*` T mixed; `media/` present for containers; W decline/verify to ready T coverage banner persists when coverage != complete.
 - AT-11 [B8] G `unknown/*` and a container report with candidates but zero extracted images T unknown, awaiting-approval, reason set; W approve T exit 2 `no_units`; W decline T ready/declined.

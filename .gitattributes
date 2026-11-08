@@ -1,0 +1,2 @@
+# Fixture encodings, line endings and digests must survive every checkout exactly.
+tests/fixtures/** -text

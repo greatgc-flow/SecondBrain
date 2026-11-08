@@ -1,9 +1,9 @@
 """DESIGN r9 §3: table cross-product, real report shape, and staged adapter."""
 from copy import deepcopy
 from hashlib import sha256
-from itertools import product
 import json
 from pathlib import Path
+import re
 import shutil
 from types import SimpleNamespace
 import unicodedata
@@ -52,17 +52,19 @@ def install_converter(monkeypatch, directory, *, text="native text", error=None,
                 (target / "b.png").write_bytes(b"original b")
                 (target / "a.png").write_bytes(b"original a")
             return SimpleNamespace(text_content=text)
-    monkeypatch.setattr(convert, "_make_converter", lambda: Converter())
+    monkeypatch.setattr(convert, "_make_converter", lambda ext: Converter())
     return calls
 
 
-def test_gate_1b_probe_classifications_are_labeled_r8():
+def test_gate_1b_probes_have_explicit_r9_plain_text_expectations():
     probes = sorted(REPORTS.glob("*.probe.json"))
     assert len(probes) == 36
     for path in probes:
         data = json.loads(path.read_text(encoding="utf-8"))
-        assert data["design_revision"] == "r8", path
-        assert len(data["design_row_class_state_reason"]) == 4
+        expected = data.get("design_row_class_state_reason_r9", data["design_row_class_state_reason"])
+        assert len(expected) == 4
+        if data["fixture"] == "text/korean-cp949.txt" or data["fixture"].startswith("llm/") and data["fixture"].endswith(".json"):
+            assert data["design_row_class_state_reason_r9"] == [11, "text-only", "ready", None]
 
 
 def test_at06_sample_adapter_is_field_exact_and_pure():
@@ -124,60 +126,81 @@ def test_at06_every_characterized_real_report(path):
     assert triage["coverage"]["state"] == report["coverage"]["state"]
 
 
-# AT-05: independently list the mutually exclusive row predicates. The classifier
-# must match exactly one, including impossible downstream values after a shortcut.
-TABLE_CASES = list(product((".pdf", ".docx", ".md", ".txt", ".png", ".mp3"),
-                          (None, "unsupported", "dependency", "conversion", "other"),
-                          ("ocr_recommended", "review", "no_candidates", "unknown"),
-                          ("complete", "partial", "none", "not_applicable"), (False, True), (False, True), (False, True)))
+# One explicit expectation per table row, plus meaningful boundaries/shortcuts.
+# No second classifier or full cross product is used as an oracle.
+ROW_CASES = [
+    pytest.param(".pdf", {"size": 0}, (None, "failed", "empty_file"), id="row-01-empty"),
+    pytest.param(".mp3", {}, ("unsupported", "unsupported", "extension_not_allowed"), id="row-02-audio"),
+    pytest.param(".png", {}, ("ocr-required", "awaiting-approval", "raster"), id="row-03-raster"),
+    pytest.param(".pdf", {"conversion_error": "unsupported"}, ("unsupported", "unsupported", "no_converter"), id="row-04-no-converter"),
+    pytest.param(".pdf", {"conversion_error": "dependency"}, ("unsupported", "unsupported", "missing_dependency"), id="row-04-dependency"),
+    pytest.param(".pdf", {"conversion_error": "conversion"}, (None, "failed", "FileConversionException"), id="row-05-conversion"),
+    pytest.param(".pdf", {"conversion_error": "other"}, (None, "failed", "ValueError"), id="row-05-other"),
+    pytest.param(".pdf", {"report_error": "report_failed"}, (None, "failed", "report_failed"), id="row-06-exit"),
+    pytest.param(".pdf", {"report_error": "report_invalid"}, (None, "failed", "report_invalid"), id="row-06-invalid"),
+    pytest.param(".pdf", {"report": "row-07.json"}, (None, "failed", "no_candidate_ids"), id="row-07-no-candidates"),
+    pytest.param(".pdf", {"report": "row-08.json", "unit_count": 1, "native": False}, ("ocr-required", "awaiting-approval", None), id="row-08-scan"),
+    pytest.param(".pdf", {"report": "row-09.json", "unit_count": 1, "native": True}, ("mixed", "awaiting-approval", None), id="row-09-mixed"),
+    pytest.param(".docx", {"report": "row-10.json", "native": True}, ("unknown", "awaiting-approval", "no_units"), id="row-10-no-assets"),
+    pytest.param(".pdf", {"report": "row-11.json", "native": True}, ("text-only", "ready", None), id="row-11-text"),
+    pytest.param(".pdf", {"report": "row-11.json", "native": False}, ("text-only", "ready", "empty_document"), id="row-11-empty"),
+    pytest.param(".md", {"report": "row-12.json", "native": True}, ("unknown", "awaiting-approval", "media_not_inspected"), id="row-12-unknown"),
+    pytest.param(".txt", {"native": True}, ("text-only", "ready", None), id="plain-text-no-report"),
+    pytest.param(".txt", {"native": False}, ("text-only", "ready", "empty_document"), id="plain-text-empty-conversion"),
+    pytest.param(".mp3", {"size": 0}, (None, "failed", "empty_file"), id="empty-before-extension"),
+    pytest.param(".png", {"conversion_error": "other"}, ("ocr-required", "awaiting-approval", "raster"), id="raster-before-converter"),
+    pytest.param(".mp3", {"conversion_error": "other"}, ("unsupported", "unsupported", "extension_not_allowed"), id="extension-before-converter"),
+    pytest.param(".pdf", {"path": "x" * 240, "report": "row-11.json", "native": True}, ("text-only", "ready", None), id="path-240"),
+    pytest.param(".pdf", {"path": "x" * 241}, (None, "failed", "path_too_long"), id="path-241"),
+    pytest.param(".pdf", {"conversion_error": "conversion", "report_error": "report_failed"}, (None, "failed", "FileConversionException"), id="conversion-before-report"),
+    pytest.param(".pdf", {"report": "row-09.json", "unit_count": 10000, "native": True}, (None, "failed", "too_many_units"), id="unit-overflow"),
+]
 
 
-@pytest.mark.parametrize("ext,exception,decision,coverage,candidates,units,native", TABLE_CASES)
-def test_at05_classification_cross_product(ext, exception, decision, coverage, candidates, units, native):
+@pytest.mark.parametrize("ext,options,expected", ROW_CASES)
+def test_at05_table_rows_and_shortcuts(ext, options, expected):
     from markitdown import UnsupportedFormatException, MissingDependencyException, FileConversionException
-    errors = {None: None, "unsupported": UnsupportedFormatException("no converter"),
+    errors = {"unsupported": UnsupportedFormatException("no converter"),
               "dependency": MissingDependencyException("dependency"), "conversion": FileConversionException("bad conversion"), "other": ValueError("other")}
-    triage = {"decision": decision, "coverage": {"state": coverage, "pages_total": 1, "pages_inspected": 1},
-              "scope": "inspected", "image_occurrences": 1, "candidates": [{"id": "p1", "kind": "page", "page": 1, "priority": "high"}] if candidates else [], "issues": ["inspection_issue"]}
-    if ext == ".txt":
-        triage = None  # r9: the entire plain-text set never carries a report.
-    raster, denied = ext == ".png", ext == ".mp3"
-    downstream = not raster and not denied and exception is None
-    reported = downstream and ext != ".txt"
-    recommended = decision in {"ocr_recommended", "review"}
-    matches = {
-        2: denied, 3: not denied and raster,
-        4: not denied and not raster and exception in {"unsupported", "dependency"},
-        5: not denied and not raster and exception in {"conversion", "other"},
-        7: reported and recommended and not candidates,
-        8: reported and recommended and candidates and units and not native,
-        9: reported and recommended and candidates and units and native,
-        10: reported and recommended and candidates and not units,
-        11: downstream and (ext == ".txt" or decision == "no_candidates" and coverage in {"complete", "not_applicable"}),
-        12: reported and (decision == "unknown" or decision == "no_candidates" and coverage in {"partial", "none"}),
-    }
-    row, = [number for number, matched in matches.items() if matched]
-    expected = {2: ("unsupported", "unsupported", "extension_not_allowed"), 3: ("ocr-required", "awaiting-approval", "raster"),
-                4: ("unsupported", "unsupported", "no_converter" if exception == "unsupported" else "missing_dependency"),
-                5: (None, "failed", type(errors[exception]).__name__), 7: (None, "failed", "no_candidate_ids"),
-                8: ("ocr-required", "awaiting-approval", None), 9: ("mixed", "awaiting-approval", None),
-                10: ("unknown", "awaiting-approval", "no_units"),
-                11: ("text-only", "ready", None if native else "empty_document"), 12: ("unknown", "awaiting-approval", "inspection_issue")}[row]
-    result = convert.classify(ext, conversion_error=errors[exception], triage=triage, native=native,
-                              units={"u0001": {}} if units else {}, date=DATE)
+    options = dict(options)
+    if "report" in options:
+        options["triage"] = convert.adapt_report(raw(options.pop("report")), ext)
+    if "conversion_error" in options:
+        options["conversion_error"] = errors[options["conversion_error"]]
+    if "report_error" in options:
+        options["report_error"] = SbError(options["report_error"], 1)
+    options["units"] = {f"u{n:04}": {} for n in range(1, options.pop("unit_count", 0) + 1)}
+    result = convert.classify(ext, date=DATE, **options)
     assert (result["class"], result["state"], result["reason"]) == expected
     assert (result["error"] is not None) == (result["state"] == "failed")
-    if row == 5:
+    if result["error"] is not None:
+        assert result["error"]["date"] == DATE
+    if expected[2] in {"FileConversionException", "ValueError"}:
         assert result["error"]["code"] == "conversion_failed"
 
 
-@pytest.mark.parametrize("options, reason", [({"size": 0}, "empty_file"), ({"path": "x" * 241}, "path_too_long"),
-                                            ({"report_error": SbError("report_failed", 1)}, "report_failed"),
-                                            ({"report_error": SbError("report_invalid", 1)}, "report_invalid")])
-def test_at05_rows_one_and_six(options, reason):
-    result = convert.classify(".pdf", date=DATE, **options)
-    assert (result["class"], result["state"], result["reason"]) == (None, "failed", reason)
-    assert result["error"]["date"] == DATE
+@pytest.mark.parametrize("coverage,expected", [
+    ("complete", ("text-only", "ready", None)), ("not_applicable", ("text-only", "ready", None)),
+    ("partial", ("unknown", "awaiting-approval", "inspection_issue")),
+    ("none", ("unknown", "awaiting-approval", "inspection_issue")),
+])
+def test_at05_no_candidates_coverage_boundaries(coverage, expected):
+    triage = convert.adapt_report(raw("row-11.json"), ".pdf")
+    triage["coverage"]["state"] = coverage
+    triage["issues"] = ["inspection_issue"]
+    result = convert.classify(".pdf", triage=triage, native=True)
+    assert (result["class"], result["state"], result["reason"]) == expected
+
+
+@pytest.mark.parametrize("native,expected", [(False, "ocr-required"), (True, "mixed")])
+def test_at05_review_keeps_candidates_under_partial_coverage(native, expected):
+    triage = convert.adapt_report(raw(), ".pdf")
+    triage["decision"] = "review"
+    triage["coverage"].update(state="partial", pages_total=2, pages_inspected=1)
+    before = deepcopy(triage)
+    result = convert.classify(".pdf", triage=triage, native=native, units={"u0001": {}})
+    assert (result["class"], result["state"], result["reason"]) == (expected, "awaiting-approval", None)
+    assert triage == before
 
 
 def test_at18_numeric_pdf_keys_and_container_asset_order():
@@ -216,7 +239,9 @@ def test_at08_whole_plain_text_set_skips_triage(root, monkeypatch, ext):
     monkeypatch.setattr(convert, "run_report", lambda *a: pytest.fail("plain text must skip triage"))
     result = convert.classify_item(directory, stage)
     assert (result["class"], result["state"], result["triage"]) == ("text-only", "ready", None)
-    assert len(calls) == 1 and calls[0][1] == {"charset": None}
+    assert len(calls) == 1 and calls[0][1]["charset"] is None
+    hint = calls[0][1]["stream_info"]
+    assert (hint.extension, hint.mimetype, hint.charset) == (ext, "text/plain", None)
     assert (directory / "converted.md").read_bytes() == "한글\r\n123\n".encode("utf-8")
 
 
@@ -319,9 +344,7 @@ def test_real_tool_classification_matches_characterization(root, source, subproc
     directory, stage = stage_file(root, source.relative_to(FIXTURES).as_posix())
     result = convert.classify_item(directory, stage)
     probe = raw(source.parent.name + "--" + source.name + ".probe.json")
-    _, cls, state, reason = probe["design_row_class_state_reason"]
-    if source.suffix.lower() in {".txt", ".csv", ".log", ".json", ".xml"} and source.stat().st_size:
-        cls, state, reason = "text-only", "ready", None
+    _, cls, state, reason = probe.get("design_row_class_state_reason_r9", probe["design_row_class_state_reason"])
     assert (result["class"], result["state"], result["reason"]) == (cls, state, reason)
     assert len(result["ocr"]["units"]) == len(probe["units"])
     should_report = source.suffix.lower() not in convert.PLAIN_TEXT_EXTENSIONS and result["conversion"] is not None
@@ -333,7 +356,6 @@ def test_real_tool_classification_matches_characterization(root, source, subproc
         expected_text = (FIXTURES / probe["conversion"]["artifact"]).read_bytes().decode("utf-8")
         # Only image-link destinations depend on the staging directory.
         for medium in probe["media"]:
-            import re
             converted = re.sub(r"!\[([^\]]*)\]\([^)]*" + re.escape(medium["file"]) + r"\)", r"![\1](MEDIA)", converted)
             expected_text = re.sub(r"!\[([^\]]*)\]\([^)]*" + re.escape(medium["file"]) + r"\)", r"![\1](MEDIA)", expected_text)
         assert converted == expected_text
@@ -352,16 +374,15 @@ def test_real_tool_classification_matches_characterization(root, source, subproc
 @pytest.mark.parametrize("ext,body", [(".txt", "Synthetic 123\n"), (".csv", "item,amount\nsynthetic,42\n"),
                                      (".log", "Synthetic log 123\n"), (".json", '{"synthetic":123}\n'),
                                      (".xml", "<doc>Synthetic 123</doc>\n")])
-def test_at08_real_whole_plain_text_set(root, ext, body, subprocess_spy):
+def test_at08_real_whole_plain_text_set(root, ext, body, subprocess_spy, monkeypatch):
+    import mimetypes
+    # Reproduce a host with no useful extension-to-text MIME mapping.
+    monkeypatch.setattr(mimetypes, "guess_type", lambda *a, **kw: ("application/octet-stream", None))
     directory, stage = stage_file(root)
     source = directory / ("src/plain" + ext)
     (directory / "src/plain.txt").rename(source)
     source.write_bytes(body.encode("utf-8"))
     stage.update(filename=source.name, relpath=source.name)
-    if ext == ".log":
-        # Python 3.15/Windows may have no text MIME mapping for .log; an explicit
-        # charset is an approved API option and makes that conversion eligible.
-        stage["charset"] = "utf-8"
     write_json_atomic(directory / "stage.json", stage)
     result = convert.classify_item(directory, stage)
     assert (result["class"], result["state"], result["triage"]) == ("text-only", "ready", None)
@@ -403,7 +424,7 @@ def test_stage_root_is_checked_before_resolving_a_reparse_alias(root, monkeypatc
     assert calls == []
 
 
-def test_at08_log_without_charset_keeps_typed_tool_outcome(root, subprocess_spy):
+def test_at08_log_without_charset_is_text_only(root, subprocess_spy):
     directory, stage = stage_file(root)
     source = directory / "src/plain.log"
     (directory / "src/plain.txt").rename(source)
@@ -411,9 +432,7 @@ def test_at08_log_without_charset_keeps_typed_tool_outcome(root, subprocess_spy)
     stage.update(filename=source.name, relpath=source.name)
     write_json_atomic(directory / "stage.json", stage)
     result = convert.classify_item(directory, stage)
-    # The host MIME registry can identify .log as text, or leave it unsupported.
-    assert (result["class"], result["state"]) in {("text-only", "ready"), ("unsupported", "unsupported")}
-    assert result["reason"] == ("no_converter" if result["class"] == "unsupported" else None)
+    assert (result["class"], result["state"], result["reason"]) == ("text-only", "ready", None)
     assert result["triage"] is None and subprocess_spy == []
 
 
@@ -425,3 +444,80 @@ def test_explicit_cp949_is_honored_when_autodetection_is_wrong(root):
     result = convert.classify_item(directory, stage)
     assert result["conversion"]["activity"]["params"]["charset"] == "cp949"
     assert (directory / "converted.md").read_bytes() == "가".encode("utf-8")
+
+
+def test_fixture_checkout_preserves_binary_exact_bytes():
+    attributes = (Path(__file__).resolve().parents[1] / ".gitattributes").read_text(encoding="utf-8")
+    assert "tests/fixtures/** -text" in attributes.splitlines()
+    for path in REPORTS.glob("*.probe.json"):
+        probe = json.loads(path.read_text(encoding="utf-8"))
+        assert sha256((FIXTURES / probe["fixture"]).read_bytes()).hexdigest() == probe["sha256"]
+        if "artifact" in probe["conversion"]:
+            expected = probe["conversion"]
+            assert sha256((FIXTURES / expected["artifact"]).read_bytes()).hexdigest() == expected["sha256"]
+
+
+@pytest.mark.parametrize("name,exit_code", [("invalid.json", 0), ("exit1.txt", 1)])
+def test_at06_actual_error_fixture_through_runner(root, monkeypatch, name, exit_code):
+    directory, stage = stage_file(root, "ocr/scan.pdf")
+    output = directory / "report.json"
+    fixture_bytes = (REPORTS / name).read_bytes()
+    def report(args, **kwargs):
+        if not exit_code:
+            output.write_bytes(fixture_bytes)
+        return SimpleNamespace(returncode=exit_code, stdout="", stderr=fixture_bytes.decode("utf-8"))
+    monkeypatch.setattr(convert.subprocess, "run", report)
+    with pytest.raises(SbError) as error:
+        convert.run_report(directory / "src" / stage["filename"], output)
+    assert error.value.code == ("report_failed" if exit_code else "report_invalid")
+    assert not output.exists()
+
+
+def test_report_output_reparse_is_refused_before_process_or_delete(root, monkeypatch):
+    import secondbrain.fsutil as fsutil
+    directory, stage = stage_file(root, "ocr/scan.pdf")
+    output = directory / "report.json"
+    output.write_bytes(b"preserve")
+    original = fsutil.is_reparse_point
+    monkeypatch.setattr(fsutil, "is_reparse_point", lambda p: Path(p) == output or original(p))
+    monkeypatch.setattr(convert.subprocess, "run", lambda *a, **kw: pytest.fail("reparse output must be rejected"))
+    with pytest.raises(SbError):
+        convert.run_report(directory / "src" / stage["filename"], output)
+    assert output.read_bytes() == b"preserve"
+
+
+@pytest.mark.parametrize("ext,expected", [(".pdf", "PdfConverter"), (".docx", "DocxConverter"),
+    (".pptx", "PptxConverter"), (".xlsx", "XlsxConverter"), (".hwp", "HwpConverter"),
+    (".hwpx", "HwpConverter"), (".md", "PlainTextConverter"), (".html", "HtmlConverter"),
+    (".htm", "HtmlConverter"), (".csv", "CsvConverter"), (".txt", "PlainTextConverter"),
+    (".log", "PlainTextConverter"), (".json", "PlainTextConverter"), (".xml", "PlainTextConverter")])
+def test_only_extension_selected_converter_is_registered(monkeypatch, ext, expected):
+    import markitdown
+    options, registered = [], []
+    class Tool:
+        def __init__(self, **kwargs): options.append(kwargs)
+        def register_converter(self, converter): registered.append(type(converter).__name__)
+    monkeypatch.setattr(markitdown, "MarkItDown", Tool)
+    convert._make_converter(ext)
+    assert options == [{"enable_builtins": False, "enable_plugins": False}]
+    assert registered == [expected]
+
+
+@pytest.mark.parametrize("optional_text", ["", "ExifTool metadata / optional audio output"])
+def test_renamed_audio_never_reaches_optional_backends(root, monkeypatch, optional_text, subprocess_spy):
+    from markitdown import MarkItDown, StreamInfo, DocumentConverterResult
+    from markitdown.converters import AudioConverter
+    directory, stage = stage_file(root, "characterize/renamed-audio.pdf")
+    audio_calls = []
+    def guesses(self, *, file_stream, base_guess):
+        # Simulate a sniffer recognizing MP3 behind the allowed PDF extension.
+        return [base_guess, StreamInfo(extension=".mp3", mimetype="audio/mpeg")]
+    def audio(self, *args, **kwargs):
+        audio_calls.append(True)
+        return DocumentConverterResult(markdown=optional_text)
+    monkeypatch.setattr(MarkItDown, "_get_stream_info_guesses", guesses)
+    monkeypatch.setattr(AudioConverter, "convert", audio)
+    result = convert.classify_item(directory, stage)
+    assert (result["class"], result["state"], result["reason"]) == (None, "failed", "FileConversionException")
+    assert result["error"]["code"] == "conversion_failed"
+    assert audio_calls == [] and subprocess_spy == []

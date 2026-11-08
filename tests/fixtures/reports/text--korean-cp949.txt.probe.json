@@ -16,6 +16,12 @@
   "awaiting-approval",
   "unsupported_format"
  ],
+ "design_row_class_state_reason_r9": [
+  11,
+  "text-only",
+  "ready",
+  null
+ ],
  "fixture": "text/korean-cp949.txt",
  "media": [],
  "report": "reports/text--korean-cp949.txt.json",

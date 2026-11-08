@@ -1,28 +1,43 @@
 {
+ "AT-08_scope": "All plain-text extensions .txt .csv .log .json .xml receive explicit text MIME and extension hints and skip triage. Successful conversions use row 11; backend failures still use rows 4-5.",
  "kind": "slice-3 API characterization; not an OCR report",
- "tool": "markitdown-gc",
- "version": "0.3.5",
- "platform": "Windows / Python 3.15.2",
  "observations": [
   {
-   "source": "runtime-generated plain.txt containing CP949 bytes b0a1 (가)",
+   "adapter_resolution": "When charset is explicit, also pass StreamInfo(charset=charset). This fulfills DESIGN r9's effective-charset requirement without changing input bytes or the extension.",
    "bare_call": "MarkItDown(enable_plugins=False).convert(abs_path, charset='cp949')",
    "bare_result": "陛",
    "bare_result_utf8_hex": "e9999b",
+   "explanation": "convert_local builds StreamInfo without copying kwargs['charset']; PlainTextConverter reads stream_info.charset. The long Slice 1 CP949 fixture decoded correctly through autodetection, not because the bare keyword was effective.",
    "required_result": "가",
    "required_result_utf8_hex": "eab080",
-   "explanation": "convert_local builds StreamInfo without copying kwargs['charset']; PlainTextConverter reads stream_info.charset. The long Slice 1 CP949 fixture decoded correctly through autodetection, not because the bare keyword was effective.",
-   "adapter_resolution": "When charset is explicit, also pass StreamInfo(charset=charset). This fulfills DESIGN r9's effective-charset requirement without changing input bytes or the extension."
+   "source": "runtime-generated plain.txt containing CP949 bytes b0a1 (가)"
   },
   {
-   "source": "runtime-generated plain.log containing Synthetic log 123 followed by LF",
-   "host_mime_type": null,
-   "bare_charset_values_tested": [null, "utf-8"],
+   "adapter_explicit_utf8_outcome": "StreamInfo(charset='utf-8') -> row 11, text-only/ready; triage skipped",
+   "bare_charset_values_tested": [
+    null,
+    "utf-8"
+   ],
    "bare_outcome": "UnsupportedFormatException -> row 4, unsupported/unsupported, no_converter",
    "explanation": "With no text MIME guess and no StreamInfo charset, .log is not accepted by PlainTextConverter on this host. A bare charset keyword does not change that eligibility. Other hosts may have a text MIME mapping.",
-   "adapter_explicit_utf8_outcome": "StreamInfo(charset='utf-8') -> row 11, text-only/ready; triage skipped",
+   "host_mime_type": null,
+   "source": "runtime-generated plain.log containing Synthetic log 123 followed by LF",
    "test": "test_at08_real_whole_plain_text_set and test_at08_log_without_charset_keeps_typed_tool_outcome"
   }
  ],
- "AT-08_scope": "All plain-text extensions .txt .csv .log .json .xml skip triage. Successful conversions use row 11; conversion exceptions still use rows 4-5. Tests cover the whole set. DESIGN.md prose is outside the allowed Slice 3 file list."
+ "platform": "Windows / Python 3.15.2",
+ "slice3_portability_resolution": {
+  "backend_policy": "Disable automatic built-in registration; register only the document backend selected by the allow-listed extension. Sniffed audio cannot reach optional audio or ExifTool backends.",
+  "fixture_checkout": "tests/fixtures/** -text in .gitattributes preserves exact bytes and existing digests.",
+  "historical_observations": "The entries above describe the previous adapter and remain historical; .log without charset is now always text-only/ready.",
+  "plain_text_hint": "Always pass StreamInfo(extension=ext, mimetype=text/plain, charset=effective_or_None) for .txt .csv .log .json .xml; preserve the actual charset in activity.params.",
+  "renamed_audio_expected": [
+   5,
+   null,
+   "failed",
+   "FileConversionException"
+  ]
+ },
+ "tool": "markitdown-gc",
+ "version": "0.3.5"
 }

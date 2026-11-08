@@ -16,6 +16,12 @@
   "awaiting-approval",
   "unsupported_format"
  ],
+ "design_row_class_state_reason_r9": [
+  11,
+  "text-only",
+  "ready",
+  null
+ ],
  "fixture": "llm/missing-key.json",
  "media": [],
  "report": "reports/llm--missing-key.json.json",

@@ -92,7 +92,9 @@ def run_report(source, output):
     """Run real triage into the caller's staging/scratch path; discard the JSON."""
     source = _local_file(source)
     output = Path(os.path.abspath(output))
-    checked_path(output.parent, output)
+    # The caller owns this directory; reject reparse parent/output paths before
+    # the tool writes or the finally block removes the disposable report.
+    output = checked_path(output.parent, output)
     output.parent.mkdir(parents=True, exist_ok=True)
     try:
         try:
@@ -117,10 +119,19 @@ def run_report(source, output):
         output.unlink(missing_ok=True)
 
 
-def _make_converter():
-    # Lazy import: denied extensions and rasters never even initialize the tool.
+def _make_converter(ext):
+    # Register only the backend selected by the allow-listed extension. Content
+    # sniffing must never fall through to audio, image/ExifTool, or other extras.
     from markitdown import MarkItDown
-    return MarkItDown(enable_plugins=False)
+    from markitdown import converters
+    backend = {".pdf": converters.PdfConverter, ".docx": converters.DocxConverter,
+               ".pptx": converters.PptxConverter, ".xlsx": converters.XlsxConverter,
+               ".hwp": converters.HwpConverter, ".hwpx": converters.HwpConverter,
+               ".html": converters.HtmlConverter, ".htm": converters.HtmlConverter,
+               ".csv": converters.CsvConverter}.get(ext, converters.PlainTextConverter)
+    tool = MarkItDown(enable_builtins=False, enable_plugins=False)
+    tool.register_converter(backend())
+    return tool
 
 
 def _conversion_record(directory, conversion_activity):
@@ -160,15 +171,17 @@ def convert_document(directory, stage):
     if not converted.exists():
         params = previous["activity"]["params"]
         options = {"charset": params["charset"]}
-        if params["charset"] is not None:
+        if source.suffix.lower() in PLAIN_TEXT_EXTENSIONS or params["charset"] is not None:
             # 0.3.5 reads charset from StreamInfo, not from the bare keyword.
             # Keep the declared keyword too; the hint makes it effective.
             from markitdown import StreamInfo
-            options["stream_info"] = StreamInfo(charset=params["charset"])
+            options["stream_info"] = StreamInfo(extension=source.suffix.lower(),
+                                               mimetype="text/plain" if source.suffix.lower() in PLAIN_TEXT_EXTENSIONS else None,
+                                               charset=params["charset"])
         if params["extract_media"]:
             options["extract_media"] = str(checked_path(directory, "media"))
         try:
-            data = _make_converter().convert(str(source), **options).text_content.encode("utf-8")
+            data = _make_converter(source.suffix.lower()).convert(str(source), **options).text_content.encode("utf-8")
         except Exception as error:
             raise SbError(ErrorCode.CONVERSION_FAILED, 1, str(error)) from error
         temporary = checked_path(directory, "converted.md.tmp")

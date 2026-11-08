@@ -328,12 +328,13 @@ def test_snapshot_is_relative_path_sorted_and_fixed_before_processing(root, tool
     assert (root / "inbox/late.txt").exists()
 
 
-def test_corrupt_committed_meta_is_reported_preserved_and_blocks_duplicate(root, tool):
+@pytest.mark.parametrize("retry", [False, True])
+def test_corrupt_committed_meta_is_reported_preserved_and_blocks_duplicate(root, tool, retry):
     item = make_item(root)
     data = (item.path / "src" / item.meta["filename"]).read_bytes()
     (item.path / "meta.json").write_bytes(b"{")
     drop(root, "copy.txt", data)
-    result = ingest.ingest(root, retry=True)
+    result = ingest.ingest(root, retry=retry)
     assert "corrupt_meta" in [e["code"] for e in result["errors"]]
     assert (item.path / "meta.json").read_bytes() == b"{" and stages(root) and not tool.convert
 
@@ -410,6 +411,116 @@ def test_staging_collision_flag_without_identity_is_corrupt(root, tool):
     assert (directory / "src/file.txt").read_bytes() == b"original"
 
 
+def test_ag_b1_meta_present_recovery_has_classification_keys(root, tool, fault_after):
+    drop(root, "source.pdf")
+    fault_after("meta.json")
+    assert ingest.ingest(root)["errors"][0]["code"] == "io_error"
+    directory, = stages(root)
+    stage = load_stage(directory)
+    assert {"class", "state", "reason", "error", "ocr"} <= stage.keys()
+    before = (directory / "meta.json").read_bytes()
+    result = ingest.ingest(root)
+    item, = committed(root)
+    assert not result["errors"] and not stages(root)
+    assert (item.path / "meta.json").read_bytes() == before
+    assert len(tool.convert) == len(tool.report) == 1
+
+
+@pytest.mark.parametrize("completed", [False, True])
+def test_ag_b2_pending_conversion_recovery_respects_completed_output(root, tool, fault_after, completed):
+    drop(root, "source.pdf")
+    fault_after("converted.md" if completed else "conversion_pending")
+    assert ingest.ingest(root)["errors"][0]["code"] == "io_error"
+    directory, = stages(root)
+    assert load_stage(directory)["conversion"]["sha256"] is None
+    output = directory / "converted.md"
+    assert output.exists() == completed
+    stamp = output.stat().st_mtime_ns if completed else None
+    assert not ingest.ingest(root)["errors"]
+    item, = committed(root)
+    assert len(tool.convert) == 1
+    assert item.meta["conversion"]["sha256"] == sha256((item.path / "converted.md").read_bytes()).hexdigest()
+    if completed:
+        assert (item.path / "converted.md").stat().st_mtime_ns == stamp
+
+
+def test_ag_b3_retained_stage_reuses_all_durable_outputs(root, tool, monkeypatch):
+    # A valid report with no candidate ids fails classification after every
+    # durable output has been recorded, including triage and native text.
+    cached = convert.adapt_report(json.loads((FIXTURES / "reports/row-07.json").read_text(encoding="utf-8")), ".pdf")
+    reports = []
+    def report(*args):
+        reports.append(True)
+        return deepcopy(cached)
+    monkeypatch.setattr(convert, "run_report", report)
+    drop(root, "source.pdf")
+    assert ingest.ingest(root)["errors"][0]["code"] == "no_candidate_ids"
+    item, = committed(root)
+    keys = ("conversion", "triage", "has_native_text")
+    before = {key: item.meta[key] for key in keys}
+    assert all(value is not None for value in before.values())
+    assert {key: load_stage(item.path)[key] for key in keys} == before
+    result = ingest.ingest(root, retry=True)
+    assert result["items"] == [{"id": item.meta["id"], "result": "retried"}]
+    assert [e["code"] for e in result["errors"]] == ["no_candidate_ids"]
+    assert {key: load_item(item.path).meta[key] for key in keys} == before
+    assert {key: load_stage(item.path)[key] for key in keys} == before
+    assert len(tool.convert) == len(reports) == 1
+
+
+def test_ag_invalid_conversion_activity_is_rejected_before_retry(root, tool, monkeypatch):
+    item = make_item(root, state="failed", filename="source.pdf", text="Completed native text")
+    item.meta["conversion"]["activity"] = None
+    write_json_atomic(item.path / "meta.json", item.meta)
+    before = (item.path / "meta.json").read_bytes()
+    monkeypatch.setattr(ingest, "_retry", lambda *args: pytest.fail("corrupt meta must never reach retry"))
+    result = ingest.ingest(root, retry=True)
+    assert [e["code"] for e in result["errors"]] == ["corrupt_meta"]
+    assert (item.path / "meta.json").read_bytes() == before and not tool.convert
+
+
+def test_ag_missing_stage_filename_is_corrupt_and_preserves_payload(root, tool):
+    directory = root / "raws/.staging/tmp-1"
+    (directory / "src").mkdir(parents=True)
+    payload = directory / "src/original.txt"
+    payload.write_bytes(b"original payload")
+    write_json_atomic(directory / "stage.json", {"relpath": "original.txt", "charset": None, "claimed_at": DATE})
+    before = (directory / "stage.json").read_bytes()
+    result = ingest.ingest(root)
+    assert [e["code"] for e in result["errors"]] == ["corrupt_meta"]
+    assert payload.read_bytes() == b"original payload" and (directory / "stage.json").read_bytes() == before
+
+
+def test_ag_aliases_preserve_distinct_exact_unicode_spellings(root, tool):
+    original = "이름.txt"
+    alias = unicodedata.normalize("NFD", original)
+    assert original != alias
+    item = make_item(root, filename=original)
+    data = (item.path / "src" / original).read_bytes()
+    drop(root, alias, data)
+    assert ingest.ingest(root)["items"][0]["result"] == "alias_added"
+    assert load_item(item.path).meta["aliases"] == [alias]
+    before = (item.path / "meta.json").read_bytes()
+    drop(root, alias, data)
+    assert ingest.ingest(root)["items"][0]["result"] == "duplicate"
+    assert (item.path / "meta.json").read_bytes() == before and not tool.convert
+
+
+def test_plain_ingest_does_not_scan_unrelated_committed_items(root, tool, monkeypatch):
+    item = make_item(root)
+    (item.path / "meta.json").write_bytes(b"{")
+    load = ingest.load_item
+    def only_target(directory):
+        assert Path(directory) != item.path, "plain ingest must not read an unrelated committed item"
+        return load(directory)
+    monkeypatch.setattr(ingest, "load_item", only_target)
+    drop(root, "new.txt", b"new distinct bytes")
+    result = ingest.ingest(root)
+    assert not result["errors"] and len(result["items"]) == 1
+    assert result["items"][0]["result"] == "new"
+    assert (item.path / "meta.json").read_bytes() == b"{"
+
+
 @pytest.mark.parametrize("group", ["text", "ocr", "mixed", "unknown", "unsupported", "characterize", "failed"])
 def test_real_fixture_ingest_matches_gate_and_retry(root, group):
     """AT-08–13 at the ingest boundary, with real 0.3.5 conversion/report."""
@@ -432,6 +543,10 @@ def test_real_fixture_ingest_matches_gate_and_retry(root, group):
         expected = probe.get("design_row_class_state_reason_r9", probe["design_row_class_state_reason"])
         item = by_name[path.name]
         assert [item.meta["class"], item.meta["state"], item.meta["reason"]] == expected[1:]
+        assert len(item.meta["ocr"]["units"]) == len(probe["units"])
+        if path.suffix.lower() in convert.CONTAINER_EXTENSIONS and probe["media"]:
+            assert (item.path / "media").is_dir()
+            assert {asset["sha256"] for asset in item.meta["conversion"]["media"]} == {asset["sha256"] for asset in probe["media"]}
         assert (item.path / "src" / path.name).read_bytes() == path.read_bytes()
         if path.name == "korean-cp949.txt":
             assert (item.path / "converted.md").read_text(encoding="utf-8") == cp_bytes.decode("cp949")

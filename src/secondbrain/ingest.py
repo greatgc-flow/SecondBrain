@@ -221,7 +221,7 @@ def ingest(root, *, retry=False, charset=None):
         raise SbError(ErrorCode.IO_ERROR, 1, "ingest requires an existing inbox directory")
     result = {"items": [], "warnings": [], "errors": []}
     try:
-        items = _scan(root, result)
+        items = _scan(root, result) if retry else []
         _recover(root, result)
         if retry:
             for item in items:

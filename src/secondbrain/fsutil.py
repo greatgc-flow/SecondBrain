@@ -6,7 +6,6 @@ from pathlib import Path
 import re
 import shutil
 import stat
-import sys
 import unicodedata
 from urllib.parse import quote
 
@@ -18,6 +17,7 @@ def resolve_root(path=None):
 
 
 def write_text(path, text):
+    """Write sb-authored UTF-8/LF text; use write_bytes for exact converter/peer bytes."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text.replace("\r\n", "\n").replace("\r", "\n"), encoding="utf-8", newline="\n")
@@ -26,7 +26,12 @@ def write_text(path, text):
 def write_json_atomic(path, value):
     path = Path(path)
     temporary = path.with_name(path.name + ".tmp")
-    write_text(temporary, json.dumps(value, ensure_ascii=False, sort_keys=True, indent=1) + "\n")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with temporary.open("w", encoding="utf-8", newline="\n") as stream:
+        json.dump(value, stream, ensure_ascii=False, sort_keys=True, indent=1)
+        stream.write("\n")
+        stream.flush()
+        os.fsync(stream.fileno())
     os.replace(temporary, path)
 
 
@@ -36,12 +41,6 @@ def sha256_file(path):
         for block in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest()
-
-
-def init_utf8_stdio():
-    for stream in (sys.stdout, sys.stderr):
-        if hasattr(stream, "reconfigure"):
-            stream.reconfigure(encoding="utf-8")
 
 
 def is_reparse_point(path):
@@ -90,8 +89,16 @@ def safe_delete(root, target):
     for directory, dirs, files in os.walk(target, followlinks=False):
         if any(is_reparse_point(Path(directory) / name) for name in dirs + files):
             raise SbError(ErrorCode.IO_ERROR, 1, "Reparse point inside deletion target")
+    def remove_readonly(operation, path, exc_info):
+        error = exc_info[1]
+        path = checked_path(root, path)
+        path.relative_to(target)
+        if not isinstance(error, PermissionError) or not (getattr(path.stat(), "st_file_attributes", 0) & stat.FILE_ATTRIBUTE_READONLY):
+            raise error
+        os.chmod(path, stat.S_IWRITE)
+        operation(path)
     try:
-        shutil.rmtree(target)
+        shutil.rmtree(target, onerror=remove_readonly)
     except OSError as error:
         raise SbError(ErrorCode.IO_ERROR, 1, str(error)) from error
 
@@ -119,6 +126,3 @@ def percent_encode(filename):
     return quote(filename, safe="")
 
 
-def fenced_block(text, info="text"):
-    fence = "`" * max(3, max((len(run) + 1 for run in re.findall(r"`+", text)), default=0))
-    return f"{fence}{info}\n{text}" + ("" if text.endswith("\n") else "\n") + fence

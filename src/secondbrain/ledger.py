@@ -51,6 +51,12 @@ def _date(value):
 def _filename(value):
     _require(isinstance(value, str) and value not in {"", ".", ".."}
              and not any(c in value for c in "/\\\0"), "Invalid filename")
+    if os.name == "nt":
+        _require(not any(c in value for c in ':*?"<>|') and not any(ord(c) < 32 for c in value)
+                 and value[-1] not in " .", "Invalid Windows filename")
+        stem = value.split(".", 1)[0].rstrip(" ").upper()
+        _require(stem not in {"CON", "PRN", "AUX", "NUL"}
+                 and not re.fullmatch(r"(?:COM|LPT)[1-9¹²³]", stem), "Reserved Windows device name")
 
 
 def _relative(value):
@@ -274,7 +280,8 @@ def _validate_meta(meta, directory):
     _string(meta["reason"], nullable=True)
     source = checked_path(directory, "src/" + meta["filename"])
     _require(source.is_file() and source.stat().st_size == meta["size"], "Missing/wrong-size source")
-    referenced = {"meta.json", "src/" + meta["filename"]}
+    # Rename 2 retains the staging ledger; I8 forbids deleting it afterwards.
+    referenced = {"meta.json", "stage.json", "src/" + meta["filename"]}
     _conversion(meta["conversion"], directory, referenced)
     _require((meta["has_native_text"] is None) == (meta["conversion"] is None), "Native text/conversion mismatch")
     if meta["has_native_text"] is not None:
@@ -301,7 +308,6 @@ def _validate_meta(meta, directory):
         _string(meta["error"]["code"])
         _string(meta["error"]["message"])
         _date(meta["error"]["date"])
-        _require(meta["reason"] == meta["error"]["code"], "Failure reason/error mismatch")
     return _orphans(directory, referenced, meta["id"])
 
 

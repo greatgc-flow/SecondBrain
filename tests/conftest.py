@@ -25,14 +25,30 @@ socket.gethostbyname_ex = denied
 '''
 
 
+def configure_basetemp(config):
+    base = Path(config.option.basetemp or WORKTREE / ".pytest-tmp").resolve()
+    if not base.is_relative_to(WORKTREE):
+        raise pytest.UsageError("Use --basetemp inside this worktree")
+    if os.name == "nt":
+        try:
+            if base.exists():
+                list(base.iterdir())
+        except PermissionError:
+            base = WORKTREE / "work" / "pytest-foundation"
+            warnings.warn("Inaccessible .pytest-tmp; using work/pytest-foundation within this worktree", pytest.PytestWarning)
+    config.option.basetemp = str(base)
+    factory = getattr(config, "_tmp_path_factory", None)
+    if factory is not None and (factory._given_basetemp != base or factory._basetemp not in (None, base)):
+        factory._given_basetemp = base
+        factory._basetemp = None
+
+
 def pytest_configure(config):
     # Resolve stdlib Windows platform metadata before installing the per-test
     # subprocess spy: platform.uname() may invoke the OS's `ver` command once.
     platform.uname()
     platform.platform()
-    base = config.option.basetemp
-    if base is None or not Path(base).resolve().is_relative_to(WORKTREE):
-        raise pytest.UsageError("Use --basetemp inside this worktree")
+    configure_basetemp(config)
     if os.name == "nt":
         # Python 3.13+ gives mkdir(0700) a private DACL that restricted Windows
         # tokens cannot reuse. Preserve inherited workspace permissions in tests.
@@ -43,12 +59,6 @@ def pytest_configure(config):
             return original(path, mode, *args, **kwargs)
         config._sb_original_mkdir = original
         os.mkdir = mkdir
-        try:
-            if Path(base).exists():
-                list(Path(base).iterdir())
-        except PermissionError:
-            config.option.basetemp = str(WORKTREE / "work" / "pytest-foundation")
-            warnings.warn("Inaccessible .pytest-tmp; using work/pytest-foundation within this worktree", pytest.PytestWarning)
 
 
 def pytest_unconfigure(config):
@@ -70,13 +80,17 @@ def network_guard():
         yield calls
 
 
-@pytest.fixture(scope="session", autouse=True)
-def audio_extra_check():
+def check_audio_extras():
     """CI installs the declared dependencies only; report shared local extras."""
     extras = [name for name in ("speech_recognition", "pydub") if importlib.util.find_spec(name) is not None]
     if os.environ.get("CI"):
         assert not extras, f"Audio extras must be absent in CI: {extras}"
     return extras
+
+
+@pytest.fixture(scope="session", autouse=True)
+def audio_extra_check():
+    return check_audio_extras()
 
 
 @pytest.fixture(autouse=True)

@@ -32,7 +32,7 @@ def test_view_only_verified_and_pure(root):
 
 def test_orphan_conversion_is_not_a_transcript(root):
     item = make_item(root, classification="unsupported", state="unsupported", text=None)
-    (item.path / "converted.md").write_text("orphan text")
+    (item.path / "converted.md").write_text("orphan text", encoding="utf-8")
     assert view(item) == ""
     assert accepted_text_present(item) is False
 

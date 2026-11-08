@@ -1,5 +1,8 @@
 from hashlib import sha256
 import json
+import os
+from types import SimpleNamespace
+import unicodedata
 
 import pytest
 
@@ -54,7 +57,7 @@ def test_at16_referenced_artifacts_required(root, artifact, action):
     if action == "missing":
         path.unlink()
     else:
-        path.write_text("changed")
+        path.write_text("changed", encoding="utf-8")
     with pytest.raises(SbError) as error:
         load_item(item.path)
     assert error.value.code == "corrupt_meta"
@@ -63,7 +66,7 @@ def test_at16_referenced_artifacts_required(root, artifact, action):
 def test_at16_orphans_warn_without_becoming_references(root):
     item = make_item(root)
     (item.path / "ocr").mkdir()
-    (item.path / "ocr/u0001.a9.md").write_text("orphan")
+    (item.path / "ocr/u0001.a9.md").write_text("orphan", encoding="utf-8")
     loaded = load_item(item.path)
     assert [(w["code"], w["id"], w["path"]) for w in loaded.warnings] == [
         ("orphan", item.meta["id"], "ocr/u0001.a9.md")]
@@ -82,7 +85,7 @@ def test_source_missing_and_invalid_json(root):
     (item.path / "src/source.txt").unlink()
     with pytest.raises(SbError):
         load_item(item.path)
-    (item.path / "meta.json").write_text("{broken")
+    (item.path / "meta.json").write_text("{broken", encoding="utf-8")
     with pytest.raises(SbError):
         load_item(item.path)
 
@@ -126,9 +129,9 @@ def test_stage_preclaim_pending_and_reconciliation(root):
     digest = sha256(b"source").hexdigest()
     stage["identity"] = {"id": digest[:16], "sha256": digest, "size": 6}
     stage["conversion"] = {"activity": provenance(), "sha256": None}
-    (path / "converted.md").write_text("completed before crash")
+    (path / "converted.md").write_text("completed before crash", encoding="utf-8")
     assert validate_stage(stage, path)[0]["code"] == "orphan"
-    (path / "stage.json").write_text(json.dumps(stage))
+    (path / "stage.json").write_text(json.dumps(stage), encoding="utf-8")
     assert load_stage(path) == stage
     stage["conversion"]["sha256"] = sha256((path / "converted.md").read_bytes()).hexdigest()
     stage["conversion"]["media"] = []
@@ -218,11 +221,11 @@ def test_activity_unit_file_is_a_provenance_string():
     assert activity(**record) == record
 
 
-def test_committed_staging_ledger_is_an_orphan_not_deleted(root):
+def test_committed_staging_ledger_is_retained_without_warning(root):
     item = make_item(root)
-    (item.path / "stage.json").write_text('{"filename": "source.txt"}')
+    (item.path / "stage.json").write_text('{"filename": "source.txt"}', encoding="utf-8")
     loaded = load_item(item.path)
-    assert loaded.warnings[0]["path"] == "stage.json"
+    assert loaded.warnings == []
     assert (item.path / "stage.json").exists()
 
 
@@ -231,6 +234,89 @@ def test_valid_declined_ocr(root):
     item.meta["state"] = "ready"
     item.meta["ocr"]["disposition"] = "declined"
     assert validate_meta(item.meta, item.path) == []
+
+
+def test_failed_conversion_reason_differs_from_error_code(root):
+    item = make_item(root, state="failed")
+    item.meta["reason"] = "FileConversionException"
+    item.meta["error"]["code"] = "conversion_failed"
+    save_meta(item)
+    assert load_item(item.path).meta["reason"] == "FileConversionException"
+
+
+@pytest.mark.parametrize("change", ["large-approval", "noncontiguous-keys", "not-a-candidate", "llm-not-ready", "llm-unsupported"])
+def test_fable_missing_ledger_cases(root, change):
+    if change == "large-approval":
+        item = make_item(root, state="ocr-in-progress", statuses=["approved"] * 21)
+        item.meta["ocr"]["large_ack"] = False
+    elif change in {"noncontiguous-keys", "not-a-candidate"}:
+        item = make_item(root, state="ocr-in-progress", statuses=["approved", "pending"])
+        units = item.meta["ocr"]["units"]
+        if change == "noncontiguous-keys":
+            units["u0003"] = units.pop("u0002")
+        else:
+            units["u0001"]["source"] = "p3"
+    else:
+        item = add_summary(make_item(root))
+        item.meta.update(state="awaiting-approval", **{"class": "unknown"})
+        if change == "llm-unsupported":
+            item.meta.update(state="unsupported", **{"class": "unsupported"})
+    with pytest.raises(SbError) as error:
+        validate_meta(item.meta, item.path)
+    assert error.value.code == "corrupt_meta"
+
+
+def test_committed_hidden_and_reparse_orphans_are_not_inbox_skips(root, monkeypatch):
+    import secondbrain.ledger as ledger
+    item = make_item(root)
+    (item.path / ".hidden.md").write_bytes(b"orphan")
+    (item.path / "linked-file").write_bytes(b"orphan")
+    (item.path / "linked-dir").mkdir()
+    (item.path / "linked-dir/child").write_bytes(b"do not traverse")
+    original = ledger.is_reparse_point
+    monkeypatch.setattr(ledger, "is_reparse_point", lambda p: p.name in {"linked-file", "linked-dir"} or original(p))
+    loaded = load_item(item.path)
+    assert [(w["path"], w["code"]) for w in loaded.warnings] == [
+        (".hidden.md", "orphan"), ("linked-dir", "orphan"), ("linked-file", "orphan")]
+    assert (item.path / "linked-dir/child").read_bytes() == b"do not traverse"
+
+
+def test_nfc_equivalent_distinct_filename_is_still_an_orphan(root):
+    name = "이름.txt"
+    item = make_item(root, filename=name)
+    decomposed = unicodedata.normalize("NFD", name)
+    extra = item.path / "src" / decomposed
+    extra.write_bytes(b"distinct unreferenced source")
+    assert not extra.samefile(item.path / "src" / name)
+    assert [w["path"] for w in load_item(item.path).warnings] == ["src/" + decomposed]
+
+
+@pytest.mark.parametrize("name", ['source:stream.txt', '*.txt', 'q?.txt', 'a"b.txt', '<x>.txt', 'a|b.txt', 'CON.txt', 'aux', 'LPT1.log', 'COM9', 'name.', 'name '])
+def test_windows_reserved_names_rejected_in_stage(root, monkeypatch, name):
+    import secondbrain.ledger as ledger
+    # Exercise Windows rules on both CI operating systems without changing os.name globally.
+    monkeypatch.setattr(ledger, "os", SimpleNamespace(name="nt", walk=os.walk))
+    stage = {"relpath": name, "filename": name, "charset": None, "claimed_at": DATE}
+    with pytest.raises(SbError) as error:
+        validate_stage(stage, root)
+    assert error.value.code == "corrupt_meta"
+
+
+def test_posix_volume_valid_name_is_not_rewritten(root, monkeypatch):
+    import secondbrain.ledger as ledger
+    monkeypatch.setattr(ledger, "os", SimpleNamespace(name="posix", walk=os.walk))
+    stage = {"relpath": 'a?b*.txt', "filename": 'a?b*.txt', "charset": None, "claimed_at": DATE}
+    assert validate_stage(stage, root) == []
+
+
+def test_summary_helper_binds_view_and_peer_methods(root):
+    from secondbrain.transcript import source_digest
+    item = add_summary(make_item(root, classification="mixed", state="ready"))
+    loaded = load_item(item.path)
+    revision = loaded.meta["llm"]["summary"][-1]
+    assert revision["source_digest"] == source_digest(loaded)
+    assert revision["activity"]["method"] == "summary"
+    assert loaded.meta["ocr"]["units"]["u0001"]["attempts"][-1]["verified"]["method"] == "ocr-verify"
 
 
 @pytest.mark.parametrize("state", ["ready", "awaiting-approval", "ocr-in-progress", "unsupported", "failed"])

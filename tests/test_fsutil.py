@@ -5,11 +5,13 @@ import socket
 import subprocess
 import sys
 import tempfile
+from types import SimpleNamespace
 
 import pytest
 
 from secondbrain.errors import ErrorCode, SbError, WarningCode
 from secondbrain import fsutil
+from conftest import WORKTREE
 
 
 def test_codes_and_error():
@@ -47,7 +49,7 @@ def test_fault_after_committed_meta_is_once(root, fault_after):
     fault_after("meta.json")
     with pytest.raises(OSError, match="fault"):
         fsutil.write_json_atomic(target, {"committed": True})
-    assert json.loads(target.read_text()) == {"committed": True}
+    assert json.loads(target.read_text(encoding="utf-8")) == {"committed": True}
     fsutil.write_json_atomic(target, {"committed": False})
 
 
@@ -55,7 +57,7 @@ def test_fault_after_committed_meta_is_once(root, fault_after):
 def test_at36_allowed_deletion(root, relative):
     path = root / relative
     path.mkdir(parents=True)
-    (path / "keep-until-delete.txt").write_text("synthetic")
+    (path / "keep-until-delete.txt").write_text("synthetic", encoding="utf-8")
     fsutil.safe_delete(root, path)
     assert not path.exists()
 
@@ -86,18 +88,26 @@ def test_at36_symlink_detection(root, monkeypatch):
     assert fsutil.is_reparse_point(root / "junction")
 
 
-def test_path_length_escaping_percent_and_fences(root):
+def test_path_length_boundary(root):
     fsutil.check_path_length(Path("x" * 240))
     with pytest.raises(SbError, match="240") as error:
         fsutil.check_path_length(Path("x" * 241))
     assert error.value.code == "path_too_long"
+
+
+def test_esc_controls_and_markdown():
     assert fsutil.esc("[x](y) <b>`z` #!\n한글|") == "\\[x\\]\\(y\\) &lt;b>'z' \\#\\! 한글\\|"
+    assert fsutil.esc("a\x00b\t*\\_") == "a b \\*\\\\\\_"
+
+
+def test_percent_encode_filename():
     assert fsutil.percent_encode("한 글#?.pdf") == "%ED%95%9C%20%EA%B8%80%23%3F.pdf"
-    assert fsutil.fenced_block("<script>\n````\n") == "`````text\n<script>\n````\n`````"
+    assert fsutil.percent_encode("[x]/100%.md") == "%5Bx%5D%2F100%25.md"
 
 
-def test_temporary_files_stay_in_worktree(root):
-    assert Path(tempfile.gettempdir()).resolve().is_relative_to(Path.cwd().resolve())
+def test_temporary_files_stay_in_worktree(root, monkeypatch):
+    monkeypatch.chdir(root / "inbox")
+    assert Path(tempfile.gettempdir()).resolve().is_relative_to(WORKTREE)
 
 
 def test_at37_socket_creation_and_loopback_bind_allowed():
@@ -152,13 +162,13 @@ def test_subprocess_spy_allows_module_entrypoint(subprocess_spy):
 def test_at36_reparse_descendant_refused_before_any_delete(root, monkeypatch):
     target = root / "wiki.old"
     target.mkdir()
-    (target / "ordinary.txt").write_text("keep")
+    (target / "ordinary.txt").write_text("keep", encoding="utf-8")
     (target / "linked").mkdir()
     original = fsutil.is_reparse_point
     monkeypatch.setattr(fsutil, "is_reparse_point", lambda p: Path(p) == target / "linked" or original(p))
     with pytest.raises(SbError):
         fsutil.safe_delete(root, target)
-    assert (target / "ordinary.txt").read_text() == "keep"
+    assert (target / "ordinary.txt").read_text(encoding="utf-8") == "keep"
 
 
 @pytest.mark.parametrize("step", ["stage.json", "identity", "conversion_pending", "conversion", "triage"])
@@ -168,7 +178,7 @@ def test_named_stage_faults(root, fault_after, step):
     fault_after(step)
     with pytest.raises(OSError, match="fault"):
         fsutil.write_json_atomic(path, data)
-    assert json.loads(path.read_text()) == data
+    assert json.loads(path.read_text(encoding="utf-8")) == data
     fsutil.write_json_atomic(path, data)
 
 
@@ -186,3 +196,133 @@ def test_named_claim_and_commit_faults(root, fault_after):
     with pytest.raises(OSError):
         os.rename(staging, target)
     assert (target / "src/file.txt").read_bytes() == b"original"
+
+
+def test_atomic_json_flushed_and_synced_before_replace(root, monkeypatch):
+    target = root / "meta.json"
+    fsutil.write_json_atomic(target, {"old": True})
+    before = target.read_bytes()
+    events = []
+    sync, replace = os.fsync, os.replace
+    def synced(descriptor):
+        assert target.read_bytes() == before
+        assert json.loads((root / "meta.json.tmp").read_text(encoding="utf-8")) == {"new": "한글"}
+        events.append("sync")
+        sync(descriptor)
+    def replaced(source, destination):
+        assert events == ["sync"]
+        events.append("replace")
+        replace(source, destination)
+    monkeypatch.setattr(os, "fsync", synced)
+    monkeypatch.setattr(os, "replace", replaced)
+    fsutil.write_json_atomic(target, {"new": "한글"})
+    assert events == ["sync", "replace"]
+
+
+def test_failed_fsync_preserves_committed_json(root, monkeypatch):
+    target = root / "meta.json"
+    fsutil.write_json_atomic(target, {"old": True})
+    before = target.read_bytes()
+    def fail(descriptor):
+        raise OSError("injected fsync failure")
+    monkeypatch.setattr(os, "fsync", fail)
+    with pytest.raises(OSError, match="fsync"):
+        fsutil.write_json_atomic(target, {"new": True})
+    assert target.read_bytes() == before
+
+
+def test_safe_delete_readonly_file(root):
+    import stat
+    target = root / "wiki.old"
+    target.mkdir()
+    file = target / "readonly.txt"
+    file.write_bytes(b"temporary derived content")
+    file.chmod(stat.S_IREAD)
+    fsutil.safe_delete(root, target)
+    assert not target.exists()
+
+
+def test_safe_delete_readonly_error_handler(root, monkeypatch):
+    import stat
+    target = root / "wiki.old"
+    target.mkdir()
+    file = target / "readonly.txt"
+    file.write_bytes(b"derived")
+    original_stat = Path.stat
+    def file_stat(path, *args, **kwargs):
+        info = original_stat(path, *args, **kwargs)
+        if path == file:
+            return SimpleNamespace(st_mode=info.st_mode, st_file_attributes=stat.FILE_ATTRIBUTE_READONLY)
+        return info
+    def denied_once(path, *, onerror):
+        error = PermissionError("simulated Windows read-only file")
+        onerror(os.unlink, str(file), (type(error), error, None))
+        target.rmdir()
+    monkeypatch.setattr(Path, "stat", file_stat)
+    monkeypatch.setattr(fsutil.shutil, "rmtree", denied_once)
+    fsutil.safe_delete(root, target)
+    assert not target.exists()
+
+
+def test_basetemp_defaults_and_resets_cached_factory(tmp_path, monkeypatch):
+    import conftest
+    monkeypatch.setattr(conftest, "WORKTREE", tmp_path)
+    factory = SimpleNamespace(_given_basetemp=None, _basetemp=tmp_path / "old")
+    config = SimpleNamespace(option=SimpleNamespace(basetemp=None), _tmp_path_factory=factory)
+    conftest.configure_basetemp(config)
+    assert Path(config.option.basetemp) == tmp_path / ".pytest-tmp"
+    assert factory._given_basetemp == tmp_path / ".pytest-tmp" and factory._basetemp is None
+
+
+def test_explicit_basetemp_outside_worktree_is_refused(tmp_path, monkeypatch):
+    import conftest
+    monkeypatch.setattr(conftest, "WORKTREE", tmp_path)
+    config = SimpleNamespace(option=SimpleNamespace(basetemp=str(tmp_path.parent / "outside")))
+    with pytest.raises(pytest.UsageError):
+        conftest.configure_basetemp(config)
+
+
+def test_audio_extra_check_is_strict_in_ci(monkeypatch):
+    import conftest
+    monkeypatch.setenv("CI", "1")
+    monkeypatch.setattr(conftest.importlib.util, "find_spec", lambda name: object())
+    with pytest.raises(AssertionError, match="Audio extras"):
+        conftest.check_audio_extras()
+    monkeypatch.setattr(conftest.importlib.util, "find_spec", lambda name: None)
+    assert conftest.check_audio_extras() == []
+
+
+def test_inaccessible_basetemp_fallback_resets_cached_factory(tmp_path, monkeypatch):
+    import conftest
+    monkeypatch.setattr(conftest, "WORKTREE", tmp_path)
+    monkeypatch.setattr(conftest, "os", SimpleNamespace(name="nt"))
+    base = tmp_path / ".pytest-tmp"
+    base.mkdir()
+    original = Path.iterdir
+    def denied(path):
+        if path == base:
+            raise PermissionError("private Windows ACL")
+        return original(path)
+    monkeypatch.setattr(Path, "iterdir", denied)
+    factory = SimpleNamespace(_given_basetemp=base, _basetemp=base)
+    config = SimpleNamespace(option=SimpleNamespace(basetemp=str(base)), _tmp_path_factory=factory)
+    with pytest.warns(pytest.PytestWarning, match="Inaccessible"):
+        conftest.configure_basetemp(config)
+    fallback = tmp_path / "work/pytest-foundation"
+    assert Path(config.option.basetemp) == factory._given_basetemp == fallback
+    assert factory._basetemp is None
+
+
+def test_safe_delete_does_not_retry_other_permission_failures(root, monkeypatch):
+    target = root / "wiki.old"
+    target.mkdir()
+    file = target / "ordinary.txt"
+    file.write_bytes(b"preserve after permission failure")
+    def denied(path, *, onerror):
+        error = PermissionError("not a read-only attribute")
+        onerror(os.unlink, str(file), (type(error), error, None))
+    monkeypatch.setattr(fsutil.shutil, "rmtree", denied)
+    with pytest.raises(SbError) as error:
+        fsutil.safe_delete(root, target)
+    assert error.value.code == "io_error"
+    assert file.read_bytes() == b"preserve after permission failure"

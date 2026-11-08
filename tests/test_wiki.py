@@ -293,8 +293,6 @@ def test_at33_only_verified_text_in_view(root):
     attempt["result"] = "mismatch"
     attempt["verified"] = helpers.provenance("ocr-verify", "cc")
     mismatch.meta["ocr"]["units"]["u0001"]["status"] = "approved"
-    mismatch.meta["ocr"]["units"]["u0002"] = {"source": "p2", "kind": "page", "status": "verified", "attempts": []}
-    mismatch.meta["ocr"]["units"].pop("u0002")
     helpers.save_meta(mismatch)
     wiki.build(root)
     progress = page(root, items["progress"])
@@ -303,3 +301,37 @@ def test_at33_only_verified_text_in_view(root):
     assert "## OCR u0002" not in progress and "## OCR u0003" not in progress
     assert "Verified synthetic OCR 1." not in page(root, mismatch)
     assert "## OCR" not in page(root, items["pending"])
+
+
+def test_at33_declined_partial_coverage_and_raster_pending_banner(root):
+    declined = helpers.make_item(root, state="ready", classification="mixed", filename="d.pdf", statuses=["pending"])
+    declined.meta["ocr"]["disposition"] = "declined"
+    declined.meta["triage"]["coverage"]["state"] = "partial"
+    helpers.save_meta(declined)
+    raster = helpers.make_item(root, state="awaiting-approval", classification="ocr-required", filename="photo.png")
+    wiki.build(root)
+    assert "```text\nOCR declined, coverage partial\n```" in page(root, declined)
+    assert "```text\nOCR pending approval: 1 units, coverage n/a\n```" in page(root, raster)
+
+
+def test_malformed_optional_meta_does_not_crash_projection(root):
+    item = helpers.make_item(root, filename="s.txt")
+    item.meta["llm"] = {"summary": []}  # in-memory only; the ledger validator never admits it
+    assert "## Summary" not in wiki.source_page(item)
+    assert wiki.index_page([item]).splitlines()[-1].endswith("| no |")
+    failed = helpers.make_item(root, state="failed", filename="f.pdf")
+    failed.meta["error"] = None
+    assert wiki.banner(failed.meta).startswith("failed:")
+
+
+def test_transcript_gate_follows_converted_md_file(root):
+    item = helpers.make_item(root, state="failed", filename="g.pdf", text="Converted.")
+    (item.path / "converted.md").unlink()
+    item.meta["conversion"] = None
+    assert "## Transcript" not in wiki.source_page(item)
+
+
+def test_index_has_no_extra_blank_line(root):
+    helpers.make_item(root, filename="a.txt")
+    wiki.build(root)
+    assert (root / "wiki" / "index.md").read_text(encoding="utf-8").startswith("# SecondBrain index\n\n| Source")

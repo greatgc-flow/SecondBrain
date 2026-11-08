@@ -65,6 +65,12 @@ def _load(root):
     return items, warnings, errors
 
 
+def _summary(meta):
+    """Current summary revision, or None."""
+    revisions = (meta.get("llm") or {}).get("summary")
+    return revisions[-1] if revisions else None
+
+
 def _counts(meta):
     units = meta["ocr"]["units"].values()
     total = len(units)
@@ -96,8 +102,8 @@ def banner(meta):
     if state == "unsupported":
         return f"unsupported: {_line(reason)}"
     if state == "failed":
-        error = meta["error"]
-        return f"failed: {_line(error['code'])}, {error['date']}"
+        error = meta.get("error") or {}
+        return f"failed: {_line(error.get('code', reason or 'unknown'))}, {error.get('date', 'unknown')}"
     if cls == "unknown":
         text = f"not inspected: {_line(reason if reason else 'unknown')}"
         return text + (", declined" if state == "ready" else "")
@@ -117,7 +123,8 @@ def _json_subset(item):
     meta = item.meta
     ocr = {key: {"recorded": unit["attempts"][-1]["recorded"], "verified": unit["attempts"][-1]["verified"]}
            for key, unit in sorted(meta["ocr"]["units"].items()) if unit["status"] == "verified"}
-    summary = meta["llm"]["summary"][-1]["activity"] if meta["llm"] else None
+    summary = _summary(meta)
+    summary = summary["activity"] if summary else None
     subset = {
         "id": meta["id"], "sha256": meta["sha256"], "size": meta["size"],
         "filename": meta["filename"], "filename_nfc": meta["filename_nfc"], "aliases": meta["aliases"],
@@ -136,24 +143,24 @@ def source_page(item):
     text = banner(meta)
     if text:
         parts += [fence(text), "\n"]
-    if meta["llm"]:
-        revision = meta["llm"]["summary"][-1]
+    revision = _summary(meta)
+    if revision:
         body = (item.path / revision["file"]).read_bytes().decode("utf-8")
         parts += ["## Summary\n\n", fence(body), "\n"]
-    if meta["state"] != "unsupported" and (meta["state"] != "failed" or meta["conversion"] is not None):
+    if meta["state"] != "unsupported" and (meta["state"] != "failed" or _exists(item.path / "converted.md")):
         parts += ["## Transcript\n\n", fence(view(item))]
     return "".join(parts).rstrip("\n") + "\n"
 
 
 def index_page(items):
-    lines = ["# SecondBrain index\n", "",
+    lines = ["# SecondBrain index", "",
              "| Source | Ext | Class | State | Ingested | OCR | Coverage | Summary |",
              "|---|---|---|---|---|---|---|---|"]
     for item in items:
         meta = item.meta
         label = f"[{esc(meta['filename_nfc'])}](sources/{meta['id']}.md)"
         cells = [label, esc(meta["ext"]), meta["class"] or "-", meta["state"], meta["ingested_at"][:10],
-                 _ocr_cell(meta), _coverage(meta) or "-", "yes" if meta["llm"] else "no"]
+                 _ocr_cell(meta), _coverage(meta) or "-", "yes" if _summary(meta) else "no"]
         lines.append("| " + " | ".join(cells) + " |")
     return "\n".join(lines) + "\n"
 

@@ -257,6 +257,8 @@ Recovery at build start: delete `wiki.tmp/`; `wiki.old/` without `wiki/` is rena
 
 `sb [--root PATH] [--json] <command>`; stdout = result, stderr = human warnings; with `--json`, stdout is exactly one object, also on parser failure.
 
+`ingest` rejects an unknown `--charset` before any write with `invalid_request` (exit 2); a missing `inbox/` is `io_error` (exit 1) **[S4/L3]**.
+
 | Command | Writes | Item `result` |
 |---|---|---|
 | `sb ingest [--retry] [--charset NAME]` / `sb status` | raws / none | `new, duplicate, alias_added, retried, skipped` / `listed, corrupt` |

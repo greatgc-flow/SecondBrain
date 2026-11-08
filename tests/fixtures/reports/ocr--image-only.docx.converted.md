@@ -1,0 +1,1 @@
+![Image](work/characterize/media/ocr--image-only.docx/9c4b0cd1370e.png)

@@ -1,0 +1,34 @@
+{
+ "adapter_errors": [],
+ "bytes": 4668,
+ "charset": null,
+ "conversion": {
+  "artifact": "reports/mixed--image.hwpx.converted.md",
+  "bytes": 109,
+  "excerpt": "합성 HWPX 문서 12345. Synthetic text.![Image](work/characterize/media/mixed--image.hwpx/9c4b0cd1370e.png)",
+  "has_native_text": true,
+  "sha256": "c8ff7ee1ca5c548e4494588a6fb64f978bb6d342268d9f01e99bdfb243621991"
+ },
+ "design_row_class_state_reason": [
+  9,
+  "mixed",
+  "awaiting-approval",
+  null
+ ],
+ "fixture": "mixed/image.hwpx",
+ "media": [
+  {
+   "bytes": 3957,
+   "file": "9c4b0cd1370e.png",
+   "sha256": "9c4b0cd1370ef33ef6093b25e6534a3e26ed8605a0e9ef5e39ffe1535d20806f"
+  }
+ ],
+ "report": "reports/mixed--image.hwpx.json",
+ "report_exit": 0,
+ "report_stderr": "ocr-report: decision=ocr_recommended high=1 low=0 coverage=complete issues=0 -> <worktree>\\tests\\fixtures\\reports\\mixed--image.hwpx.json\n",
+ "role": "ingest",
+ "sha256": "7e27d58f4fb1aca5b7ca54da1c5a02e602ab24c0ffe66144b22d7379e0752db4",
+ "units": [
+  "9c4b0cd1370e.png"
+ ]
+}

@@ -1,0 +1,26 @@
+{
+ "adapter_errors": [],
+ "bytes": 35396,
+ "charset": null,
+ "conversion": {
+  "artifact": "reports/text--empty-table.docx.converted.md",
+  "bytes": 37,
+  "excerpt": "|  |  |\n| --- | --- |\n|  |  |\n|  |  |",
+  "has_native_text": false,
+  "sha256": "0bef335d3bbd83efcef6ac78bd2e310d872142d336828a953e2baa0810700695"
+ },
+ "design_row_class_state_reason": [
+  11,
+  "text-only",
+  "ready",
+  "empty_document"
+ ],
+ "fixture": "text/empty-table.docx",
+ "media": [],
+ "report": "reports/text--empty-table.docx.json",
+ "report_exit": 0,
+ "report_stderr": "ocr-report: decision=no_candidates high=0 low=0 coverage=complete issues=0 -> <worktree>\\tests\\fixtures\\reports\\text--empty-table.docx.json\n",
+ "role": "ingest",
+ "sha256": "8c2fd2d3ed5b6f74e0e46ecf5614fd5485a542c8559727f65134f0cc3ed7668a",
+ "units": []
+}

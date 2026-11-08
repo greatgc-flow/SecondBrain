@@ -1,0 +1,23 @@
+{
+ "adapter_errors": [],
+ "bytes": 39,
+ "charset": null,
+ "conversion": {
+  "exception": "FileConversionException",
+  "message": "File conversion failed after 1 attempts: PdfConverter: PDFSyntaxError: No /Root object! - Is this really a PDF?\n - PdfConverter threw PDFSyntaxError with message: No /Root object! - Is this really a PDF?\n"
+ },
+ "design_row_class_state_reason": [
+  5,
+  null,
+  "failed",
+  "FileConversionException"
+ ],
+ "fixture": "failed/corrupt.pdf",
+ "media": [],
+ "report": "reports/failed--corrupt.pdf.json",
+ "report_exit": 0,
+ "report_stderr": "ocr-report: decision=unknown high=0 low=0 coverage=none issues=1 -> <worktree>\\tests\\fixtures\\reports\\failed--corrupt.pdf.json\n",
+ "role": "ingest",
+ "sha256": "d93b29eea3568de2124248996a803678f36cd45569953b60f80d4dfa5107c9c0",
+ "units": []
+}

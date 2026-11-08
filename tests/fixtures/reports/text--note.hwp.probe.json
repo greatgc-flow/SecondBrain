@@ -1,0 +1,26 @@
+{
+ "adapter_errors": [],
+ "bytes": 3072,
+ "charset": null,
+ "conversion": {
+  "artifact": "reports/text--note.hwp.converted.md",
+  "bytes": 41,
+  "excerpt": "합성 HWP5 문서 12345. Synthetic text.",
+  "has_native_text": true,
+  "sha256": "89d6340d2bbe801c6a639ac4855d58bb7d08996fbe13dc852274467c5319d609"
+ },
+ "design_row_class_state_reason": [
+  11,
+  "text-only",
+  "ready",
+  null
+ ],
+ "fixture": "text/note.hwp",
+ "media": [],
+ "report": "reports/text--note.hwp.json",
+ "report_exit": 0,
+ "report_stderr": "ocr-report: decision=no_candidates high=0 low=0 coverage=complete issues=0 -> <worktree>\\tests\\fixtures\\reports\\text--note.hwp.json\n",
+ "role": "ingest",
+ "sha256": "6d6a3c06638e0560776c2cffe17ab563b16cd8599cba81d165cc675c206e8442",
+ "units": []
+}

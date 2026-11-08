@@ -1,0 +1,26 @@
+{
+ "adapter_errors": [],
+ "bytes": 39,
+ "charset": null,
+ "conversion": {
+  "artifact": "reports/llm--valid.md.converted.md",
+  "bytes": 39,
+  "excerpt": "Synthetic invoice 12345 totals 42 USD.\n",
+  "has_native_text": true,
+  "sha256": "5f6239120682dcb69ffa3257c925fc96d848a6817472ae76b6a205f334783f7c"
+ },
+ "design_row_class_state_reason": [
+  12,
+  "unknown",
+  "awaiting-approval",
+  "media_not_inspected"
+ ],
+ "fixture": "llm/valid.md",
+ "media": [],
+ "report": "reports/llm--valid.md.json",
+ "report_exit": 0,
+ "report_stderr": "ocr-report: decision=unknown high=0 low=0 coverage=none issues=1 -> <worktree>\\tests\\fixtures\\reports\\llm--valid.md.json\n",
+ "role": "peer/LLM adapter data; not an ingest acceptance fixture",
+ "sha256": "5f6239120682dcb69ffa3257c925fc96d848a6817472ae76b6a205f334783f7c",
+ "units": []
+}

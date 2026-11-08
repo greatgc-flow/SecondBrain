@@ -1,0 +1,26 @@
+{
+ "adapter_errors": [],
+ "bytes": 4890,
+ "charset": null,
+ "conversion": {
+  "artifact": "reports/text--table.xlsx.converted.md",
+  "bytes": 67,
+  "excerpt": "## Synthetic\n| Item | Amount |\n| --- | --- |\n| Invoice 12345 | 42 |",
+  "has_native_text": true,
+  "sha256": "d7bea463e2137683fce730f360725341e288d55d3914ed56fca35f5c8c29533e"
+ },
+ "design_row_class_state_reason": [
+  11,
+  "text-only",
+  "ready",
+  null
+ ],
+ "fixture": "text/table.xlsx",
+ "media": [],
+ "report": "reports/text--table.xlsx.json",
+ "report_exit": 0,
+ "report_stderr": "ocr-report: decision=no_candidates high=0 low=0 coverage=complete issues=0 -> <worktree>\\tests\\fixtures\\reports\\text--table.xlsx.json\n",
+ "role": "ingest",
+ "sha256": "795e9dd37722d341ba18857c83762d62a303aaf72a939416696b7363773f6122",
+ "units": []
+}

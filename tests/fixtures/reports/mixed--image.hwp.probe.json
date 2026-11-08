@@ -1,0 +1,34 @@
+{
+ "adapter_errors": [],
+ "bytes": 7168,
+ "charset": null,
+ "conversion": {
+  "artifact": "reports/mixed--image.hwp.converted.md",
+  "bytes": 110,
+  "excerpt": "합성 HWP5 문서 12345. Synthetic text.\n\n![Image](work/characterize/media/mixed--image.hwp/9c4b0cd1370e.png)",
+  "has_native_text": true,
+  "sha256": "28638eb6696fbfcb9d59d9198a335ad4a514a5548f613ffe8606445344a924ce"
+ },
+ "design_row_class_state_reason": [
+  9,
+  "mixed",
+  "awaiting-approval",
+  null
+ ],
+ "fixture": "mixed/image.hwp",
+ "media": [
+  {
+   "bytes": 3957,
+   "file": "9c4b0cd1370e.png",
+   "sha256": "9c4b0cd1370ef33ef6093b25e6534a3e26ed8605a0e9ef5e39ffe1535d20806f"
+  }
+ ],
+ "report": "reports/mixed--image.hwp.json",
+ "report_exit": 0,
+ "report_stderr": "ocr-report: decision=review high=0 low=1 coverage=complete issues=0 -> <worktree>\\tests\\fixtures\\reports\\mixed--image.hwp.json\n",
+ "role": "ingest",
+ "sha256": "eff5a081c8a49628a4610b0794468d279b82a806c3212b9e719233be4da7b170",
+ "units": [
+  "9c4b0cd1370e.png"
+ ]
+}

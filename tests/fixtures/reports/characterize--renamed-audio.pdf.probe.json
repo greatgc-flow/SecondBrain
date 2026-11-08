@@ -1,0 +1,23 @@
+{
+ "adapter_errors": [],
+ "bytes": 2085,
+ "charset": null,
+ "conversion": {
+  "exception": "FileConversionException",
+  "message": "File conversion failed after 1 attempts: PdfConverter: PDFSyntaxError: No /Root object! - Is this really a PDF?\n - PdfConverter threw PDFSyntaxError with message: No /Root object! - Is this really a PDF?\n"
+ },
+ "design_row_class_state_reason": [
+  5,
+  null,
+  "failed",
+  "FileConversionException"
+ ],
+ "fixture": "characterize/renamed-audio.pdf",
+ "media": [],
+ "report": "reports/characterize--renamed-audio.pdf.json",
+ "report_exit": 0,
+ "report_stderr": "ocr-report: decision=unknown high=0 low=0 coverage=none issues=1 -> <worktree>\\tests\\fixtures\\reports\\characterize--renamed-audio.pdf.json\n",
+ "role": "ingest",
+ "sha256": "16a30255b27654f20148bd1ff26e5cfa82a236495e2c58ca48e22c0e15fea0c6",
+ "units": []
+}

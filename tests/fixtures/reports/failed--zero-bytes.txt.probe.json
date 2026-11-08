@@ -1,0 +1,26 @@
+{
+ "adapter_errors": [],
+ "bytes": 0,
+ "charset": null,
+ "conversion": {
+  "artifact": "reports/failed--zero-bytes.txt.converted.md",
+  "bytes": 0,
+  "excerpt": "",
+  "has_native_text": false,
+  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+ },
+ "design_row_class_state_reason": [
+  1,
+  null,
+  "failed",
+  "empty_file"
+ ],
+ "fixture": "failed/zero-bytes.txt",
+ "media": [],
+ "report": "reports/failed--zero-bytes.txt.json",
+ "report_exit": 0,
+ "report_stderr": "ocr-report: decision=unknown high=0 low=0 coverage=none issues=1 -> <worktree>\\tests\\fixtures\\reports\\failed--zero-bytes.txt.json\n",
+ "role": "ingest",
+ "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+ "units": []
+}

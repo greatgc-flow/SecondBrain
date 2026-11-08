@@ -1,0 +1,26 @@
+{
+ "adapter_errors": [],
+ "bytes": 112,
+ "charset": null,
+ "conversion": {
+  "artifact": "reports/unknown--page.html.converted.md",
+  "bytes": 51,
+  "excerpt": "Synthetic HTML 12345.\n\n![invoice](../ocr/photo.png)",
+  "has_native_text": true,
+  "sha256": "cd36fa7db5c27ac78c84cadb0bc7a5b9f41630d367405815b7d4560af6da8ac9"
+ },
+ "design_row_class_state_reason": [
+  12,
+  "unknown",
+  "awaiting-approval",
+  "media_not_inspected"
+ ],
+ "fixture": "unknown/page.html",
+ "media": [],
+ "report": "reports/unknown--page.html.json",
+ "report_exit": 0,
+ "report_stderr": "ocr-report: decision=unknown high=0 low=0 coverage=none issues=1 -> <worktree>\\tests\\fixtures\\reports\\unknown--page.html.json\n",
+ "role": "ingest",
+ "sha256": "d54dede65c7b712ee90d7f9151ffbcf42205a83f378ffe3a64f80e0834471bd8",
+ "units": []
+}

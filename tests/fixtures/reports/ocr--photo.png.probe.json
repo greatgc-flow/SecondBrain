@@ -1,0 +1,28 @@
+{
+ "adapter_errors": [],
+ "bytes": 4096,
+ "charset": null,
+ "conversion": {
+  "artifact": "reports/ocr--photo.png.converted.md",
+  "bytes": 0,
+  "excerpt": "",
+  "has_native_text": false,
+  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+ },
+ "design_row_class_state_reason": [
+  3,
+  "ocr-required",
+  "awaiting-approval",
+  "raster"
+ ],
+ "fixture": "ocr/photo.png",
+ "media": [],
+ "report": "reports/ocr--photo.png.json",
+ "report_exit": 0,
+ "report_stderr": "ocr-report: decision=ocr_recommended high=1 low=0 coverage=complete issues=0 -> <worktree>\\tests\\fixtures\\reports\\ocr--photo.png.json\n",
+ "role": "ingest",
+ "sha256": "a4181d2867daf2ca63e7dd49128284905e6433e3ab8147e44b7d12c42920b09f",
+ "units": [
+  "self"
+ ]
+}

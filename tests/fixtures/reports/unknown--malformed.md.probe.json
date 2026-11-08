@@ -1,0 +1,26 @@
+{
+ "adapter_errors": [],
+ "bytes": 51,
+ "charset": null,
+ "conversion": {
+  "artifact": "reports/unknown--malformed.md.converted.md",
+  "bytes": 51,
+  "excerpt": "<!-- unclosed synthetic comment\n![broken](\n| --- |\n",
+  "has_native_text": true,
+  "sha256": "83efde0848c1d128d775cb5976434a9d27a84327cbce1e928c3294f2543d2cda"
+ },
+ "design_row_class_state_reason": [
+  12,
+  "unknown",
+  "awaiting-approval",
+  "media_not_inspected"
+ ],
+ "fixture": "unknown/malformed.md",
+ "media": [],
+ "report": "reports/unknown--malformed.md.json",
+ "report_exit": 0,
+ "report_stderr": "ocr-report: decision=unknown high=0 low=0 coverage=none issues=1 -> <worktree>\\tests\\fixtures\\reports\\unknown--malformed.md.json\n",
+ "role": "ingest",
+ "sha256": "83efde0848c1d128d775cb5976434a9d27a84327cbce1e928c3294f2543d2cda",
+ "units": []
+}

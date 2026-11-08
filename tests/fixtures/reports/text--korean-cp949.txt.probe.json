@@ -1,0 +1,26 @@
+{
+ "adapter_errors": [],
+ "bytes": 48,
+ "charset": "cp949",
+ "conversion": {
+  "artifact": "reports/text--korean-cp949.txt.converted.md",
+  "bytes": 62,
+  "excerpt": "합성 문서입니다.\n청구 번호 12345, 금액 42000원.\n",
+  "has_native_text": true,
+  "sha256": "82e881e07445068f86be55d48363df1a6e085c07f45f738e83c3422ba09fb88f"
+ },
+ "design_row_class_state_reason": [
+  12,
+  "unknown",
+  "awaiting-approval",
+  "unsupported_format"
+ ],
+ "fixture": "text/korean-cp949.txt",
+ "media": [],
+ "report": "reports/text--korean-cp949.txt.json",
+ "report_exit": 0,
+ "report_stderr": "ocr-report: decision=unknown high=0 low=0 coverage=none issues=1 -> <worktree>\\tests\\fixtures\\reports\\text--korean-cp949.txt.json\n",
+ "role": "ingest",
+ "sha256": "6dfa8bab1e1cd8a68bfd04d231c28874066c62cde38fdbbbb9ca59740575fc36",
+ "units": []
+}

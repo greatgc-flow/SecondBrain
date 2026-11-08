@@ -1,0 +1,23 @@
+{
+ "adapter_errors": [],
+ "bytes": 35,
+ "charset": null,
+ "conversion": {
+  "exception": "UnsupportedFormatException",
+  "message": "Could not convert stream to Markdown. No converter attempted a conversion, suggesting that the filetype is simply not supported. See markitdown-gc --guide formats."
+ },
+ "design_row_class_state_reason": [
+  2,
+  "unsupported",
+  "unsupported",
+  "extension_not_allowed"
+ ],
+ "fixture": "unsupported/data.xyz",
+ "media": [],
+ "report": "reports/unsupported--data.xyz.json",
+ "report_exit": 0,
+ "report_stderr": "ocr-report: decision=unknown high=0 low=0 coverage=none issues=1 -> <worktree>\\tests\\fixtures\\reports\\unsupported--data.xyz.json\n",
+ "role": "ingest",
+ "sha256": "f76f7167e419ca6c8c447bfc0232056a27ce6bae598618dd88d14e28faf06da6",
+ "units": []
+}

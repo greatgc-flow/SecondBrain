@@ -1,0 +1,26 @@
+{
+ "adapter_errors": [],
+ "bytes": 1080,
+ "charset": null,
+ "conversion": {
+  "artifact": "reports/text--note.hwpx.converted.md",
+  "bytes": 41,
+  "excerpt": "합성 HWPX 문서 12345. Synthetic text.",
+  "has_native_text": true,
+  "sha256": "f03fd6cbd8de9e8d8d79dac5439d5b8101a81c3173298441f56cfc0aff965d75"
+ },
+ "design_row_class_state_reason": [
+  11,
+  "text-only",
+  "ready",
+  null
+ ],
+ "fixture": "text/note.hwpx",
+ "media": [],
+ "report": "reports/text--note.hwpx.json",
+ "report_exit": 0,
+ "report_stderr": "ocr-report: decision=no_candidates high=0 low=0 coverage=complete issues=0 -> <worktree>\\tests\\fixtures\\reports\\text--note.hwpx.json\n",
+ "role": "ingest",
+ "sha256": "9bfc12fcb4b86bd1e2a66870b96dc5cbde5b68dd032dd0c4fea55a12dfb214e0",
+ "units": []
+}

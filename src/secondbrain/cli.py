@@ -53,7 +53,7 @@ def build_parser():
     record.add_argument("id")
     record.add_argument("--peer", required=True)
     record.add_argument("--model", required=True)
-    record.add_argument("--dpi", type=int, help="dpi used for the images (default: the approved dpi)")
+    record.add_argument("--dpi", type=int, help="dpi of the images (default: the dpi used at approve, else 200)")
     verify = leaf(ocr_actions, "verify", "record the second peer's verification")
     verify.add_argument("id")
     verify.add_argument("--peer", required=True)
@@ -204,8 +204,7 @@ def run_command(args, root):
 # ------------------------------------------------------------------ output
 
 def _sorted(notes):
-    unique = {(n["id"] or "", n["code"], n["path"] or ""): n for n in map(_note, notes)}
-    return [unique[key] for key in sorted(unique)]
+    return sorted(map(_note, notes), key=lambda n: (n["id"] or "", n["code"], n["path"] or "", n["message"]))
 
 
 def envelope(command, exit_code, root, items=(), warnings=(), errors=(), extra=None):

@@ -2,13 +2,16 @@
 
 The converter runs inside the child, so its call counts are read from the child's ledgers
 (meta.json / converted.md), never from the parent's subprocess spy (DESIGN section 9).
-`python -m secondbrain` is used only when the console script is not installed (run `pip install -e .`).
+A missing console script fails under CI and skips locally (run `pip install -e .`);
+`test_e2e_python_dash_m_entry_point` is the separate `-m` check.
 """
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
 import sys
+import sysconfig
 
 import pytest
 
@@ -17,8 +20,14 @@ FIXTURES = Path(__file__).parent / "fixtures"
 
 @pytest.fixture(scope="session")
 def sb_command():
-    script = shutil.which("sb")
-    return [script] if script else [sys.executable, "-m", "secondbrain"]
+    """The console script installed next to the running interpreter; never a silent `-m` fallback."""
+    script = shutil.which("sb", path=sysconfig.get_path("scripts"))
+    if script is None:
+        if os.environ.get("CI"):
+            pytest.fail("console script `sb` is not installed (pip install -e .); CI must exercise it")
+        # DESIGN §9 / plan slice 8: e2e must run through the installed console script; run `pip install -e .` locally.
+        pytest.skip("console script `sb` is not installed in this interpreter (pip install -e .)")
+    return [script]
 
 
 @pytest.fixture

@@ -132,7 +132,7 @@ def _conversion(value, directory, referenced, pending=False):
         _artifact(directory, media["file"], media["sha256"], referenced)
 
 
-def _triage(value, pdf=False):
+def validate_triage(value, pdf=False):
     if value is None:
         return
     _keys(value, "decision coverage scope image_occurrences candidates issues")
@@ -209,7 +209,8 @@ def _ocr(value, meta, directory, referenced):
         elif attempts:
             _require(last == "mismatch", "Pending/approved attempt must be mismatch")
     approved = any(u["status"] != "pending" for u in units.values())
-    _require((value["disposition"] == "approved") == approved, "Disposition/unit mismatch")
+    _require(value["disposition"] == "declined" or (value["disposition"] == "approved") == approved,
+             "Disposition/unit mismatch")
     if approved and len(units) > LARGE:
         _require(value["large_ack"], "Missing large approval acknowledgement")
     if meta["state"] == "awaiting-approval":
@@ -280,7 +281,7 @@ def _validate_meta(meta, directory):
     _require((meta["has_native_text"] is None) == (meta["conversion"] is None), "Native text/conversion mismatch")
     if meta["has_native_text"] is not None:
         _boolean(meta["has_native_text"])
-    _triage(meta["triage"], meta["ext"] == ".pdf")
+    validate_triage(meta["triage"], meta["ext"] == ".pdf")
     if meta["ext"] in RASTER_EXTENSIONS:
         _require(meta["conversion"] is None, "Raster must not have a conversion")
     if meta["class"] in {"text-only", "mixed", "unknown"} or meta["class"] == "ocr-required" and meta["ext"] not in RASTER_EXTENSIONS:
@@ -372,7 +373,7 @@ def _validate_stage(stage, directory):
     if "collision" in stage:
         _boolean(stage["collision"])
     _conversion(stage.get("conversion"), directory, referenced, pending=True)
-    _triage(stage.get("triage"), Path(stage["filename"]).suffix.lower() == ".pdf")
+    validate_triage(stage.get("triage"), Path(stage["filename"]).suffix.lower() == ".pdf")
     return _orphans(directory, referenced, stage.get("identity", {}).get("id"))
 
 

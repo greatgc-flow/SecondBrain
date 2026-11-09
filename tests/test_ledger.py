@@ -268,6 +268,18 @@ def test_valid_declined_ocr(root):
     assert validate_meta(item.meta, item.path) == []
 
 
+def test_decline_after_partial_ocr_preserves_attempts_and_verification_rules(root):
+    item = make_item(root, classification="mixed", state="ocr-in-progress",
+                     statuses=["verified", "recorded", "approved", "pending"])
+    item.meta["state"] = "ready"
+    item.meta["ocr"]["disposition"] = "declined"
+    assert validate_meta(item.meta, item.path) == []
+    # Abandoning the rest must not exempt preserved attempts from digest checks.
+    (item.path / "ocr/u0002.a1.md").write_bytes(b"changed")
+    with pytest.raises(SbError, match="digest mismatch"):
+        validate_meta(item.meta, item.path)
+
+
 def test_failed_conversion_reason_differs_from_error_code(root):
     item = make_item(root, state="failed")
     item.meta["reason"] = "FileConversionException"

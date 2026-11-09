@@ -138,6 +138,58 @@ def test_at04_collision_is_flagged_and_never_resumed(root, tool, monkeypatch):
     assert (item.path / "meta.json").read_bytes() == before and not tool.convert
 
 
+def test_alias_is_validated_before_commit_and_recovery_keeps_source(root, tool, monkeypatch):
+    item = make_item(root)
+    before = (item.path / "meta.json").read_bytes()
+    original = (item.path / "src" / item.meta["filename"]).read_bytes()
+    drop(root, "alias.txt", original)
+    validate = ingest.validate_meta
+    def reject_alias(meta, directory):
+        assert meta["aliases"] == ["alias.txt"]
+        raise SbError("corrupt_meta", 1, "alias validation rejected")
+    monkeypatch.setattr(ingest, "validate_meta", reject_alias)
+    result = ingest.ingest(root)
+    assert [error["code"] for error in result["errors"]] == ["corrupt_meta"]
+    assert (item.path / "meta.json").read_bytes() == before
+    directory, = stages(root)
+    assert (directory / "src/alias.txt").read_bytes() == original
+    monkeypatch.setattr(ingest, "validate_meta", validate)
+    assert ingest.ingest(root)["items"] == [{"id": item.meta["id"], "result": "alias_added"}]
+    assert not stages(root) and not tool.convert
+
+
+@pytest.mark.parametrize("ext,body,expected", [
+    (".md", "# Note\nPlain prose and [a link](other.md).", "text-only"),
+    (".html", "<html><body><h1>Note</h1><p>Plain prose.</p></body></html>", "text-only"),
+    (".htm", "<p>Plain prose.</p>", "text-only"),
+    (".md", "---\n", "text-only"),
+    (".md", "![inline](photo.png)", "unknown"),
+    (".md", "![reference][img]\n[img]: photo.png", "unknown"),
+    (".md", "![short]\n[short]: photo.png", "unknown"),
+    (".md", "![broken](", "unknown"),
+    (".html", '<IMG src="photo.png">', "unknown"),
+    (".html", "<svg><text>123</text></svg>", "unknown"),
+    (".html", '<object data="scan.pdf"></object>', "unknown"),
+    (".html", '<iframe src="scan.pdf"></iframe>', "unknown"),
+    (".md", '<img src="photo.png">', "unknown"),
+])
+def test_markup_without_media_is_ready_but_uninspected_media_stays_unknown(root, ext, body, expected, subprocess_spy):
+    # Real conversion matters: HTML conversion can remove objects/iframes entirely.
+    drop(root, "note" + ext, body.encode("utf-8"))
+    result = ingest.ingest(root)
+    assert not result["errors"]
+    item, = committed(root)
+    assert item.meta["class"] == expected
+    assert item.meta["state"] == ("ready" if expected == "text-only" else "awaiting-approval")
+    if expected == "text-only":
+        assert item.meta["triage"]["decision"] == "no_candidates"
+        assert item.meta["triage"]["coverage"]["state"] == "complete"
+        assert item.meta["triage"]["issues"] == []
+        assert subprocess_spy == []
+    else:
+        assert item.meta["reason"] == "media_not_inspected"
+
+
 @pytest.mark.parametrize("step", ["stage.json", "claim", "identity", "conversion_pending", "converted.md", "conversion", "triage", "meta.json", "commit"])
 def test_at26_all_durable_boundaries_recover_once(root, tool, fault_after, step):
     source = drop(root, "하위/보고서 v2.hwp")

@@ -93,6 +93,7 @@ def _resume(root, directory, stage, result):
         outcome = "duplicate"
         if name != item.meta["filename"] and name not in item.meta["aliases"]:
             item.meta["aliases"] = sorted([*item.meta["aliases"], name])
+            validate_meta(item.meta, target)
             write_json_atomic(target / "meta.json", item.meta)
             outcome = "alias_added"
         safe_delete(root, directory)

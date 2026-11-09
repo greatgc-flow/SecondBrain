@@ -2,13 +2,17 @@
 
 ## 1.0.1 — Unreleased
 
-- Generated OCR transcription and LLM summary peerhub asks include `--writable`; verification asks remain read-only.
+- OCR and LLM workflows share `ocr.ask_line()` and centralized peer defaults; transcription/summary asks include `--writable`,
+  verification asks remain read-only. The operator runs peers; sb prepares commands and validates outputs.
 - Media-free Markdown/HTML becomes text-only and ready; unknown is reserved for incomplete inspection.
 - Alias updates validate metadata before commit. Conversion and ledger reads share triage validation.
 - OCR can be declined after partial work while preserving attempts and verified text. Render DPI belongs to each unit;
-  later approvals cannot relabel earlier renders. Ready-item cleanup preserves prepared LLM summaries.
-- Wiki transcripts render safe Markdown with deterministic tags and related-source navigation.
-- Development installs include peerhub; offline tests check generated flags against the real CLI help.
+  `work/<id>/dpi.json` preserves each render across approvals. Generated record commands omit `--dpi`; explicit record DPI stays
+  an operator override. Ready-item cleanup preserves prepared LLM summaries.
+- Wiki transcripts render safe Markdown after HTML/image/unsafe-link neutralization; nothing is fetched. Summary/metadata stay
+  fenced and JSON records authoritative provenance. Class/extension/collected-month tags link source pages through `wiki/tags/<tag>.md`.
+- Keep the real local `peerhub ask --help` contract test: it runs offline and starts no peer. Development installs and CI include
+  peerhub; missing CLI fails in CI and only local absence skips. Live write/read-only peer smoke remains a separate release gate.
 - Remove historical review/vote/response documents; refresh design, release evidence and the live peer smoke gate.
 
 ## 1.0.0

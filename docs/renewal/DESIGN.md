@@ -27,7 +27,11 @@ No extra transcript file: one pure function assembles `converted.md` and verifie
     media/<asset>        images extracted in the same conversion call; present iff container source with >= 1 image (always kept)
     ocr/uNNNN.aN.md      OCR attempt N for unit NNNN, as recorded (append-only; never renamed, edited or overwritten)
     llm/summary.aN.md    accepted LLM summary revisions (append-only)   (raws/.staging/<dir>/stage.json = staging ledger, §4)
-  wiki/ | work/<id>/     DERIVED (index.md, sources/<id>.md; rebuilt via wiki.tmp/ swap) | SCRATCH (units, per-unit render DPI, COMMANDS.txt, peer outputs, llm/)
+  wiki/                 DERIVED; rebuilt via wiki.tmp/ swap
+    index.md            source index and tag links
+    sources/<id>.md     per-source page
+    tags/<tag>.md       links to every source carrying the tag
+  work/<id>/            SCRATCH: units, dpi.json ({unit: render dpi}), COMMANDS.txt, peer outputs, llm/
 ```
 
 **Identity.** Full `sha256` of the staged file; dir = first 16 hex. Committed dir with a different `sha256` for the same prefix = `id_collision`
@@ -124,7 +128,7 @@ records it (artifact rule, §2); a resume redoes a step only when it has no outp
 | – | `ingest` | new bytes / known bytes | ready, awaiting-approval, unsupported or failed / unchanged | §3 + commit protocol / alias if new name, staging dir deleted |
 | failed | `ingest --retry` | – | per §3 | resumes at the first step without valid output (artifact rule); conversion runs iff no `converted.md` exists (I2) |
 | awaiting-approval, ocr-in-progress | `ocr approve [--yes-large] [--dpi N]` | units non-empty; `--yes-large` if units > 20 (first call only); pending units remain or approved units lack scratch | ocr-in-progress | next <= 30 pending units -> approved; scratch (re)rendered, idempotent |
-| awaiting-approval, ocr-in-progress | `ocr decline` | – | ready | `disposition=declined`; keep attempts and verified text; discard OCR scratch |
+| awaiting-approval, ocr-in-progress | `ocr decline` | – | ready | `disposition=declined`; unit statuses/attempts unchanged; keep verified text; discard OCR scratch |
 | ocr-in-progress | `ocr record --peer --model` | ≥1 approved unit has valid output | ocr-in-progress | attempts added, units -> recorded |
 | ocr-in-progress | `ocr verify --peer --model [--ok L] [--mismatch L]` | request valid (§5) | ocr-in-progress or ready | results recorded; ready when all units verified; OCR scratch deleted, `llm/` retained |
 | ready | `llm prepare` / `llm accept` | class != unsupported; `accepted_text_present` | ready | prompt in scratch / new `llm/summary.aN.md` revision |
@@ -169,22 +173,26 @@ retried (`--retry`, resume) [AT-13, AT-14, AT-19, AT-26]. (The brief's never-ret
 
 ## 5. OCR workflow
 
-**Decision: operator workflow with a file adapter; peerhub is neither imported nor spawned** (human approval gate; no peers/network in
-CI (only offline `peerhub ask --help` is allowed); `sb` prepares inputs and records outputs with provenance; direct invocation later would change only who runs COMMANDS.txt).
+**Decision: operator workflow with a file adapter.** `sb` never imports or runs peers: it prepares commands and records validated
+outputs with provenance. The manual approve → peer → record → independent peer → verify loop preserves owner approval and independent
+verification. Removing that loop would require a peer runner and more machinery, so it remains intentional. Tests may execute exactly
+`peerhub ask --help` locally, with connections/DNS blocked; this starts no peer and preserves the offline test contract.
 
 **Approve.** Guide rule: one approval = at most 10 asks x 3 pages = 30 units. `ocr approve ID` approves the next <= 30 `pending` units in
 key order and renders scratch for every `approved` unit lacking it: PDF pages via pdfplumber to `work/<id>/uNNNN.png` (200 dpi, `--dpi 300`
 for dense Korean; effective render DPI recorded per unit and copied into its attempt); assets/rasters copied as `uNNNN<ext>`. Items with > 30 units need further explicit
 `approve` calls (status shows `approved/total`). `--yes-large` is required on the first approval when total units > 20 (`large_ack`). The effective
-render DPI is stored per scratch unit at render time. A later approval at another DPI changes only newly rendered units;
-recording must use each unit's actual render DPI. An explicit record DPI must not relabel an existing render. Missing render provenance
-requires re-approval/re-rendering before recording; it is never inferred from a later approval. Default render DPI is 200.
+render DPI is stored in `work/<id>/dpi.json` as `{unit: dpi}`, merged only for units rendered by that approval. A later approval at
+another DPI leaves earlier entries unchanged. Omitted approve DPI defaults to 200. Record uses each unit's stored render DPI by default
+(200 if its entry is absent); explicit `record --dpi N` remains an operator override. `dpi.txt` and last-approval inheritance are removed;
+the generated record command omits `--dpi`, preserving each unit's own provenance.
 Approve prints the guide notice (pages leave the machine; sensitive documents need the owner's approval) and writes `work/<id>/COMMANDS.txt`: guide
 S2 prompt (`ocr-v1`), absolute quoted unit paths, <= 3 units per ask, pilot = first 5, <= 2 asks in parallel, `--stream ocr-<id>-<n>`; output
 contract `work/<id>/uNNNN.md` (UTF-8, verbatim, `[illegible]`, `[no text]`); then a verify section (`verify-v1`): the other peer re-reads each
 image independently, reports `ok`/`mismatch` per unit; digits, dates, ids must match exactly.
-Write-producing asks (OCR transcription and §6 summary) include `--writable`; verification asks omit it. Each ask uses `-p`, `-w`,
-and `--stream`; prompts use paths relative to the quoted workspace. The CLI contract test parses installed `peerhub ask --help` and
+`ocr.ask_line()` is the shared command builder for OCR and §6 summaries; peer defaults are `ocr.TRANSCRIBER` and `ocr.VERIFIER`.
+It builds `-p <peer>.effort`, quoted `-w`, `--stream`, and `--writable` only for write asks (transcription/summary), never verification.
+Prompts use paths relative to the quoted workspace. The CLI contract test parses installed `peerhub ask --help` and
 checks every flag generated by both workflows. `peerhub` is a development extra, installed in CI, not a runtime dependency.
 
 **Record.** `ocr record ID --peer P --model M [--dpi N]`: candidate files = `work/<id>/uNNNN.md` for `approved` units. Validation (all-or-nothing):
@@ -213,7 +221,7 @@ the model (keys exact, digest == `sha256(view)`, peer regex, ISO date, size, UTF
 `summary.json` is UTF-8 and <= 64 KiB. Before reading `summary.md`, reject a size > 32000 bytes (8000 x 4); then decode UTF-8 and enforce
 the 8000-character cap. Acceptance is the operator's faithfulness judgment, not a guarantee.
 
-**Security boundary.** `sb` never executes or sandboxes peers. Operators restrict peer reads to this item/scratch, writes to
+**Security boundary.** `sb` never executes or sandboxes peers; generated commands remain operator-run to preserve this boundary. Operators restrict peer reads to this item/scratch, writes to
 scratch and network access as described in USAGE. Imports validate allowed paths, UTF-8, size, schema, digests and peer independence.
 Untrusted text stays data: transcripts use safe Markdown; summaries and metadata are fenced. Conversion uses local files and only
 the allowed backend (§3). Tests block connections and DNS; socket construction/loopback bind remain available for import-time probes.
@@ -225,17 +233,22 @@ Recovery at build start: delete `wiki.tmp/`; `wiki.old/` without `wiki/` is rena
 - **Escaping.** Untrusted scalars rendered as Markdown text are the title and index label (`esc(filename_nfc)`) and the index `ext` column
   (`esc(meta.ext)`): control
   chars/newlines -> space, `<` -> `&lt;`, `` ` `` -> `'`, `\ [ ] ( ) | * _ # !` backslash-escaped. All other untrusted values (aliases,
-  peer/model strings, reasons) appear only inside fenced blocks. Link targets are `sb`-generated hex paths.
+  peer/model strings, reasons) appear only inside fenced blocks. Navigation targets are `sb`-generated source ids and safe tag names.
 - `index.md`: one table sorted by `casefold(filename_nfc)` then `id`: `esc` label (link to `sources/<16 hex>.md`) | ext | class | state |
   ingested (UTC date) | OCR (`none` / `a/n approved, r recorded, v verified` / `declined`) | coverage | summary (yes/no).
+  Its `## Tags` section links every generated tag page.
 - `sources/<id>.md`: `# <esc(filename_nfc)>`; ```` ```json ```` block with the meta subset (identity, names, aliases, class, state, reason,
   triage, activities, source digest); relative link to `../../raws/<id>/src/<percent-encoded filename>`; banner per projection; `## Summary` (current revision
   iff `meta.llm.summary`); `## Transcript` = safely rendered `view(item)`. Summary bodies sit inside a fenced block (info string `text`, fence of `max(3, longest
-  backtick run + 1)` backticks). Transcript Markdown preserves headings, lists and tables; raw HTML, images and unsafe
-  links/reference definitions are neutralized before rendering. Provenance and filenames remain escaped/fenced. No front matter.
-- **Tags and links.** Each source page has stable tags derived from its ledger metadata, with deterministic cross-source links for
-  related items sharing tags. Index/page ordering and link targets depend only on `raws/`; no new tagging database or peer call.
-  Labels are escaped, targets are generated source ids. Tags are visible on source pages and support navigation across sources.
+  backtick run + 1)` backticks). Transcript stays the last section and renders as Markdown after `wiki.safe_markdown()`:
+  escape `<`/`>` except leading blockquote markers, neutralize `![` image embeds, and permit only http(s)/relative link targets in
+  inline links and reference definitions (replace other destinations with `#`). Headings, lists and tables render; nothing is fetched.
+  Summary, banner and metadata stay fenced/escaped. No front matter. Source text can imitate an OCR provenance heading; authoritative
+  provenance is the JSON block at the top of the source page, not headings inside its transcript.
+- **Tags and links.** `wiki.tags(meta)` returns sorted `class-<class>` (if non-null), `ext-<extension>` and `collected-YYYY-MM` tags.
+  Extensions outside ASCII `[a-z0-9]{1,16}` use `ext-other`. Each source links its tags (`../tags/<tag>.md`) and the index;
+  `wiki/tags/<tag>.md` links the index and all member source pages. This supplies cross-source navigation through shared tags. Index/page ordering and
+  generated tag/id link targets depend only on `raws/`; no tagging database or peer call. Source labels are escaped.
 
 | class / state | Banner |
 |---|---|
@@ -307,7 +320,7 @@ independent-audit responses remain here. Human approval, peer faithfulness and l
 |---|---|---|---|
 | B1 | inbox -> raws (original + transcript) -> wiki | §2, §4, §5 view, §7 | AT-01, AT-03, AT-08 |
 | B3 | Deterministic wiki: per-source pages, index, tags and cross-source links | §7 | AT-30, AT-31 |
-| B3-tags | BRIEF owner decision 2: tags and related-source navigation | §7 | `test_wiki.py` tag/link regressions |
+| B3-tags | BRIEF owner decision 2: tags and related-source navigation | §2, §7 | `test_wiki.py::test_tags_pages_index_links_and_back_links` |
 | B4 | LLM tier only on explicit command via peers; never overwrites deterministic pages | §6 | AT-28, AT-29 |
 | B5 | Classify first, show list with page counts, OCR only approved | §3, §4, §5, §8 | AT-09, AT-10, AT-16, AT-24 |
 | B6 | Sensitive or > 20 pages/images need explicit approval | §5 | AT-17 |
@@ -330,7 +343,7 @@ For v1.0.1, require all of the following on the exact release candidate:
    Score 0 for missing/failing implementation, 50 for missing/skipped evidence, 100 only with complete test/review evidence.
 2. All six Ubuntu/Windows × Python 3.11/3.13/3.15 CI suites pass without skips, including installed-console end-to-end tests and
    the real peerhub help contract. Both offline clean installs pass with `secondbrain==1.0.1` and markitdown-gc 0.3.5.
-3. **Live peer smoke:** in disposable scratch, run one generated writable OCR ask, confirm the expected UTF-8 file exists, record it,
+3. **Live peer smoke before tagging:** in disposable scratch, run one generated writable OCR ask, confirm the expected UTF-8 file exists, record it,
    run independent read-only verification, then finalize and build the wiki. Run one generated writable summary ask and accept its
    two outputs. Confirm workspace write boundaries, per-unit DPI, provenance, faithful text and summary scratch preservation.
    A help/regex check alone cannot close this step. Record date, versions and observed outputs in RUBRIC.

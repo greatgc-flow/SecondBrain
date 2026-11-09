@@ -6,9 +6,12 @@ The owner target is 100 in every area. Scores are not promoted until the integra
 ## Evidence
 
 - Local command: `python -m pytest -q -p no:cacheprovider`.
-- Current cx worktree result (Windows, Python 3.15.2): **597 passed, 4 skipped in 166.08s**.
-  The four skips are installed-console e2e cases because `sb` is absent locally; the real peerhub help contract passed.
-  cc changes are in a separate worktree, so this is not integrated-candidate evidence.
+- Current combined cx/cc candidate result (Windows, Python 3.15.2): **601 passed, 6 skipped in 160.76s**.
+  All six skips are installed-console e2e cases because `sb` is absent locally, including the mixed-PDF and Markdown-to-ready flows.
+  The real local peerhub CLI-help contract passed; this run does not replace CI or live peer evidence.
+- Verified CI workflow installation: `.github/workflows/ci.yml` full-matrix runs `python -m pip install --disable-pip-version-check -q -e ".[dev]"`;
+  `pyproject.toml` declares peerhub in dev. `test_peerhub_contract.py` checks local help offline, never starts a peer, and fails if peerhub
+  is missing in CI (only local absence skips). Both responses withdraw the prior offline-breaking objection.
 - CI: the integrated v1.0.1 candidate must pass all eight jobs (six full suites and two offline clean installs).
   Record one consistent passed/skipped count per suite from that run; prior-revision counts are not release evidence.
 - Live peer smoke: pending operator execution of DESIGN §12 step 3; offline help proves flag availability, not peer write behavior.
@@ -24,20 +27,20 @@ All release scores remain **pending the integrated gate**; a previous all-100 sh
 |---|---|---|
 | B1 | inbox → raws → wiki | `test_ingest.py`, `test_wiki.py`, `test_e2e.py` |
 | B2 | v0.1 discarded; history only | `test_bootstrap.py::test_v1_discard_boundary` |
-| B3 | Deterministic source pages, index, tags and related-source links | `test_wiki.py` |
+| B3 | Deterministic source pages, index, tag pages and related-source links | `test_wiki.py::test_tags_pages_index_links_and_back_links` |
 | B4 | Explicit LLM workflow and accepted provenance | `test_llm.py`, `test_peerhub_contract.py` |
 | B5 | Classification/counts before selective approved OCR | `test_ingest.py`, `test_cli.py`, `test_ocr.py`, `test_e2e.py` |
 | B6 | Sensitive/large input approval | `test_ocr.py`, `test_cli.py`; operator permission review |
 | B7 | markitdown-gc 0.3.5 conversion and triage | `test_convert.py`, `test_ingest.py` |
 | B8 | MECE; media-free markup ready; unknown means incomplete inspection | `test_convert.py::test_at05_full_domain_is_mece`, `test_ingest.py::test_markup_without_media_is_ready_but_uninspected_media_stays_unknown` |
-| B9 | No retranscription; complete per-unit provenance | `test_ingest.py`, `test_ocr.py` |
+| B9 | No retranscription; complete per-unit provenance | `test_ingest.py`, `test_ocr.py::test_second_approve_with_other_dpi_keeps_earlier_units_provenance` |
 | B10 | VerySimpleGuide, Windows, English | `test_fsutil.py`, `test_ingest.py`; minimality and English review |
 | G1 | Prompt, batching, pilot, concurrency and approval cap | `test_ocr.py`; operator live smoke |
 | G2 | Independent verification of every accepted unit | `test_ocr.py`; operator fidelity review |
-| G3 | Attempt history, no image cache, cleanup preserving LLM scratch | `test_ocr.py`, `test_ledger.py::test_decline_after_partial_ocr_preserves_attempts_and_verification_rules` |
+| G3 | Attempt history, no image cache, cleanup preserving LLM scratch | `test_ocr.py::test_verify_on_ready_item_keeps_llm_scratch`, `test_ledger.py::test_decline_after_partial_ocr_preserves_attempts_and_verification_rules` |
 | G4 | Offline operation; peerhub is an operator workflow | `test_fsutil.py`, `test_peerhub_contract.py` |
 | X1 | Crash safety and corruption handling | `test_ingest.py`, `test_ledger.py`, `test_ocr.py`, `test_wiki.py`, `test_llm.py` fault tests |
-| X2 | Untrusted text, safe Markdown and summary rendering | `test_ocr.py`, `test_wiki.py`, `test_llm.py` |
+| X2 | Untrusted text, safe Markdown and summary rendering | `test_ocr.py`, `test_wiki.py::test_at32_transcript_is_markdown_but_inert`, `test_llm.py` |
 | X3 | CLI, JSON and exit contract | `test_cli.py` |
 | I1 | Source unchanged after claim | `test_ingest.py::test_at26_all_durable_boundaries_recover_once` |
 | I2 | Completed conversion at most once | `test_convert.py::test_completed_output_reconciled_after_crash`, `test_ingest.py` retry fault tests |
@@ -50,6 +53,10 @@ All release scores remain **pending the integrated gate**; a previous all-100 sh
 
 ## Closeout
 
-[Independent audit](AUDIT_independent.md) deductions are answered in [cx response](RESPONSE_independent_cx.md) and the cc response.
+[Independent audit](AUDIT_independent.md) deductions are answered in [cx response](RESPONSE_independent_cx.md) and [cc response](RESPONSE_independent_cc.md).
 Retain the independent scores until the integrated candidate is reviewed. Required checks are the complete matrix with no skips,
 both offline clean installs, live writable OCR/summary smoke and independent verification, then release actions in DESIGN §12.
+
+Reconciled DESIGN now includes the exact tag layout/rule, partial-decline lifecycle, `dpi.json` and shared `ocr.ask_line()` contract,
+safe Markdown pass and authoritative JSON provenance. The manual operator loop remains intentional: sb never runs peers. The live
+writable/read-only peer smoke in DESIGN §12 remains required before tagging; offline help does not replace it.

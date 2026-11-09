@@ -6,11 +6,9 @@ The owner target is 100 in every area. Scores are not promoted until the integra
 ## Evidence
 
 - Local command: `python -m pytest -q -p no:cacheprovider`.
-- Current Round 3 cx worktree result (Windows, Python 3.15.2): **623 passed, 6 skipped in 125.90s**.
-  cc’s Round 3 wiki/LLM changes are not yet merged here; this is a cx-only update, not the final combined-candidate count.
-  Refresh this local count after both merges; the orchestrator will finalize CI per-suite evidence.
-  All six skips are installed-console e2e cases because `sb` is absent locally, including the mixed-PDF and Markdown-to-ready flows.
-  The real local peerhub CLI-help contract passed; this run does not replace CI or live peer evidence.
+- Combined Round 3 local result (reported by the orchestrator): **635 passed, 7 skipped**.
+  Both cx and cc Round 3 changes are merged. CI per-suite counts will be finalized by the orchestrator;
+  this local result does not replace CI or exact-candidate live-peer evidence.
 - Verified CI workflow installation: `.github/workflows/ci.yml` full-matrix runs `python -m pip install --disable-pip-version-check -q -e ".[dev]"`;
   `pyproject.toml` pins `peerhub==0.24.1` in dev. `test_peerhub_contract.py` checks local help offline, never starts a peer, and fails if peerhub
   is missing in CI (only local absence skips). Both responses withdraw the prior offline-breaking objection.

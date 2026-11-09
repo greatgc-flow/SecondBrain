@@ -101,8 +101,8 @@ when media inspection is incomplete.
 
 ## Commands and machine output
 
-Replace `ID` with an actual 16-hex id from `status`, and `MODEL` with the model
-actually used by that peer. Use actual unit keys from status/COMMANDS, not these
+Replace `ID` with an actual 16-hex id from `status`, and `PEER`/`MODEL` with the
+actual peer id and model used. Use actual unit keys from status/COMMANDS, not these
 illustrative keys.
 
 | Command example | Effect |
@@ -118,7 +118,7 @@ illustrative keys.
 | `sb ocr verify ID --peer cc --model MODEL --ok u0001,u0002 --mismatch u0003` | Record independent checks; a mismatch reopens the unit, and all verified units finalize the item. |
 | `sb wiki build` | Rebuild index, source and tag pages from committed raws, including accepted summaries. |
 | `sb llm prepare ID` | Write an explicit summary prompt and output contract for an eligible ready item. |
-| `sb llm accept ID` | Validate the peer's two files, then append a summary revision or return `unchanged`. |
+| `sb llm accept ID --peer PEER --model MODEL` | Validate the peer's two files, then append a summary revision or return `unchanged`. |
 | `sb --help` / `sb ocr approve --help` | Command and option help. |
 
 Default approve DPI is 200; use 300 for dense Korean. Omit `--yes-large` for small
@@ -278,10 +278,12 @@ actual peer/model, string-or-null version, and a UTC ISO timestamp ending in
 Read the result and judge its faithfulness before accepting:
 
 ```sh
-sb llm accept ID
+sb llm accept ID --peer PEER --model MODEL
 sb wiki build
 ```
 
+Supply the actual peer/model you used; acceptance records those operator-supplied
+values as provenance and retains peer self-reports as untrusted `params.reported`.
 Acceptance validates outside the model. A different body appends
 `llm/summary.aN.md` with provenance; an identical current body returns
 `unchanged` with no writes. Old revisions remain. A stale transcript digest or

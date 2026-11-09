@@ -3,7 +3,6 @@ import json
 import os
 from pathlib import Path
 import re
-import string
 import unicodedata
 
 from .errors import ErrorCode, SbError
@@ -45,97 +44,17 @@ def _quote_safe(line):
     return head + line[len(head):].replace(">", "&gt;")
 
 
-_FENCE = re.compile(r"(`{3,}|~{3,})(.*)")  # column 0 only: such a line is never inside a list item or blockquote
-_BACKTICKS = re.compile(r"`+")
-
-
-def _closes(line, mark):
-    line = line.rstrip(" \t\r")
-    body = line.lstrip(" ")
-    return len(line) - len(body) <= 3 and len(body) >= len(mark) and set(body) == {mark[0]}
-
-
-def _mask_block(text, keep):
-    """One blank-line-delimited block: backtick runs are paired across all its lines (as the renderer does).
-
-    Only a span whose two runs share a line (outside a table row) is masked. A run left unmatched means the
-    renderer may pair differently, so then nothing in the block is masked.
-    """
-    spans, i = [], 0
-    while i < len(text):
-        if text[i] == "\\" and text[i + 1:i + 2] in tuple(string.punctuation):
-            i += 2
-        elif text[i] == "`":
-            size = _BACKTICKS.match(text, i).end() - i
-            closer = next((m.end() for m in _BACKTICKS.finditer(text, i + size) if m.end() - m.start() == size), None)
-            if closer is None:
-                return text
-            spans.append((i, closer))
-            i = closer
-        else:
-            i += 1
-    out, last = [], 0
-    for start, end in spans:
-        line = text[text.rfind("\n", 0, start) + 1:(text.find("\n", end) % (len(text) + 1))]  # find()==-1 -> len(text)
-        if "\n" not in text[start:end] and "|" not in line:
-            out += [text[last:start], keep(text[start:end])]
-            last = end
-    return "".join(out) + text[last:]
-
-
-def _mask_code(text):
-    """Fenced blocks and code spans, which are inert, replaced by NUL placeholders; returns (text, kept).
-
-    Conservative on purpose: only column-0 fences that are closed, and same-line spans, count as code.
-    Everything else (indented or nested fences, an unclosed fence and all that follows) is escaped like prose,
-    so the renderer can never see code where this pass saw prose.
-    """
-    kept, out, block, lines, i = [], [], [], text.split("\n"), 0
-
-    def keep(chunk):
-        kept.append(chunk)
-        return f"\x00{len(kept) - 1}\x00"
-
-    def flush():
-        if block:
-            out.append(_mask_block("\n".join(block), keep))
-            block.clear()
-    while i < len(lines):
-        opening = _FENCE.fullmatch(lines[i])
-        end = i + 1
-        if opening and not (opening[1][0] == "`" and "`" in opening[2]):
-            while end < len(lines) and not _closes(lines[end], opening[1]):
-                end += 1
-            if end == len(lines):  # unclosed: escape this line and everything after it
-                flush()
-                out.extend(lines[i:])
-                break
-            flush()
-            out.append(keep("\n".join(lines[i:end + 1])))
-            i = end + 1
-        elif lines[i].strip(" \t") == "":
-            flush()
-            out.append(lines[i])
-            i += 1
-        else:
-            block.append(lines[i])
-            i += 1
-    flush()
-    return "\n".join(out), kept
-
-
 def safe_markdown(text):
     """Untrusted Markdown made inert: no raw HTML, no image embeds, only http(s)/relative link targets.
 
+    Every "<" and (outside a leading blockquote marker) ">" is escaped everywhere, code included:
+    code shows "&lt;" literally, which is the price of not having to model the renderer's code rules.
     Nothing is fetched. Entities are used (not backslashes) so a hostile backslash cannot undo them.
-    Fenced code blocks and code spans are left byte-identical (they are inert and entities would show).
     """
-    text = text.replace("\r\n", "\n").replace("\r", "\n").replace("\x00", "�")  # CR is a line ending for the renderer
-    text, kept = _mask_code(text)
+    text = text.replace("\r\n", "\n").replace("\r", "\n")  # CR is a line ending for the renderer
     text = text.replace("<", "&lt;").replace("![", "&#33;[")
     text = "\n".join(_quote_safe(line) for line in text.split("\n"))
-    text = _LINK_DEFINITION.sub(_safe_dest, _INLINE_LINK.sub(_safe_dest, text))
-    return re.sub(r"\x00(\d+)\x00", lambda m: kept[int(m[1])], text)
+    return _LINK_DEFINITION.sub(_safe_dest, _INLINE_LINK.sub(_safe_dest, text))
 
 
 def tags(meta):

@@ -262,52 +262,60 @@ def test_source_page_structure_and_link(root):
     assert text.endswith("## Transcript\n\nSynthetic text 123.\n") and "\nSynthetic text 123.\n```" not in text
 
 
-def test_safety_pass_leaves_code_blocks_and_spans_untouched(root):
-    code = ("Use `a < b` and ``x ![i](u) > y``.\n\n```c\nif (a < b && c > d) { /* ![x](javascript:1) <b> */ }\n```\n\n"
-            "~~~\n<tag>\n~~~\n\n")
-    prose = ("after <b>bold</b> and ![img](http://e/x.png) `unclosed\n\n    indented <i>\n\n| t |\n|---|\n| `a|<b>` |\n\n"
-             "`x\n# <script>\n`\n\n[`l`]: javascript:alert(1)\n\n```not a fence `<b>`\n")
-    item = helpers.make_item(root, filename="c.md", text=code + prose)
-    wiki.build(root)
-    body = page(root, item).split("## Transcript\n\n")[1]
-    assert body.startswith(code)  # byte-identical: no &lt;, &gt; or &#33; inside code
-    assert body[len(code):] == ("after &lt;b&gt;bold&lt;/b&gt; and &#33;[img](http://e/x.png) `unclosed\n\n    indented &lt;i&gt;\n\n"
-                                "| t |\n|---|\n| `a|&lt;b&gt;` |\n\n`x\n# &lt;script&gt;\n`\n\n[`l`]: #\n\n"
-                                "```not a fence `&lt;b&gt;`\n")  # indented code, table rows, multi-line "spans" and blocks with an unmatched run are escaped like prose
-    assert wiki.safe_markdown("```\n<x>\n") == "```\n&lt;x&gt;\n"  # an unclosed fence: it and everything after it is escaped
-    assert wiki.safe_markdown("~~~\n<x>\n```\n<y>\n~~~~\n<z>") == "~~~\n<x>\n```\n<y>\n~~~~\n&lt;z&gt;"
+def test_safety_pass_escapes_everywhere_including_code():
+    assert wiki.safe_markdown("`a < b`\n\n```c\nif (a<b && c>d) {}\n```\n") == "`a &lt; b`\n\n```c\nif (a&lt;b && c&gt;d) {}\n```\n"
+    assert wiki.safe_markdown("> quote <b>\n> > nested > x\n") == "> quote &lt;b&gt;\n> > nested &gt; x\n"
+    assert wiki.safe_markdown("a\r\nb\rc") == "a\nb\nc"
 
 
+# Untrusted text that must never become raw HTML or an image, however the renderer pairs backticks or fences.
 BYPASSES = [
-    "`x\n`<script>alert(1)</script>`",                    # the renderer pairs line 1 with the first backtick of line 2
-    "`x\n`![t](http://e/p.png)`",
-    "x | `y\n`![t](http://e/p.png)`",
-    "- a\n  ```\n<img src=x onerror=alert(1)>\n  ```",     # the fence belongs to the list item; the <img> line ends it
+    "<script>alert(1)</script>", "<img src=x onerror=alert(1)>", "<svg onload=alert(1)>", "<svg/onload=alert(1)>",
+    "<!-- c --> <http://e/x> <div>\n\nx\n\n</div>", "![i](http://e/i.png) ![r][r]\n\n[r]: http://e/p.png", "[![i](http://e/i.png)](http://e/)",
+    "`x\n`<script>alert(1)</script>`",                          # the renderer pairs line 1 with the first backtick of line 2
+    "`x\n# h\n`<script>alert(1)</script>`",                     # (a) a heading, list item or blockquote splits the block
+    "`x\n- l\n`<img src=x onerror=alert(1)>`",
+    "`x\n> q\n`<svg onload=alert(1)>`",
+    "`x\n`![t](http://e/p.png)`", "x | `y\n`![t](http://e/p.png)`",
+    "- a\n  ```\n<img src=x onerror=alert(1)>\n  ```",           # (b) a column-0 line closes the indented fence of a list item
+    "  ```\n<script>alert(1)</script>\n```",
     "> ```\n<img src=x onerror=alert(1)>\n> ```",
-    "```\nx\n  ```\n<script>alert(1)</script>\n```",         # an indented closer still closes
-    "   ```\n<script>alert(1)</script>\n   ```",             # indented fence: not exempt
-    "```a`b\n<script>alert(1)</script>\n```",               # backtick in the info string: not a fence
-    "``a`\n<script>alert(1)</script>\n`b``",                # spans pair across lines, so nothing is masked
+    "```\nx\n  ```\n<script>alert(1)</script>\n```",
+    "```a`b\n<script>alert(1)</script>\n```", "``a`\n<script>alert(1)</script>\n`b``",
+    "```\r<script>alert(1)</script>\r```", "`x\r<script>alert(1)</script>\r`",
+    "~~~\n<script>alert(1)</script>\n~~~", "    <script>alert(1)</script>", "| a |\n|---|\n| `x|<script>alert(1)</script>` |",
 ]
 
 
 @pytest.mark.parametrize("hostile", BYPASSES)
-def test_safety_pass_bypasses_leave_no_raw_html_or_images(hostile):
+def test_safety_pass_leaves_no_raw_html_or_images(hostile):
     out = wiki.safe_markdown(hostile + "\n")
-    assert "<script" not in out and "<img" not in out and "![" not in out
+    assert "<" not in out and "![" not in out
 
 
-def test_safety_pass_exemption_survives_a_lone_cr_line_ending():
-    assert wiki.safe_markdown("```\r<x>\r```") == "```\n<x>\n```"  # still one proper fence, exempt
+def test_wiki_pages_render_without_html_or_image_tokens(root):
+    """Differential check against a real CommonMark parser (markdown-it-py, dev extra; html enabled)."""
+    if os.environ.get("CI"):
+        import markdown_it
+    else:
+        markdown_it = pytest.importorskip("markdown_it")
+    parser = markdown_it.MarkdownIt("commonmark", {"html": True})
 
-
-def test_safety_pass_rendered_by_markdown_it_has_no_raw_html_or_images():
-    markdown_it = pytest.importorskip("markdown_it")
-    parser = markdown_it.MarkdownIt("commonmark")
-    for hostile in BYPASSES + ["`a` <b>x</b> ![i](http://e/i.png)", "```\n<script>x</script>\n```\n<img src=x>"]:
-        html = parser.render(wiki.safe_markdown(hostile + "\n"))
-        assert "<script" not in re.sub(r"<code>.*?</code>", "", html, flags=re.S), (hostile, html)
-        assert "<img" not in html, (hostile, html)
+    def walk(tokens):
+        for token in tokens:
+            yield token
+            yield from walk(token.children or [])
+    assert {t.type for t in walk(parser.parse("<b>x</b>\n\n<p>y</p>\n\n![i](http://e/i.png)"))} >= {"html_inline", "html_block", "image"}  # the detector works
+    for n, hostile in enumerate(BYPASSES):
+        item = helpers.make_item(root, filename=f"h{n}.md", text=hostile + "\n")
+        wiki.build(root)
+        tokens = list(walk(parser.parse(page(root, item))))
+        bad = [t.type for t in tokens if t.type in ("html_block", "html_inline", "image")]
+        assert not bad, (hostile, bad)
+        for token in tokens:
+            if token.type == "link_open":
+                href = token.attrGet("href")
+                assert re.match(r"https?://", href, re.I) or not re.match(r"[a-z][a-z0-9+.-]*:", href, re.I), (hostile, href)
 
 
 def test_tags_pages_index_links_and_back_links(root):

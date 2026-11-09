@@ -180,6 +180,8 @@ def test_at29_prepare_prompt_fence_contract_and_no_subprocess(root, subprocess_s
         assert needle in prompt
     commands = (scratch / "COMMANDS.txt").read_text(encoding="utf-8")
     assert f"sb llm accept {item.meta['id']}" in commands and str(scratch / "prompt.txt") in commands
+    asks = [l.strip() for l in commands.splitlines() if l.strip().startswith("peerhub ask")]
+    assert len(asks) == 1 and " --writable " in asks[0] and f'-w "{scratch}"' in asks[0]
     assert subprocess_spy == []
     assert tree(root / "raws" / item.meta["id"]) == tree(item.path)
 

@@ -31,3 +31,7 @@ python -m pytest -q -p no:cacheprovider
 v0.1 is discarded; its history remains at tag `v0.1.1`. The deleted `legacy/`
 tree remains at tag `legacy-r13-final`. `CONTRIBUTING.md` and `docs/STATUS.md`
 were removed because they described the v0.1 workflow.
+
+1.0.1: generated peerhub asks that make the peer write files (OCR
+transcription, LLM summary) now include `--writable`; verification asks stay
+read-only.

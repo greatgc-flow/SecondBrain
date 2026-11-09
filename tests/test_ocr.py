@@ -145,8 +145,10 @@ def test_commands_peerhub_lines_have_no_inner_quotes(root, fake_render):
     lines = [l for l in commands.splitlines() if l.startswith("peerhub ask")]
     assert len(lines) == 4  # 2 asks + 2 verify groups
     for line in lines:
-        match = re.fullmatch(r'peerhub ask (cx|cc) -p \1\.effort -w "[^"]+" --stream \S+ "([^"\$`]+)"', line)
+        match = re.fullmatch(r'peerhub ask (cx|cc) -p \1\.effort -w "[^"]+"(?: --writable)? --stream \S+ "([^"\$`]+)"', line)
         assert match, line
+        # write asks (cx transcription) need --writable; read-only verify asks (cc) must not have it
+        assert (" --writable " in line) == (match[1] == "cx"), line
         assert "u0001.png" in line or "u0004.png" in line  # relative names inside the -w folder
         assert str(work(root, item)) not in match[2]
 

@@ -1,8 +1,9 @@
 # Final audit — cx response
 
-Ownership follows the orchestrator's assignment. FIXED below describes the cx
-portion when cc adoption is explicitly pending; it does not certify other
-worktrees or close the release gate. Each finding id in AUDIT_v1.md is listed.
+The initial pass below follows the orchestrator's ownership assignment. Its
+cc-adoption deferrals are superseded by the combined closeout at the end of
+this file. Each finding id in AUDIT_v1.md is listed; the release gate remains
+with the orchestrator.
 
 Tests first: the focused run had **12 failures** before implementation (missing
 shared helpers, dead path argument, retry metadata overwritten, and converter
@@ -47,3 +48,16 @@ their own sorting, stale-work notes, counts, and output projections.
 
 Full validation: `python -m pytest -q -p no:cacheprovider` -> **576 passed, 4 skipped in 118.92s**. The skips are the existing installed-console e2e cases because this interpreter has no installed `sb`; AT-19 uses the real module entry point and all four cases passed.
 No git commands, cc-owned production edits, rubric changes or release actions.
+
+## Combined closeout after cc commit ad569ff
+
+- **H1/H2/H3/H4/H6 — FIXED.** Confirmed the complete stage-output keys, dpi.txt inheritance, stale_work rule and ext escaping in DESIGN. Added H3's 32000-byte summary.md pre-read limit before UTF-8 decoding and the 8000-character check; the 64 KiB summary.json cap remains explicit.
+- **H5/V3/S5 — FIXED by cc and retained.** The failed transcript gate uses the ledger, verify keys are stripped, and projections index validated schemas. The helper migration preserves those changes.
+- **S1/S2/S3/S4 — FIXED across the combined codebase.** OCR/LLM use fsutil.write_bytes_atomic; LLM and collision-status JSON reads use load_json_strict; LLM schema predicates use require with the existing llm_invalid mapping/messages. Wiki and status call ledger.scan directly; wiki keeps its display sort and status keeps corrupt-row/stale-work projections. Deleted the local scanner, unique-key parser, byte writers and list-only OCR key wrapper. OCR/LLM/CLI and tests/helpers.py import shared errors constants; fixture metadata uses write_json_atomic. The cumulative unit counter remains defined once in wiki and shared with CLI.
+- **S6 — FIXED across the combined codebase.** helpers.tree is the only tree implementation and serves OCR/wiki/LLM/CLI plus byte-only ingest/ledger snapshots. Timestamp-sensitive snapshots remain explicit because tree intentionally records only bytes. The single parametrized basetemp test retains all three scenarios; the distinct CI audio-extra test remains. Confirmed functools.wraps and the cleaned __main__ from cc.
+- **R1 — ORCHESTRATOR GATE, unchanged.** No rubric promotion, CI-result claim, git operation, tag or release action.
+
+Static AST audit confirms one strict JSON parser, atomic byte writer, raws
+scanner, constraint helper, cumulative unit counter and tree helper; PEER,
+LARGE and raster sets are defined only in errors.py. All source/tests parse
+with Python 3.11 syntax. Combined validation: `python -m pytest -q -p no:cacheprovider` -> **581 passed, 4 skipped in 96.60s**. The four skips still require the locally absent installed `sb` console script.

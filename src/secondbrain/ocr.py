@@ -6,20 +6,17 @@ then records and verifies what comes back. meta.json is always written last (com
 import copy
 import functools
 import hashlib
-import os
 from pathlib import Path
 import re
 import shutil
 
-from .errors import ErrorCode, SbError
-from .fsutil import checked_path, safe_delete, write_json_atomic
+from .errors import LARGE, PEER, ErrorCode, SbError
+from .fsutil import checked_path, safe_delete, write_bytes_atomic, write_json_atomic
 from .ledger import activity, load_item, validate_meta
 
 MAX_APPROVAL = 30
-LARGE = 20
 MAX_OUTPUT_BYTES = 1024 * 1024
 DEFAULT_DPI = 200
-PEER = re.compile(r"[a-z][a-z0-9-]{0,31}")
 NOTICE = ("Notice: the page images leave this machine when a peer reads them. "
           "Sensitive documents need the owner's approval first.")
 
@@ -58,22 +55,9 @@ def _dpi(value, work=None):
     return value
 
 
-def _keys(value):
-    """Unit keys as given by the caller (the CLI splits and strips comma lists)."""
-    return list(value or [])
-
-
 def _commit(item, meta):
     validate_meta(meta, item.path)
     write_json_atomic(item.path / "meta.json", meta)
-
-
-def _write_bytes(path, data):
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_name(path.name + ".tmp")
-    temporary.write_bytes(data)
-    os.replace(temporary, path)
 
 
 def _io(function):
@@ -221,7 +205,7 @@ def record(root, item_id, peer, model, dpi=None):
     meta = copy.deepcopy(item.meta)
     for key, n, data, digest, recorded in prepared:
         file = f"ocr/{key}.a{n}.md"
-        _write_bytes(item.path / file, data)  # new, never-referenced name
+        write_bytes_atomic(item.path / file, data)  # new, never-referenced name
         unit = meta["ocr"]["units"][key]
         unit["attempts"].append({"n": n, "file": file, "sha256": digest, "recorded": recorded, "verified": None, "result": None})
         unit["status"] = "recorded"
@@ -237,7 +221,7 @@ def verify(root, item_id, peer, model, ok=None, mismatch=None):
         stale = work.exists()
         safe_delete(root, work)
         return {"id": item_id, "result": "cleaned", "removed": stale}
-    ok, mismatch = _keys(ok), _keys(mismatch)
+    ok, mismatch = list(ok or []), list(mismatch or [])
     listed = ok + mismatch
     units = item.meta["ocr"]["units"]
     if not listed or set(ok) & set(mismatch) or len(set(listed)) != len(listed):

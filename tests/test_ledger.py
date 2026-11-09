@@ -7,7 +7,7 @@ import unicodedata
 
 import pytest
 
-from helpers import DATE, add_summary, make_item, provenance, save_meta
+from helpers import DATE, add_summary, make_item, provenance, save_meta, tree
 from secondbrain.errors import SbError
 from secondbrain.ledger import activity, load_item, load_stage, validate_meta, validate_stage
 
@@ -27,13 +27,13 @@ def test_scan_collects_valid_corrupt_orphan_and_reparse_without_mutations(root, 
     link.mkdir()
     original = ledger.is_reparse_point
     monkeypatch.setattr(ledger, "is_reparse_point", lambda path: Path(path) == link or original(path))
-    before = {p: p.read_bytes() for p in (root / "raws").rglob("*") if p.is_file()}
+    before = tree(root / "raws")
     items, warnings, errors = ledger.scan(root)
     assert [item.meta["id"] for item in items] == [ready.meta["id"]]
     assert {note["code"] for note in warnings} == {"orphan", "skipped_reparse"}
     assert len(errors) == 1 and errors[0]["code"] == "corrupt_meta" and errors[0]["id"] == broken.meta["id"]
     assert errors[0]["path"] == "raws/" + broken.meta["id"]
-    assert before == {p: p.read_bytes() for p in (root / "raws").rglob("*") if p.is_file()}
+    assert before == tree(root / "raws")
 
 
 def test_scan_empty_root_creates_nothing(tmp_path):

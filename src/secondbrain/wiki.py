@@ -5,9 +5,9 @@ from pathlib import Path
 import re
 import unicodedata
 
-from .errors import ErrorCode, SbError, WarningCode
-from .fsutil import checked_path, esc, is_reparse_point, percent_encode, safe_delete, write_text
-from .ledger import load_item
+from .errors import ErrorCode, SbError
+from .fsutil import checked_path, esc, percent_encode, safe_delete, write_text
+from .ledger import scan
 from .transcript import source_digest, view
 
 
@@ -40,30 +40,6 @@ def recover(root):
             safe_delete(root, root / "wiki.old")
         else:
             os.rename(root / "wiki.old", root / "wiki")
-
-
-def load_items(root):
-    """The ledger scan: (items sorted for display, warnings, errors); corrupt items are reported and skipped."""
-    items, warnings, errors = [], [], []
-    raws = Path(root) / "raws"
-    names = sorted(p.name for p in raws.iterdir()) if raws.is_dir() else []
-    for name in names:
-        path = raws / name
-        if name.startswith(".") or not path.is_dir():
-            continue
-        if is_reparse_point(path):
-            warnings.append({"code": str(WarningCode.SKIPPED_REPARSE), "id": name, "path": f"raws/{name}",
-                             "message": "Reparse point skipped"})
-            continue
-        try:
-            item = load_item(path)
-        except SbError as error:
-            errors.append({"code": error.code, "id": name, "path": f"raws/{name}", "message": str(error)})
-            continue
-        warnings.extend(item.warnings)
-        items.append(item)
-    items.sort(key=lambda i: (i.meta["filename_nfc"].casefold(), i.meta["id"]))
-    return items, warnings, errors
 
 
 def _summary(meta):
@@ -168,7 +144,8 @@ def build(root):
     root = Path(root)
     try:
         recover(root)
-        items, warnings, errors = load_items(root)
+        items, warnings, errors = scan(root)
+        items.sort(key=lambda i: (i.meta["filename_nfc"].casefold(), i.meta["id"]))
         tmp = root / "wiki.tmp"
         write_text(tmp / "index.md", index_page(items))
         for item in items:

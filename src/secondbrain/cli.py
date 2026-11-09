@@ -9,9 +9,9 @@ from pathlib import Path
 import sys
 
 from . import ingest, llm, ocr, wiki
-from .errors import ErrorCode, SbError, WarningCode
-from .fsutil import resolve_root
-from .ledger import load_item
+from .errors import LARGE, ErrorCode, SbError, WarningCode
+from .fsutil import load_json_strict, resolve_root
+from .ledger import load_item, scan
 
 STATES = ("ready", "awaiting-approval", "ocr-in-progress", "unsupported", "failed")
 
@@ -119,7 +119,7 @@ def _staged_collisions(root):
     warnings = []
     for directory in sorted((root / "raws" / ".staging").glob("tmp-*")):
         try:
-            stage = json.loads((directory / "stage.json").read_text(encoding="utf-8"))
+            stage = load_json_strict(directory / "stage.json")
         except (OSError, ValueError):
             continue
         if isinstance(stage, dict) and stage.get("collision") is True:
@@ -130,7 +130,7 @@ def _staged_collisions(root):
 
 
 def run_status(root):
-    loaded, warnings, errors = wiki.load_items(root)  # the one ledger scan, shared with `wiki build`
+    loaded, warnings, errors = scan(root)
     items = [row(item.meta, "listed") for item in loaded] + [corrupt_row(error["id"], "corrupt") for error in errors]
     warnings = [*warnings, *filter(None, (_stale_work(root, item) for item in loaded)), *_staged_collisions(root)]
     counts = {state: sum(1 for i in items if i["state"] == state) for state in STATES}
@@ -202,7 +202,7 @@ def _status_lines(env):
             awaiting.append(item)
     if awaiting:
         lines += ["", "OCR approval needed:"]
-        lines += [f"  {i['id']} {i['filename']} units={i['units']['total']}" + (" LARGE" if i["units"]["total"] > ocr.LARGE else "")
+        lines += [f"  {i['id']} {i['filename']} units={i['units']['total']}" + (" LARGE" if i["units"]["total"] > LARGE else "")
                   for i in awaiting]
     lines += ["", "counts: " + ", ".join(f"{state}={n}" for state, n in env["counts"].items())]
     return lines

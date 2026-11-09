@@ -1,8 +1,10 @@
 """Synthetic committed items shared by later command tests."""
 from hashlib import sha256
 from pathlib import Path
-import json
 import unicodedata
+
+from secondbrain.errors import CONVERTER_VERSION, LARGE, RASTER_EXTENSIONS, TRIAGE_EXTENSIONS
+from secondbrain.fsutil import write_json_atomic
 
 DATE = "2026-11-09T00:00:00Z"
 DEFAULT = object()
@@ -13,13 +15,13 @@ def provenance(method="convert", peer=None):
     params = {"charset": None, "extract_media": False} if convert else {"prompt_rev": "verify-v1" if method == "ocr-verify" else "llm-v1" if method == "summary" else "ocr-v1"}
     if method == "ocr-vision":
         params.update(dpi=200, unit_file="u0001.png")
-    return {"tool": "markitdown-gc" if convert else "peerhub", "version": "0.3.5" if convert else None,
+    return {"tool": "markitdown-gc" if convert else "peerhub", "version": CONVERTER_VERSION if convert else None,
             "method": method, "peer": None if convert else peer or "cx", "model": None if convert else "synthetic-model",
             "date": DATE, "params": params}
 
 
 def save_meta(item):
-    (item.path / "meta.json").write_text(json.dumps(item.meta, ensure_ascii=False, indent=1, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
+    write_json_atomic(item.path / "meta.json", item.meta)
 
 
 def make_item(root, *, state="ready", classification=DEFAULT, filename=None, text=DEFAULT, statuses=None):
@@ -28,7 +30,7 @@ def make_item(root, *, state="ready", classification=DEFAULT, filename=None, tex
         classification = {"failed": None, "unsupported": "unsupported", "awaiting-approval": "mixed", "ocr-in-progress": "mixed"}.get(state, "text-only")
     if filename is None:
         filename = "source" + {"ocr-required": ".pdf", "mixed": ".pdf", "unknown": ".md", "unsupported": ".xyz", None: ".pdf"}.get(classification, ".txt")
-    raster = Path(filename).suffix.lower() in {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tif", ".tiff", ".webp"}
+    raster = Path(filename).suffix.lower() in RASTER_EXTENSIONS
     if text is DEFAULT:
         text = None if raster or classification in {None, "unsupported"} else "" if classification == "ocr-required" else "Synthetic text 123."
     source = (filename + " synthetic original").encode("utf-8")
@@ -58,7 +60,7 @@ def make_item(root, *, state="ready", classification=DEFAULT, filename=None, tex
                 attempts[0]["recorded"]["params"]["unit_file"] = key + ".png"
             units[key] = {"source": "self" if raster else f"p{n}", "kind": "raster" if raster else "page", "status": status, "attempts": attempts}
     triage = None
-    if Path(filename).suffix.lower() in {".pdf", ".docx", ".pptx", ".xlsx", ".hwp", ".hwpx", ".md", ".html", ".htm"} and classification not in {None, "unsupported"}:
+    if Path(filename).suffix.lower() in TRIAGE_EXTENSIONS and classification not in {None, "unsupported"}:
         triage = {"decision": "review" if units else "unknown" if classification == "unknown" else "no_candidates",
                   "coverage": {"state": "complete" if classification != "unknown" else "none", "pages_total": len(units) or 1, "pages_inspected": len(units) or 1},
                   "scope": "inspected", "image_occurrences": len(units), "candidates": [
@@ -69,7 +71,7 @@ def make_item(root, *, state="ready", classification=DEFAULT, filename=None, tex
             "filename": filename, "filename_nfc": unicodedata.normalize("NFC", filename), "aliases": [], "ingested_at": DATE,
             "class": classification, "reason": "SyntheticError" if state == "failed" else "media_not_inspected" if classification == "unknown" else "extension_not_allowed" if classification == "unsupported" else "raster" if raster else None,
             "state": state, "conversion": conversion, "triage": triage, "has_native_text": None if text is None else bool(text),
-            "ocr": {"disposition": disposition, "large_ack": len(units) > 20 and disposition == "approved", "units": units},
+            "ocr": {"disposition": disposition, "large_ack": len(units) > LARGE and disposition == "approved", "units": units},
             "llm": None, "error": {"code": "SyntheticError", "message": "synthetic failure", "date": DATE} if state == "failed" else None}
     item = Item(path, meta)
     save_meta(item)

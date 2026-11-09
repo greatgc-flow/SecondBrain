@@ -15,7 +15,7 @@ from secondbrain import convert, ingest
 from secondbrain.errors import SbError
 from secondbrain.fsutil import write_json_atomic
 from secondbrain.ledger import load_item, load_stage
-from helpers import DATE, make_item
+from helpers import DATE, make_item, tree
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -132,11 +132,11 @@ def test_at04_collision_is_flagged_and_never_resumed(root, tool, monkeypatch):
     directory, = stages(root)
     assert load_stage(directory)["collision"] is True
     assert (directory / "src/collision.txt").read_bytes() == b"different original" and not source.exists()
-    snapshot = {p.relative_to(directory).as_posix(): p.read_bytes() for p in directory.rglob("*") if p.is_file()}
+    snapshot = tree(directory)
     result = ingest.ingest(root)
     assert [w["code"] for w in result["warnings"]] == ["staged_collision"]
     assert not result["errors"] and not result["items"]
-    assert snapshot == {p.relative_to(directory).as_posix(): p.read_bytes() for p in directory.rglob("*") if p.is_file()}
+    assert snapshot == tree(directory)
     assert (item.path / "meta.json").read_bytes() == before and not tool.convert
 
 

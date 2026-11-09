@@ -6,14 +6,12 @@
 import copy
 from datetime import datetime
 import hashlib
-import json
-import os
 from pathlib import Path
 import re
 import secrets
 
-from .errors import ErrorCode, SbError
-from .fsutil import checked_path, write_json_atomic
+from .errors import PEER, ErrorCode, SbError
+from .fsutil import checked_path, load_json_strict, require, write_bytes_atomic, write_json_atomic
 from .ledger import activity, load_item, validate_meta
 from .transcript import accepted_text_present, source_digest, view
 
@@ -21,7 +19,6 @@ PROMPT_REV = "llm-v1"
 MAX_BODY_CHARS = 8000
 MAX_JSON_BYTES = 64 * 1024
 KEYS = {"kind", "source_digest", "peer", "model", "version", "date"}
-PEER = re.compile(r"[a-z][a-z0-9-]{0,31}")
 DATE = re.compile(r"\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d+)?Z")
 
 
@@ -40,14 +37,6 @@ def _eligible(root, item_id):
     if item.meta["class"] == "unsupported" or not accepted_text_present(item):
         raise SbError(ErrorCode.NOT_ELIGIBLE, 2, "No accepted text to summarize")
     return item
-
-
-def _write_bytes(path, data):
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_name(path.name + ".tmp")
-    temporary.write_bytes(data)
-    os.replace(temporary, path)
 
 
 def _nonce(text):
@@ -82,20 +71,11 @@ def prepare(root, item_id):
             f"1. Have one peer read \"{scratch / 'prompt.txt'}\" and write the two files named there.\n"
             "   The peer needs read access to this item and write access to this scratch folder only.\n"
             f"2. Then run: sb llm accept {item_id}\n")
-        _write_bytes(scratch / "prompt.txt", prompt.encode("utf-8"))
-        _write_bytes(scratch / "COMMANDS.txt", commands.encode("utf-8"))
+        write_bytes_atomic(scratch / "prompt.txt", prompt.encode("utf-8"))
+        write_bytes_atomic(scratch / "COMMANDS.txt", commands.encode("utf-8"))
     except OSError as error:
         raise SbError(ErrorCode.IO_ERROR, 1, str(error)) from error
     return {"id": item_id, "result": "prepared", "prompt": str(scratch / "prompt.txt"), "source_digest": digest}
-
-
-def _unique(pairs):
-    result = {}
-    for key, value in pairs:
-        if key in result:
-            raise ValueError("Duplicate JSON key")
-        result[key] = value
-    return result
 
 
 def _read(root, item_id, name, limit):
@@ -113,21 +93,18 @@ def _validate(root, item, item_id):
     try:
         if len(body.decode("utf-8")) > MAX_BODY_CHARS:
             raise _invalid(f"Summary body exceeds {MAX_BODY_CHARS} characters")
-        data = json.loads(_read(root, item_id, "summary.json", MAX_JSON_BYTES).decode("utf-8"), object_pairs_hook=_unique)
-    except (UnicodeDecodeError, ValueError) as error:
+        data = load_json_strict(_read(root, item_id, "summary.json", MAX_JSON_BYTES))
+    except ValueError as error:
         raise _invalid(f"Unreadable summary file: {error}") from error
-    if not isinstance(data, dict) or set(data) != KEYS:
-        raise _invalid("summary.json keys must be exactly: " + ", ".join(sorted(KEYS)))
-    if data["kind"] != "summary":
-        raise _invalid("kind must be summary")
-    if data["source_digest"] != source_digest(item):
-        raise _invalid("source_digest does not match the current transcript view")
-    if not isinstance(data["peer"], str) or not PEER.fullmatch(data["peer"]):
-        raise _invalid("Invalid peer id")
-    if not isinstance(data["model"], str) or not data["model"]:
-        raise _invalid("Missing model")
-    if data["version"] is not None and not isinstance(data["version"], str):
-        raise _invalid("version must be a string or null")
+    try:
+        require(isinstance(data, dict) and set(data) == KEYS, "summary.json keys must be exactly: " + ", ".join(sorted(KEYS)))
+        require(data["kind"] == "summary", "kind must be summary")
+        require(data["source_digest"] == source_digest(item), "source_digest does not match the current transcript view")
+        require(isinstance(data["peer"], str) and PEER.fullmatch(data["peer"]), "Invalid peer id")
+        require(isinstance(data["model"], str) and data["model"], "Missing model")
+        require(data["version"] is None or isinstance(data["version"], str), "version must be a string or null")
+    except ValueError as error:
+        raise _invalid(str(error)) from error
     try:
         if not isinstance(data["date"], str) or not DATE.fullmatch(data["date"]):
             raise ValueError
@@ -148,7 +125,7 @@ def accept(root, item_id):
             return {"id": item_id, "result": "unchanged", "revision": revisions[-1]["n"]}
         n = len(revisions) + 1
         file = f"llm/summary.a{n}.md"
-        _write_bytes(item.path / file, body)  # new, never-referenced name (mutation rule step 2)
+        write_bytes_atomic(item.path / file, body)  # new, never-referenced name (mutation rule step 2)
         meta = copy.deepcopy(item.meta)
         meta["llm"] = {"summary": revisions + [{
             "n": n, "file": file, "sha256": digest, "source_digest": data["source_digest"],

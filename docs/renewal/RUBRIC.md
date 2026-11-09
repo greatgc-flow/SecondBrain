@@ -6,7 +6,7 @@ v1.0.0 promotion, tag and GitHub Release remain orchestrator actions.
 **R1 — release evidence:** head `6113a8f0883f0ca2b51b9e556035ca3fe103a67e`
 (`6113a8f`), [CI run 42542262213](https://github.com/greatgc-flow/SecondBrain/actions/runs/42542262213),
 attempt 1: **all eight jobs passed**. The six full-suite logs each report
-**582 passed, 0 skipped**, including all four installed-console e2e cases.
+**584 passed, 0 skipped**, including all four installed-console e2e cases.
 Both offline clean installs passed on that revision.
 
 | CI jobs | Python | Result |

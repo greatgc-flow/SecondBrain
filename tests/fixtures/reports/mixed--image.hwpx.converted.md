@@ -1,0 +1,1 @@
+합성 HWPX 문서 12345. Synthetic text.![Image](work/characterize/media/mixed--image.hwpx/9c4b0cd1370e.png)

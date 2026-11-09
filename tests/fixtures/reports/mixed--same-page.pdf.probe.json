@@ -1,0 +1,29 @@
+{
+ "adapter_errors": [],
+ "bytes": 4231,
+ "charset": null,
+ "conversion": {
+  "artifact": "reports/mixed--same-page.pdf.converted.md",
+  "bytes": 53,
+  "excerpt": "Synthetic native text. Invoice 12345, total 42 USD.\n\n",
+  "has_native_text": true,
+  "sha256": "b299ba35ac18bf0821f459b74fe3722f0b3015f77883296b83a5905c7b28c4bc"
+ },
+ "design_revision": "r8",
+ "design_row_class_state_reason": [
+  9,
+  "mixed",
+  "awaiting-approval",
+  null
+ ],
+ "fixture": "mixed/same-page.pdf",
+ "media": [],
+ "report": "reports/mixed--same-page.pdf.json",
+ "report_exit": 0,
+ "report_stderr": "ocr-report: decision=review high=0 low=1 coverage=complete issues=0 -> <worktree>\\tests\\fixtures\\reports\\mixed--same-page.pdf.json\n",
+ "role": "ingest",
+ "sha256": "2c31c5dda6abeba660f2f2a9abc23d64d8cf2c95306dd08e26081fabdc1ec84b",
+ "units": [
+  "p1"
+ ]
+}

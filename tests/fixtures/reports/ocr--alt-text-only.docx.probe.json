@@ -1,0 +1,35 @@
+{
+ "adapter_errors": [],
+ "bytes": 39132,
+ "charset": null,
+ "conversion": {
+  "artifact": "reports/ocr--alt-text-only.docx.converted.md",
+  "bytes": 74,
+  "excerpt": "![Image](work/characterize/media/ocr--alt-text-only.docx/9c4b0cd1370e.png)",
+  "has_native_text": false,
+  "sha256": "e15dc051e72a6a60efe2383c42dd5f00ceb353e74b16209a8a51cb9e7a42422e"
+ },
+ "design_revision": "r8",
+ "design_row_class_state_reason": [
+  8,
+  "ocr-required",
+  "awaiting-approval",
+  null
+ ],
+ "fixture": "ocr/alt-text-only.docx",
+ "media": [
+  {
+   "bytes": 3957,
+   "file": "9c4b0cd1370e.png",
+   "sha256": "9c4b0cd1370ef33ef6093b25e6534a3e26ed8605a0e9ef5e39ffe1535d20806f"
+  }
+ ],
+ "report": "reports/ocr--alt-text-only.docx.json",
+ "report_exit": 0,
+ "report_stderr": "ocr-report: decision=ocr_recommended high=1 low=0 coverage=complete issues=0 -> <worktree>\\tests\\fixtures\\reports\\ocr--alt-text-only.docx.json\n",
+ "role": "ingest",
+ "sha256": "2a8ae59f60b618bca44591b0f757bd30c88552be40bee0a19255726a59d63be5",
+ "units": [
+  "9c4b0cd1370e.png"
+ ]
+}

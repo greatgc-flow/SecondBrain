@@ -1,0 +1,27 @@
+{
+ "adapter_errors": [],
+ "bytes": 50,
+ "charset": null,
+ "conversion": {
+  "artifact": "reports/unknown--with-image.md.converted.md",
+  "bytes": 50,
+  "excerpt": "Synthetic Markdown.\n\n![invoice](../ocr/photo.png)\n",
+  "has_native_text": true,
+  "sha256": "089422445444a8e38ddb4c1f934d90647d6450e4b09e2a9257dcb3878a1929ce"
+ },
+ "design_revision": "r8",
+ "design_row_class_state_reason": [
+  12,
+  "unknown",
+  "awaiting-approval",
+  "media_not_inspected"
+ ],
+ "fixture": "unknown/with-image.md",
+ "media": [],
+ "report": "reports/unknown--with-image.md.json",
+ "report_exit": 0,
+ "report_stderr": "ocr-report: decision=unknown high=0 low=0 coverage=none issues=1 -> <worktree>\\tests\\fixtures\\reports\\unknown--with-image.md.json\n",
+ "role": "ingest",
+ "sha256": "089422445444a8e38ddb4c1f934d90647d6450e4b09e2a9257dcb3878a1929ce",
+ "units": []
+}

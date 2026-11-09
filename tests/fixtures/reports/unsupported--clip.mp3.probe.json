@@ -1,0 +1,24 @@
+{
+ "adapter_errors": [],
+ "bytes": 2085,
+ "charset": null,
+ "conversion": {
+  "exception": "FileConversionException",
+  "message": "File conversion failed after 1 attempts: AudioConverter: FileNotFoundError: [WinError 2] 지정된 파일을 찾을 수 없습니다\n - AudioConverter threw FileNotFoundError with message: [WinError 2] 지정된 파일을 찾을 수 없습니다\n"
+ },
+ "design_revision": "r8",
+ "design_row_class_state_reason": [
+  2,
+  "unsupported",
+  "unsupported",
+  "extension_not_allowed"
+ ],
+ "fixture": "unsupported/clip.mp3",
+ "media": [],
+ "report": "reports/unsupported--clip.mp3.json",
+ "report_exit": 0,
+ "report_stderr": "ocr-report: decision=unknown high=0 low=0 coverage=none issues=1 -> <worktree>\\tests\\fixtures\\reports\\unsupported--clip.mp3.json\n",
+ "role": "ingest",
+ "sha256": "16a30255b27654f20148bd1ff26e5cfa82a236495e2c58ca48e22c0e15fea0c6",
+ "units": []
+}

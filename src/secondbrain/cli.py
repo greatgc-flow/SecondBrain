@@ -1,801 +1,288 @@
-"""Command-line interface for SecondBrain."""
+"""`sb` command line (DESIGN section 8): argparse, JSON envelope, exit precedence, human output.
 
-from __future__ import annotations
-
+The command-by-state matrix (section 4) is enforced by the command modules themselves
+(they reject with `state_not_allowed` before any write); this module only wires them up.
+"""
 import argparse
 import json
-import sqlite3
-import sys
-from functools import partial
 from pathlib import Path
-from typing import Any, Sequence
+import sys
 
-from secondbrain import __version__
-from secondbrain.capture import capture_file, capture_folder
-from secondbrain.errors import (
-    IntegrityError,
-    LockError,
-    RootRefusedError,
-    UsageIOError,
-)
-from secondbrain.lock import WriterLock
-from secondbrain.open_cmd import open_item
-from secondbrain.root import bootstrap_root, resolve_root, validate_root
-from secondbrain import search
-from secondbrain.backup import backup_repository
-from secondbrain.restore import restore_repository
-from secondbrain.verify import verify_repository
+from . import ingest, llm, ocr, wiki
+from .errors import LARGE, ErrorCode, SbError, WarningCode
+from .fsutil import load_json_strict, resolve_root
+from .ledger import load_item, scan
 
-SUBCOMMANDS: tuple[str, ...] = (
-    "capture",
-    "find",
-    "open",
-    "verify",
-    "backup",
-    "restore",
-)
-
-STUB_COMMANDS: tuple[str, ...] = ()
+STATES = ("ready", "awaiting-approval", "ocr-in-progress", "unsupported", "failed")
 
 
-class JsonArgumentParser(argparse.ArgumentParser):
-    """Argument parser that formats errors as JSON when --json is provided."""
-
-    _current_argv: Sequence[str] | None = None
-
-    def __init__(self, *args: Any, json_mode: bool = False, **kwargs: Any) -> None:
-        self.json_mode = json_mode
-        super().__init__(*args, **kwargs)
-
-    def parse_args(
-        self,
-        args: Sequence[str] | None = None,
-        namespace: argparse.Namespace | None = None,
-    ) -> argparse.Namespace:
-        self._current_argv = args if args is not None else sys.argv[1:]
-        return super().parse_args(args, namespace)
-
-    def error(self, message: str) -> None:
-        argv_to_check = self._current_argv if self._current_argv is not None else sys.argv[1:]
-        if self.json_mode or "--json" in argv_to_check:
-            emit_error(
-                is_json=True,
-                error=message,
-                path="",
-                results=[],
-                exit_code=2,
-            )
-        super().error(message)
+class UsageError(Exception):
+    pass
 
 
-def build_parser(json_mode: bool = False) -> argparse.ArgumentParser:
-    """Build the argument parser for sb."""
-    common = argparse.ArgumentParser(add_help=False)
-    common.add_argument(
-        "--root",
-        type=str,
-        default=argparse.SUPPRESS,
-        help="Root directory for the SecondBrain repository/store",
-    )
-    common.add_argument(
-        "--json",
-        action="store_true",
-        default=argparse.SUPPRESS,
-        help="Output structured JSON instead of human-readable text",
-    )
+class Parser(argparse.ArgumentParser):
+    def error(self, message):
+        raise UsageError(message)
 
-    parser = JsonArgumentParser(
-        prog="sb",
-        description="SecondBrain - Personal knowledge and evidence preservation CLI",
-        parents=[common],
-        json_mode=json_mode,
-    )
-    parser.add_argument(
-        "--version",
-        action="version",
-        version=f"%(prog)s {__version__}",
-    )
 
-    subparsers = parser.add_subparsers(
-        dest="command",
-        title="subcommands",
-        description="Available subcommands",
-        parser_class=partial(JsonArgumentParser, json_mode=json_mode),
-    )
+def build_parser():
+    common = Parser(add_help=False)  # --root/--json also accepted after the command
+    common.add_argument("--root", default=argparse.SUPPRESS, help="data root (default: $SB_ROOT, else the current folder)")
+    common.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help="print exactly one JSON object")
+    parser = Parser(prog="sb", description="SecondBrain: inbox -> raws -> wiki", parents=[common])
+    commands = parser.add_subparsers(dest="command", required=True, metavar="command")
 
-    capture_parser = subparsers.add_parser(
-        "capture",
-        help="Preserve bytes and acquisition receipt",
-        parents=[common],
-    )
-    capture_parser.add_argument(
-        "target",
-        type=str,
-        help="File or folder to capture",
-    )
+    def leaf(group, name, help_text):
+        return group.add_parser(name, parents=[common], help=help_text)
 
-    open_parser = subparsers.add_parser(
-        "open",
-        help="Verify and open, or only print the verified path",
-        parents=[common],
-    )
-    open_parser.add_argument(
-        "id",
-        type=str,
-        help="Receipt ID or SHA-256 prefix (>= 8 hex)",
-    )
-    open_parser.add_argument(
-        "--print-path",
-        action="store_true",
-        default=False,
-        help="Print verified working-copy path without launching viewer",
-    )
-    open_parser.add_argument(
-        "--force-launch",
-        action="store_true",
-        default=False,
-        help="Force launching executable or script file associations",
-    )
+    ingest_p = leaf(commands, "ingest", "move files out of inbox/ and classify them")
+    ingest_p.add_argument("--retry", action="store_true", help="retry failed items")
+    ingest_p.add_argument("--charset", help="text encoding of plain-text files, e.g. cp949")
+    leaf(commands, "status", "list every item (read-only)")
 
-    subparsers.add_parser(
-        "verify",
-        help="Check all receipts and objects",
-        parents=[common],
-    )
+    ocr_p = leaf(commands, "ocr", "OCR approval workflow")
+    ocr_actions = ocr_p.add_subparsers(dest="action", required=True, metavar="action")
+    approve = leaf(ocr_actions, "approve", "approve the next units and prepare scratch")
+    approve.add_argument("id")
+    approve.add_argument("--yes-large", action="store_true", help="required once when an item has more than 20 units")
+    approve.add_argument("--dpi", type=int, help="render resolution (default 200)")
+    leaf(ocr_actions, "decline", "decline OCR for the whole item").add_argument("id")
+    record = leaf(ocr_actions, "record", "record peer transcriptions")
+    record.add_argument("id")
+    record.add_argument("--peer", required=True)
+    record.add_argument("--model", required=True)
+    record.add_argument("--dpi", type=int, help="dpi of the images (default: the dpi used at approve, else 200)")
+    verify = leaf(ocr_actions, "verify", "record the second peer's verification")
+    verify.add_argument("id")
+    verify.add_argument("--peer", required=True)
+    verify.add_argument("--model", required=True)
+    verify.add_argument("--ok", action="append", metavar="L", help="comma-separated units that match")
+    verify.add_argument("--mismatch", action="append", metavar="L", help="comma-separated units that differ")
 
-    find_parser = subparsers.add_parser(
-        "find",
-        help="Search names, context and supported text",
-        parents=[common],
-    )
-    find_parser.add_argument(
-        "text",
-        type=str,
-        nargs="?",
-        default="",
-        help="Search query text",
-    )
-    find_parser.add_argument(
-        "--reindex",
-        action="store_true",
-        default=False,
-        help="Rebuild index from scratch",
-    )
-    find_parser.add_argument(
-        "--limit",
-        type=int,
-        default=None,
-        help="Maximum number of results to return",
-    )
+    wiki_p = leaf(commands, "wiki", "generated wiki")
+    leaf(wiki_p.add_subparsers(dest="action", required=True, metavar="action"), "build", "rebuild wiki/ from raws/")
 
-    backup_parser = subparsers.add_parser(
-        "backup",
-        help="Set/store root override and mirror to backup_root",
-        parents=[common],
-    )
-    backup_parser.add_argument(
-        "--backup-root",
-        type=str,
-        default=None,
-        help="Path to user-managed backup root folder",
-    )
-
-    restore_parser = subparsers.add_parser(
-        "restore",
-        help="Restore into an empty local directory",
-        parents=[common],
-    )
-    restore_parser.add_argument(
-        "backup_root",
-        type=str,
-        help="Path to user-managed backup root folder",
-    )
-    restore_parser.add_argument(
-        "--to",
-        required=True,
-        type=str,
-        dest="to_dir",
-        help="Empty target directory for restored repository",
-    )
-    restore_parser.add_argument(
-        "--manifest",
-        type=str,
-        default=None,
-        help="Name or path of specific manifest to restore (default: newest)",
-    )
-
-    for name in STUB_COMMANDS:
-        subparsers.add_parser(
-            name,
-            help=f"{name} command (stub)",
-            parents=[common],
-        )
-
+    llm_p = leaf(commands, "llm", "optional LLM summary tier")
+    llm_actions = llm_p.add_subparsers(dest="action", required=True, metavar="action")
+    leaf(llm_actions, "prepare", "write the summary prompt").add_argument("id")
+    leaf(llm_actions, "accept", "validate and record a peer summary").add_argument("id")
     return parser
 
 
-def emit_error(
-    is_json: bool,
-    error: str,
-    path: str = "",
-    results: list[dict[str, Any]] | None = None,
-    errors: list[dict[str, Any]] | None = None,
-    exit_code: int = 2,
-    prefix: str = "Error: ",
-) -> None:
-    """Emit centralized error output as JSON or text and exit."""
-    if is_json:
-        err_list = errors if errors is not None else [{"path": str(path), "error": error}]
-        out: dict[str, Any] = {
-            "status": "error",
-            "error": error,
-            "results": results if results is not None else [],
-            "errors": err_list,
-        }
-        print(json.dumps(out, indent=2))
+# ------------------------------------------------------------------ projections
+
+def _note(note):
+    code = str(note["code"])
+    return {"code": code, "id": note.get("id"), "path": note.get("path"), "message": note.get("message") or code}
+
+
+def row(meta, result):
+    triage = meta["triage"]
+    return {"id": meta["id"], "filename": meta["filename"], "filename_nfc": meta["filename_nfc"], "ext": meta["ext"],
+            "class": meta["class"], "state": meta["state"], "reason": meta["reason"],
+            "disposition": meta["ocr"]["disposition"],
+            "pages_total": triage["coverage"]["pages_total"] if triage else None,
+            "image_occurrences": triage["image_occurrences"] if triage else None,
+            "coverage": {"state": triage["coverage"]["state"] if triage else None, "scope": triage["scope"] if triage else None},
+            "units": wiki.unit_counts(meta), "summary": meta["llm"] is not None, "result": result}
+
+
+def corrupt_row(item_id, result):
+    return {"id": item_id, "filename": None, "filename_nfc": None, "ext": None, "class": None, "state": None,
+            "reason": None, "disposition": None, "pages_total": None, "image_occurrences": None,
+            "coverage": {"state": None, "scope": None}, "units": None, "summary": None, "result": result}
+
+
+def _row_for(root, item_id, result):
+    try:
+        return row(load_item(Path(root) / "raws" / item_id).meta, result)
+    except SbError:
+        return corrupt_row(item_id, "corrupt")
+
+
+def _relative(root, path):
+    return Path(path).relative_to(root).as_posix()
+
+
+def _stale_work(root, item):
+    work = root / "work" / item.meta["id"]
+    if not work.is_dir() or item.meta["state"] == "ocr-in-progress":
+        return None
+    leftovers = [p.name for p in work.iterdir() if not (p.name == "llm" and item.meta["state"] == "ready")]
+    if not leftovers:
+        return None
+    return {"code": str(WarningCode.STALE_WORK), "id": item.meta["id"], "path": _relative(root, work),
+            "message": "Scratch left over; the next verify or approve cleans it"}
+
+
+def _staged_collisions(root):
+    warnings = []
+    for directory in sorted((root / "raws" / ".staging").glob("tmp-*")):
+        try:
+            stage = load_json_strict(directory / "stage.json")
+        except (OSError, ValueError):
+            continue
+        if isinstance(stage, dict) and stage.get("collision") is True:
+            identity = stage.get("identity") if isinstance(stage.get("identity"), dict) else {}
+            warnings.append({"code": str(WarningCode.STAGED_COLLISION), "id": identity.get("id"),
+                             "path": _relative(root, directory), "message": "Staged file kept for the operator to resolve"})
+    return warnings
+
+
+def run_status(root):
+    loaded, warnings, errors = scan(root)
+    items = [row(item.meta, "listed") for item in loaded] + [corrupt_row(error["id"], "corrupt") for error in errors]
+    warnings = [*warnings, *filter(None, (_stale_work(root, item) for item in loaded)), *_staged_collisions(root)]
+    counts = {state: sum(1 for i in items if i["state"] == state) for state in STATES}
+    return {"items": items, "warnings": warnings, "errors": errors, "extra": {"counts": counts}, "messages": []}
+
+
+# ------------------------------------------------------------------ dispatch
+
+def _keys(values):
+    return [key.strip() for value in values or [] for key in value.split(",") if key.strip()]
+
+
+def run_command(args, root):
+    command = args.command if args.command in ("ingest", "status") else f"{args.command} {args.action}"
+    if command == "status":
+        return run_status(root)
+    if command == "ingest":
+        result = ingest.ingest(root, retry=args.retry, charset=args.charset)
+        items = [_row_for(root, entry["id"], entry["result"]) for entry in result["items"]]
+        return {"items": items, "warnings": result["warnings"], "errors": result["errors"], "extra": {}, "messages": []}
+    if command == "wiki build":
+        result = wiki.build(root)
+        return {"items": [row(item.meta, "built") for item in result["items"]], "warnings": result["warnings"],
+                "errors": result["errors"], "extra": {"pages": result["pages"]}, "messages": []}
+    messages = []
+    if command == "ocr approve":
+        done = ocr.approve(root, args.id, yes_large=args.yes_large, dpi=args.dpi)
+        messages = [done["notice"], f"Next: follow {done['commands']}"]
+    elif command == "ocr decline":
+        done = ocr.decline(root, args.id)
+    elif command == "ocr record":
+        done = ocr.record(root, args.id, args.peer, args.model, dpi=args.dpi)
+    elif command == "ocr verify":
+        done = ocr.verify(root, args.id, args.peer, args.model, ok=_keys(args.ok), mismatch=_keys(args.mismatch))
+    elif command == "llm prepare":
+        done = llm.prepare(root, args.id)
+        messages = ["The summary is the operator's judgment call: read it before you trust it.",
+                    f"Next: follow {Path(done['prompt']).with_name('COMMANDS.txt')}"]
+    else:  # llm accept
+        done = llm.accept(root, args.id)
+    return {"items": [_row_for(root, done["id"], done["result"])], "warnings": [], "errors": [], "extra": {}, "messages": messages}
+
+
+# ------------------------------------------------------------------ output
+
+def _sorted(notes):
+    return sorted(map(_note, notes), key=lambda n: (n["id"] or "", n["code"], n["path"] or "", n["message"]))
+
+
+def envelope(command, exit_code, root, items=(), warnings=(), errors=(), extra=None):
+    value = {"command": command, "ok": exit_code == 0, "exit": exit_code, "root": str(root),
+             "items": sorted(items, key=lambda i: i["id"] or ""), "warnings": _sorted(warnings), "errors": _sorted(errors)}
+    value.update(extra or {})
+    return value
+
+
+def _status_lines(env):
+    lines = []
+    awaiting = []
+    for item in env["items"]:
+        if item["state"] is None:
+            lines.append(f"{item['id']} corrupt")
+            continue
+        units, coverage = item["units"], item["coverage"]["state"]
+        pages = "-" if item["pages_total"] is None else item["pages_total"]
+        lines.append(f"{item['id']} {item['state']} {item['class'] or '-'} {pages}/{item['image_occurrences'] or 0} "
+                     f"{units['approved']}/{units['recorded']}/{units['verified']}/{units['total']} {coverage or '-'} {item['filename']}")
+        if item["state"] == "awaiting-approval":
+            awaiting.append(item)
+    if awaiting:
+        lines += ["", "OCR approval needed:"]
+        lines += [f"  {i['id']} {i['filename']} units={i['units']['total']}" + (" LARGE" if i["units"]["total"] > LARGE else "")
+                  for i in awaiting]
+    lines += ["", "counts: " + ", ".join(f"{state}={n}" for state, n in env["counts"].items())]
+    return lines
+
+
+def emit(env, as_json, messages=()):
+    out, err = sys.stdout, sys.stderr
+    if as_json:
+        out.write(json.dumps(env, ensure_ascii=False, sort_keys=True) + "\n")
+        for message in messages:
+            err.write(message + "\n")
     else:
-        print(f"{prefix}{error}" if prefix else error, file=sys.stderr)
-    sys.exit(exit_code)
-
-
-def emit_success(
-    is_json: bool,
-    results: list[dict[str, Any]],
-    captured: int,
-    reused_objects: int,
-    human_msg: str,
-) -> None:
-    """Emit centralized success output as JSON or text and exit."""
-    if is_json:
-        out = {
-            "status": "ok",
-            "captured": captured,
-            "reused_objects": reused_objects,
-            "failed": 0,
-            "results": results,
-            "errors": [],
-        }
-        print(json.dumps(out, indent=2))
-    else:
-        print(human_msg)
-    sys.exit(0)
-
-
-def main(argv: Sequence[str] | None = None) -> int:
-    """Main CLI entrypoint."""
-    is_json = "--json" in (argv if argv is not None else sys.argv[1:])
-    parser = build_parser(json_mode=is_json)
-    args = parser.parse_args(argv)
-
-    if args.command is None:
-        if is_json:
-            emit_error(
-                is_json=True,
-                error="No subcommand specified",
-                path="",
-                results=[],
-                exit_code=2,
-            )
+        if env["command"] == "status":
+            lines = _status_lines(env)
         else:
-            parser.print_help()
-            sys.exit(2)
+            lines = [f"{i['id']} {i['result']} {i['filename']}" if i["filename"] else f"{i['id']} {i['result']}" for i in env["items"]]
+            if "pages" in env:
+                lines.append(f"pages: {env['pages']}")
+        lines += list(messages)
+        out.write("\n".join(lines) + ("\n" if lines else ""))
+    for kind, notes in (("warning", env["warnings"]), ("error", env["errors"])):
+        for note in notes:
+            where = " ".join(part for part in (note["id"], note["path"]) if part)
+            err.write(f"{kind}: {note['code']}{' ' + where if where else ''}: {note['message']}\n")
+    out.flush()
+    err.flush()
 
-    if args.command in STUB_COMMANDS:
-        if is_json:
-            emit_error(
-                is_json=True,
-                error="not implemented",
-                path="",
-                results=[],
-                exit_code=2,
-            )
-        else:
-            print("not implemented")
-            sys.exit(2)
 
-    if args.command == "capture":
-        cli_root = getattr(args, "root", None)
-
+def _utf8():
+    for stream in (sys.stdout, sys.stderr):
         try:
-            root = resolve_root(cli_root)
-            validate_root(root)
-        except RootRefusedError as exc:
-            emit_error(
-                is_json=is_json,
-                error=str(exc),
-                path=str(cli_root or ""),
-                results=[],
-                exit_code=2,
-                prefix="",
-            )
-
-        target = Path(args.target)
-        if not target.exists():
-            emit_error(
-                is_json=is_json,
-                error=f"Target not found: {target}",
-                path=str(target),
-                results=[],
-                exit_code=2,
-            )
-
-        try:
-            with WriterLock(root):
-                bootstrap_root(root)
-
-                if target.is_file():
-                    res = capture_file(target, root, __version__)
-                    emit_success(
-                        is_json=is_json,
-                        results=[res],
-                        captured=1,
-                        reused_objects=1 if res["object"] == "reused" else 0,
-                        human_msg=f"captured id={res['id']} name={res['name']} object={res['object']}",
-                    )
-
-                elif target.is_dir():
-                    res = capture_folder(target, root, __version__)
-                    failed = res["failed"]
-                    has_integrity = any(
-                        e.get("category") == "integrity" for e in res["errors"]
-                    )
-                    if failed == 0:
-                        emit_success(
-                            is_json=is_json,
-                            results=res["results"],
-                            captured=res["captured"],
-                            reused_objects=res["reused_objects"],
-                            human_msg=f"captured={res['captured']} reused_objects={res['reused_objects']} failed=0",
-                        )
-                    else:
-                        exit_code = 1 if has_integrity else 2
-                        if is_json:
-                            out = {
-                                "status": "error",
-                                "captured": res["captured"],
-                                "reused_objects": res["reused_objects"],
-                                "failed": failed,
-                                "results": res["results"],
-                                "errors": res["errors"],
-                            }
-                            print(json.dumps(out, indent=2))
-                        else:
-                            print(
-                                f"captured={res['captured']} reused_objects={res['reused_objects']} failed={failed}"
-                            )
-                            for err in res["errors"]:
-                                print(
-                                    f"Error capturing {err['path']}: {err['error']}",
-                                    file=sys.stderr,
-                                )
-                        sys.exit(exit_code)
-
-                else:
-                    emit_error(
-                        is_json=is_json,
-                        error=f"Target is neither a regular file nor a directory: {target}",
-                        path=str(target),
-                        results=[],
-                        exit_code=2,
-                    )
-
-        except LockError as exc:
-            emit_error(
-                is_json=is_json,
-                error=str(exc),
-                path=str(root),
-                results=[],
-                exit_code=2,
-            )
-        except IntegrityError as exc:
-            emit_error(
-                is_json=is_json,
-                error=str(exc),
-                path=str(target),
-                results=[],
-                exit_code=1,
-                prefix="Integrity Error: ",
-            )
-        except (UsageIOError, OSError, IOError) as exc:
-            emit_error(
-                is_json=is_json,
-                error=str(exc),
-                path=str(target),
-                results=[],
-                exit_code=2,
-            )
-
-    elif args.command == "verify":
-        cli_root = getattr(args, "root", None)
-        try:
-            root = resolve_root(cli_root)
-            validate_root(root)
-        except RootRefusedError as exc:
-            emit_error(
-                is_json=is_json,
-                error=str(exc),
-                path=str(cli_root or ""),
-                results=[],
-                exit_code=2,
-                prefix="",
-            )
-        except (UsageIOError, OSError, IOError) as exc:
-            emit_error(
-                is_json=is_json,
-                error=str(exc),
-                path=str(cli_root or ""),
-                results=[],
-                exit_code=2,
-            )
-
-        try:
-            report = verify_repository(root)
-            if report["status"] == "ok":
-                if is_json:
-                    print(json.dumps(report, indent=2))
-                else:
-                    print(
-                        f"OK receipts={report['receipts']} objects={report['objects']} "
-                        f"missing=0 corrupt=0 orphan=0"
-                    )
-                    for ca in report.get("concurrent_activity", []):
-                        severity = ca.get("severity", "possible_concurrent_activity")
-                        print(f"  [{severity}] {ca.get('path', ca.get('id'))}: {ca.get('message', '')}")
-                sys.exit(0)
-            else:
-                if is_json:
-                    print(json.dumps(report, indent=2))
-                else:
-                    print(
-                        f"FAIL receipts={report['receipts']} objects={report['objects']} "
-                        f"missing={report['missing']} corrupt={report['corrupt']} orphan={report['orphan']}"
-                    )
-                    for prob in report.get("problems", []):
-                        print(f"  [{prob['code']}] {prob['path']}: {prob['error']}", file=sys.stderr)
-                    for ca in report.get("concurrent_activity", []):
-                        severity = ca.get("severity", "possible_concurrent_activity")
-                        print(f"  [{severity}] {ca.get('path', ca.get('id'))}: {ca.get('message', '')}", file=sys.stderr)
-                    for err in report.get("io_errors", []):
-                        print(f"  [io_error] {err['path']}: {err['error']}", file=sys.stderr)
-                exit_code = 2 if len(report.get("io_errors", [])) > 0 else 1
-                sys.exit(exit_code)
-        except IntegrityError as exc:
-            emit_error(
-                is_json=is_json,
-                error=str(exc),
-                path=str(root),
-                results=[],
-                exit_code=1,
-                prefix="Integrity Error: ",
-            )
-        except (UsageIOError, OSError, IOError) as exc:
-            emit_error(
-                is_json=is_json,
-                error=str(exc),
-                path=str(root),
-                results=[],
-                exit_code=2,
-            )
-
-    elif args.command == "open":
-        cli_root = getattr(args, "root", None)
-        try:
-            root = resolve_root(cli_root)
-            validate_root(root)
-        except RootRefusedError as exc:
-            emit_error(
-                is_json=is_json,
-                error=str(exc),
-                path=str(cli_root or ""),
-                results=[],
-                exit_code=2,
-                prefix="",
-            )
-        except (UsageIOError, OSError, IOError) as exc:
-            emit_error(
-                is_json=is_json,
-                error=str(exc),
-                path=str(cli_root or ""),
-                results=[],
-                exit_code=2,
-            )
-
-        force_launch = getattr(args, "force_launch", False)
-        try:
-            res = open_item(
-                args.id,
-                root,
-                print_path=args.print_path,
-                force_launch=force_launch,
-            )
-            if is_json:
-                out = {
-                    "status": "ok",
-                    "id": res["id"],
-                    "path": res["path"],
-                    "sha256": res["sha256"],
-                    "opened": res["opened"],
-                    "results": [res],
-                    "errors": [],
-                }
-                print(json.dumps(out, indent=2))
-            else:
-                if args.print_path:
-                    print(res["path"])
-                else:
-                    print(f"verified {res['id']}; opened {res['path']}")
-            sys.exit(0)
-        except IntegrityError as exc:
-            emit_error(
-                is_json=is_json,
-                error=str(exc),
-                path="",
-                results=[],
-                exit_code=1,
-                prefix="Integrity Error: ",
-            )
-        except (UsageIOError, OSError, IOError) as exc:
-            emit_error(
-                is_json=is_json,
-                error=str(exc),
-                path="",
-                results=[],
-                exit_code=2,
-            )
-
-    elif args.command == "find":
-        cli_root = getattr(args, "root", None)
-        try:
-            root = resolve_root(cli_root)
-            validate_root(root)
-        except RootRefusedError as exc:
-            emit_error(
-                is_json=is_json,
-                error=str(exc),
-                path=str(cli_root or ""),
-                results=[],
-                exit_code=2,
-                prefix="",
-            )
-        except (UsageIOError, OSError, IOError) as exc:
-            emit_error(
-                is_json=is_json,
-                error=str(exc),
-                path=str(cli_root or ""),
-                results=[],
-                exit_code=2,
-            )
-
-        limit = getattr(args, "limit", None)
-        if limit is not None and limit <= 0:
-            emit_error(
-                is_json=is_json,
-                error=f"--limit must be greater than 0, got {limit}",
-                path="",
-                results=[],
-                exit_code=2,
-            )
-
-        query = getattr(args, "text", "") or ""
-        reindex = getattr(args, "reindex", False)
-        if not query and not reindex:
-            emit_error(
-                is_json=is_json,
-                error="Search query text is required unless --reindex is specified",
-                path="",
-                results=[],
-                exit_code=2,
-            )
-
-        try:
-            if reindex and not query:
-                index_mode, integrity_errors = search.ensure_index_current(root, force_reindex=True)
-                if integrity_errors:
-                    emit_error(
-                        is_json=is_json,
-                        error=integrity_errors[0]["error"],
-                        path=integrity_errors[0]["path"],
-                        results=[],
-                        errors=integrity_errors,
-                        exit_code=1,
-                        prefix="Integrity Error: ",
-                    )
-                if index_mode == "like":
-                    print(
-                        "Notice: SQLite trigram tokenizer not available; falling back to LIKE search.",
-                        file=sys.stderr,
-                    )
-                if is_json:
-                    print(
-                        json.dumps(
-                            {
-                                "status": "ok",
-                                "index_mode": index_mode,
-                                "results": [],
-                                "errors": [],
-                            },
-                            indent=2,
-                        )
-                    )
-                else:
-                    print("Index rebuilt successfully.")
-                sys.exit(0)
-
-            results, index_mode, integrity_errors = search.find_items(
-                root=root,
-                query=query,
-                limit=limit,
-                force_reindex=reindex,
-            )
-
-            if integrity_errors:
-                emit_error(
-                    is_json=is_json,
-                    error=integrity_errors[0]["error"],
-                    path=integrity_errors[0]["path"],
-                    results=[],
-                    errors=integrity_errors,
-                    exit_code=1,
-                    prefix="Integrity Error: ",
-                )
-
-            if index_mode == "like":
-                print(
-                    "Notice: SQLite trigram tokenizer not available; falling back to LIKE search.",
-                    file=sys.stderr,
-                )
-
-            if is_json:
-                out = {
-                    "status": "ok",
-                    "index_mode": index_mode,
-                    "results": results,
-                    "errors": [],
-                }
-                print(json.dumps(out, indent=2))
-            else:
-                for res in results:
-                    err_suffix = (
-                        f": {res['extraction_error']}"
-                        if res.get("extraction_error")
-                        else ""
-                    )
-                    print(
-                        f"{res['id']}  {res['name']}  {res['snippet']}  [{res['extraction_status']}{err_suffix}]"
-                    )
-            sys.exit(0)
-
-        except LockError as exc:
-            emit_error(
-                is_json=is_json,
-                error=str(exc),
-                path=str(root),
-                results=[],
-                exit_code=2,
-            )
-        except (
-            UsageIOError,
-            OSError,
-            IOError,
-            sqlite3.OperationalError,
-            sqlite3.DatabaseError,
-        ) as exc:
-            emit_error(
-                is_json=is_json,
-                error=str(exc),
-                path="",
-                results=[],
-                exit_code=2,
-            )
-
-    elif args.command == "backup":
-        cli_root = getattr(args, "root", None)
-        try:
-            root = resolve_root(cli_root)
-            validate_root(root)
-        except RootRefusedError as exc:
-            emit_error(
-                is_json=is_json,
-                error=str(exc),
-                path=str(cli_root or ""),
-                results=[],
-                exit_code=2,
-                prefix="",
-            )
-        except (UsageIOError, OSError, IOError) as exc:
-            emit_error(
-                is_json=is_json,
-                error=str(exc),
-                path=str(cli_root or ""),
-                results=[],
-                exit_code=2,
-            )
-
-        backup_root_arg = getattr(args, "backup_root", None)
-        backup_root_path = Path(backup_root_arg) if backup_root_arg else None
-        store_flag = backup_root_path is not None
-
-        try:
-            res = backup_repository(
-                data_root=root,
-                backup_root=backup_root_path,
-                store_backup_root=store_flag,
-                tool_version=__version__,
-            )
-            if is_json:
-                print(json.dumps(res, indent=2))
-            else:
-                print(
-                    f"OK backup_root={res['backup_root']} manifest={res['manifest']} "
-                    f"objects={res['total_objects']} (copied {res['copied_objects']}, reused {res['reused_objects']}) "
-                    f"receipts={res['total_receipts']} (copied {res['copied_receipts']}, reused {res['reused_receipts']})"
-                )
-            sys.exit(0)
-        except IntegrityError as exc:
-            emit_error(
-                is_json=is_json,
-                error=str(exc),
-                path="",
-                results=[],
-                exit_code=1,
-                prefix="Integrity Error: ",
-            )
-        except LockError as exc:
-            emit_error(
-                is_json=is_json,
-                error=str(exc),
-                path=str(root),
-                results=[],
-                exit_code=2,
-            )
-        except (UsageIOError, OSError, IOError) as exc:
-            emit_error(
-                is_json=is_json,
-                error=str(exc),
-                path="",
-                results=[],
-                exit_code=2,
-            )
-
-    elif args.command == "restore":
-        backup_root_path = Path(args.backup_root)
-        to_path = Path(args.to_dir)
-        manifest_arg = getattr(args, "manifest", None)
-
-        try:
-            res = restore_repository(
-                backup_root=backup_root_path,
-                target_dir=to_path,
-                manifest_name=manifest_arg,
-            )
-            if is_json:
-                print(json.dumps(res, indent=2))
-            else:
-                print(
-                    f"PASS restored to {res['restored_root']} from manifest {res['manifest']} "
-                    f"(receipts={res['receipts']} objects={res['objects']})"
-                )
-            sys.exit(0)
-        except IntegrityError as exc:
-            emit_error(
-                is_json=is_json,
-                error=str(exc),
-                path="",
-                results=[],
-                exit_code=1,
-                prefix="Integrity Error: ",
-            )
-        except (UsageIOError, OSError, IOError) as exc:
-            emit_error(
-                is_json=is_json,
-                error=str(exc),
-                path="",
-                results=[],
-                exit_code=2,
-            )
-
-    return 0
+            stream.reconfigure(encoding="utf-8")
+        except (AttributeError, ValueError, OSError):
+            pass
 
 
-if __name__ == "__main__":
-    sys.exit(main())
+def _guess(argv, option):
+    for n, token in enumerate(argv):
+        if token == option and n + 1 < len(argv):
+            return argv[n + 1]
+        if token.startswith(option + "="):
+            return token.split("=", 1)[1]
+    return None
+
+
+def _command_guess(argv):
+    """Best-effort command name for a parser failure ("usage" when none is recognizable)."""
+    words = [t for t in argv if not t.startswith("-")]
+    if words and words[0] in ("ingest", "status"):
+        return words[0]
+    if words and words[0] in ("wiki", "ocr", "llm"):
+        return " ".join(words[:2])
+    return "usage"
+
+
+def main(argv=None):
+    argv = list(sys.argv[1:] if argv is None else argv)
+    _utf8()
+    as_json = "--json" in argv
+    try:
+        args = build_parser().parse_args(argv)
+    except UsageError as error:
+        root = resolve_root(_guess(argv, "--root"))
+        emit(envelope(_command_guess(argv), 2, root, errors=[{"code": str(ErrorCode.USAGE), "id": None, "path": None, "message": str(error)}]), as_json)
+        return 2
+    as_json = getattr(args, "json", False)  # defaults are SUPPRESSed so either position works
+    root = resolve_root(getattr(args, "root", None))
+    command = args.command if args.command in ("ingest", "status") else f"{args.command} {args.action}"
+    item_id = getattr(args, "id", None)
+    try:
+        result = run_command(args, root)
+    except SbError as error:
+        env = envelope(command, error.exit, root, errors=[{"code": error.code, "id": item_id, "path": None, "message": str(error)}])
+        emit(env, as_json)
+        return env["exit"]
+    except OSError as error:
+        env = envelope(command, 1, root, errors=[{"code": str(ErrorCode.IO_ERROR), "id": item_id, "path": None, "message": str(error)}])
+        emit(env, as_json)
+        return 1
+    exit_code = 1 if result["errors"] else 0
+    env = envelope(command, exit_code, root, result["items"], result["warnings"], result["errors"], result["extra"])
+    emit(env, as_json, result["messages"])
+    return exit_code

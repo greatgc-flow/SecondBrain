@@ -1,0 +1,1 @@
+Synthetic DOCX text. Invoice 12345, total 42 USD.

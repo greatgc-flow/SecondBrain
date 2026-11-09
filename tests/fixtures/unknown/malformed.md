@@ -1,0 +1,3 @@
+<!-- unclosed synthetic comment
+![broken](
+| --- |

@@ -1,0 +1,29 @@
+{
+ "adapter_errors": [],
+ "bytes": 4437,
+ "charset": null,
+ "conversion": {
+  "artifact": "reports/mixed--two-pages.pdf.converted.md",
+  "bytes": 53,
+  "excerpt": "Synthetic native text. Invoice 12345, total 42 USD.\n\n",
+  "has_native_text": true,
+  "sha256": "b299ba35ac18bf0821f459b74fe3722f0b3015f77883296b83a5905c7b28c4bc"
+ },
+ "design_revision": "r8",
+ "design_row_class_state_reason": [
+  9,
+  "mixed",
+  "awaiting-approval",
+  null
+ ],
+ "fixture": "mixed/two-pages.pdf",
+ "media": [],
+ "report": "reports/mixed--two-pages.pdf.json",
+ "report_exit": 0,
+ "report_stderr": "ocr-report: decision=ocr_recommended high=1 low=0 coverage=complete issues=0 -> <worktree>\\tests\\fixtures\\reports\\mixed--two-pages.pdf.json\n",
+ "role": "ingest",
+ "sha256": "4283c5580032cf5ad7ff8a88ab560f4eedea6af02ed5cc9f934d2b6f18faedc4",
+ "units": [
+  "p2"
+ ]
+}

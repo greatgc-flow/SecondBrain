@@ -1,0 +1,27 @@
+{
+ "adapter_errors": [],
+ "bytes": 28,
+ "charset": null,
+ "conversion": {
+  "artifact": "reports/text--nfd-이름.txt.converted.md",
+  "bytes": 28,
+  "excerpt": "합성 이름 문서 12345.\n",
+  "has_native_text": true,
+  "sha256": "256d01e0587f2618e0e5fbbd442984022a4b9206511a663d5cbb49397b3e6da5"
+ },
+ "design_revision": "r8",
+ "design_row_class_state_reason": [
+  11,
+  "text-only",
+  "ready",
+  null
+ ],
+ "fixture": "text/nfd-이름.txt",
+ "media": [],
+ "report": "reports/text--nfd-이름.txt.json",
+ "report_exit": 0,
+ "report_stderr": "ocr-report: decision=no_candidates high=0 low=0 coverage=not_applicable issues=0 -> <worktree>\\tests\\fixtures\\reports\\text--nfd-이름.txt.json\n",
+ "role": "ingest",
+ "sha256": "256d01e0587f2618e0e5fbbd442984022a4b9206511a663d5cbb49397b3e6da5",
+ "units": []
+}

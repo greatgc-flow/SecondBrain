@@ -1,0 +1,35 @@
+{
+ "adapter_errors": [],
+ "bytes": 9514,
+ "charset": null,
+ "conversion": {
+  "artifact": "reports/mixed--image.xlsx.converted.md",
+  "bytes": 164,
+  "excerpt": "## Synthetic\n| Item | Amount |\n| --- | --- |\n| Invoice 12345 | 42 |\n\n### Images in this sheet:\n\n![Image](work/characterize/media/mixed--image.xlsx/9c4b0cd1370e.png)",
+  "has_native_text": true,
+  "sha256": "21ea29685185916740c583e7e1f111b345ea3ae631462d939c8a4767bbb9b735"
+ },
+ "design_revision": "r8",
+ "design_row_class_state_reason": [
+  9,
+  "mixed",
+  "awaiting-approval",
+  null
+ ],
+ "fixture": "mixed/image.xlsx",
+ "media": [
+  {
+   "bytes": 3957,
+   "file": "9c4b0cd1370e.png",
+   "sha256": "9c4b0cd1370ef33ef6093b25e6534a3e26ed8605a0e9ef5e39ffe1535d20806f"
+  }
+ ],
+ "report": "reports/mixed--image.xlsx.json",
+ "report_exit": 0,
+ "report_stderr": "ocr-report: decision=ocr_recommended high=1 low=0 coverage=complete issues=0 -> <worktree>\\tests\\fixtures\\reports\\mixed--image.xlsx.json\n",
+ "role": "ingest",
+ "sha256": "ebef102957b5e3b3aad3eb2574b1c15025e0e54878991b67762c3104f8e9e1ac",
+ "units": [
+  "9c4b0cd1370e.png"
+ ]
+}

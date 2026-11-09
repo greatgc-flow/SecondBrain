@@ -1,0 +1,27 @@
+{
+ "adapter_errors": [],
+ "bytes": 22,
+ "charset": null,
+ "conversion": {
+  "artifact": "reports/peer-output--illegible.md.converted.md",
+  "bytes": 22,
+  "excerpt": "[illegible]\n[no text]\n",
+  "has_native_text": true,
+  "sha256": "7215d7c36da7c082b3822c4e004592e7284947b5a44de1b6bd55d3240f82fc37"
+ },
+ "design_revision": "r8",
+ "design_row_class_state_reason": [
+  12,
+  "unknown",
+  "awaiting-approval",
+  "media_not_inspected"
+ ],
+ "fixture": "peer-output/illegible.md",
+ "media": [],
+ "report": "reports/peer-output--illegible.md.json",
+ "report_exit": 0,
+ "report_stderr": "ocr-report: decision=unknown high=0 low=0 coverage=none issues=1 -> <worktree>\\tests\\fixtures\\reports\\peer-output--illegible.md.json\n",
+ "role": "peer/LLM adapter data; not an ingest acceptance fixture",
+ "sha256": "7215d7c36da7c082b3822c4e004592e7284947b5a44de1b6bd55d3240f82fc37",
+ "units": []
+}

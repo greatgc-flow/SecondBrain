@@ -1,31 +1,11 @@
 name: CI
 
-# Private account: one Linux job for code PRs; full OS/Python matrix is explicit opt-in.
-# One Linux test on relevant main pushes, including direct updates or merges.
+# Public repository: full OS/Python matrix and offline clean installs on every CI event.
 on:
   push:
-    branches: [main]
-    paths:
-      - 'src/**'
-      - 'tests/**'
-      - 'scripts/**'
-      - 'pyproject.toml'
-      - '.github/workflows/**'
+    branches: [main, 'renew/**']
   pull_request:
-    branches: [main]
-    paths:
-      - 'src/**'
-      - 'tests/**'
-      - 'scripts/**'
-      - 'pyproject.toml'
-      - '.github/workflows/**'
   workflow_dispatch:
-    inputs:
-      full_matrix:
-        description: 'Run all 6 Windows/Linux x Python 3.11/3.12/3.13 jobs (uses private Actions quota)'
-        required: false
-        type: boolean
-        default: false
 
 permissions:
   contents: read
@@ -35,42 +15,93 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  smoke:
-    name: Smoke (Linux, Python 3.12)
-    if: github.event_name == 'push' || github.event_name == 'pull_request' || !inputs.full_matrix
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          persist-credentials: false
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
-        with:
-          python-version: '3.12'
-      - name: Install test dependencies
-        run: python -m pip install --disable-pip-version-check -q -e ".[dev]"
-      - name: Run current tests without spawning xdist workers
-        run: python scripts/verify.py
-
   full-matrix:
     name: Full (${{ matrix.os }}, Python ${{ matrix.python-version }})
-    if: github.event_name == 'workflow_dispatch' && inputs.full_matrix
     runs-on: ${{ matrix.os }}
     timeout-minutes: 25
     strategy:
       fail-fast: false
-      max-parallel: 2
       matrix:
         os: [ubuntu-latest, windows-latest]
-        python-version: ['3.11', '3.12', '3.13']
+        python-version: ['3.11', '3.13', '3.15']
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install test dependencies
         run: python -m pip install --disable-pip-version-check -q -e ".[dev]"
-      - name: Run full current tests on this runner
-        run: python scripts/verify.py
+      - name: Run tests
+        run: python -m pytest --basetemp=.pytest-tmp
+
+  offline-clean-install:
+    name: Offline install (${{ matrix.os }}, Python 3.13)
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    env:
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.13'
+      - name: Build wheel and download runtime wheels (online preparation)
+        shell: python {0}
+        run: |
+          from pathlib import Path
+          import subprocess
+          import sys
+
+          wheels = Path('work/release/wheelhouse').resolve()
+          wheels.mkdir(parents=True)
+          subprocess.run([sys.executable, '-m', 'pip', 'wheel', '--no-deps', '--wheel-dir', str(wheels), '.'], check=True)
+          wheel, = wheels.glob('secondbrain-1.0.0-*.whl')
+          subprocess.run([sys.executable, '-m', 'pip', 'download', '--only-binary=:all:', '--dest', str(wheels), str(wheel)], check=True)
+      - name: Install offline in a fresh venv and verify the installed console script
+        shell: python {0}
+        run: |
+          from pathlib import Path
+          import json
+          import os
+          import subprocess
+          import venv
+
+          work = Path('work/release').resolve()
+          target = work / 'venv'
+          venv.EnvBuilder(with_pip=True).create(target)
+          scripts = target / ('Scripts' if os.name == 'nt' else 'bin')
+          python = scripts / ('python.exe' if os.name == 'nt' else 'python')
+          sb = scripts / ('sb.exe' if os.name == 'nt' else 'sb')
+          empty = work / 'empty-root'
+          empty.mkdir()
+          env = dict(os.environ, PIP_NO_INDEX='1')
+          env.pop('PYTHONPATH', None)
+          subprocess.run([str(python), '-I', '-m', 'pip', 'install', '--no-index', '--find-links', str(work / 'wheelhouse'), 'secondbrain==1.0.0'], cwd=empty, env=env, check=True)
+          check = (
+              'from importlib.metadata import version; from importlib.util import find_spec; '
+              'from pathlib import Path; import sys, secondbrain; '
+              'assert version("secondbrain") == secondbrain.__version__ == "1.0.0"; '
+              'assert version("markitdown-gc") == "0.3.5"; '
+              'assert Path(secondbrain.__file__).is_relative_to(Path(sys.prefix)); '
+              'assert all(find_spec(name) is None for name in ("speech_recognition", "pydub")); '
+              'print("Installed metadata: secondbrain 1.0.0; markitdown-gc 0.3.5")'
+          )
+          subprocess.run([str(python), '-I', '-c', check], cwd=empty, env=env, check=True)
+          done = subprocess.run([str(sb), '--root', str(empty), '--json', 'status'], cwd=empty, env=env, check=True, capture_output=True, encoding='utf-8')
+          value = json.loads(done.stdout)
+          assert value['command'] == 'status' and value['exit'] == 0 and value['ok'] is True
+          assert Path(value['root']) == empty
+          assert value['items'] == value['errors'] == value['warnings'] == []
+          assert set(value['counts']) == {'ready', 'awaiting-approval', 'ocr-in-progress', 'unsupported', 'failed'}
+          assert all(count == 0 for count in value['counts'].values())
+          assert not any(empty.iterdir())
+          print(done.stdout, end='')

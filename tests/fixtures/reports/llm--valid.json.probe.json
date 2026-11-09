@@ -1,0 +1,33 @@
+{
+ "adapter_errors": [],
+ "bytes": 204,
+ "charset": null,
+ "conversion": {
+  "artifact": "reports/llm--valid.json.converted.md",
+  "bytes": 204,
+  "excerpt": "{\n \"date\": \"2026-11-09T00:00:00Z\",\n \"kind\": \"summary\",\n \"model\": \"synthetic-model\",\n \"peer\": \"cx\",\n \"source_digest\": \"59c7bcbced49378eac2525e7ae385ea04bfd468e8a8b79ef2652279cd12516",
+  "has_native_text": true,
+  "sha256": "9956c8e52efb4d185c5a6d51cefb9529ba64ac308121143ea3540ea0a985866a"
+ },
+ "design_revision": "r8",
+ "design_row_class_state_reason": [
+  12,
+  "unknown",
+  "awaiting-approval",
+  "unsupported_format"
+ ],
+ "design_row_class_state_reason_r9": [
+  11,
+  "text-only",
+  "ready",
+  null
+ ],
+ "fixture": "llm/valid.json",
+ "media": [],
+ "report": "reports/llm--valid.json.json",
+ "report_exit": 0,
+ "report_stderr": "ocr-report: decision=unknown high=0 low=0 coverage=none issues=1 -> <worktree>\\tests\\fixtures\\reports\\llm--valid.json.json\n",
+ "role": "peer/LLM adapter data; not an ingest acceptance fixture",
+ "sha256": "9956c8e52efb4d185c5a6d51cefb9529ba64ac308121143ea3540ea0a985866a",
+ "units": []
+}

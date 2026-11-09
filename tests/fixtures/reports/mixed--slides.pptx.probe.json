@@ -1,0 +1,35 @@
+{
+ "adapter_errors": [],
+ "bytes": 32112,
+ "charset": null,
+ "conversion": {
+  "artifact": "reports/mixed--slides.pptx.converted.md",
+  "bytes": 150,
+  "excerpt": "<!-- Slide number: 1 -->\nSynthetic slide text. Invoice 12345, total 42 USD.\n\n![image.png](work/characterize/media/mixed--slides.pptx/9c4b0cd1370e.png)",
+  "has_native_text": true,
+  "sha256": "9898c42bd601d9d1752fa9f12baf29d7dc897d417a36171e8932b91161c9b4cb"
+ },
+ "design_revision": "r8",
+ "design_row_class_state_reason": [
+  9,
+  "mixed",
+  "awaiting-approval",
+  null
+ ],
+ "fixture": "mixed/slides.pptx",
+ "media": [
+  {
+   "bytes": 3957,
+   "file": "9c4b0cd1370e.png",
+   "sha256": "9c4b0cd1370ef33ef6093b25e6534a3e26ed8605a0e9ef5e39ffe1535d20806f"
+  }
+ ],
+ "report": "reports/mixed--slides.pptx.json",
+ "report_exit": 0,
+ "report_stderr": "ocr-report: decision=review high=0 low=1 coverage=complete issues=0 -> <worktree>\\tests\\fixtures\\reports\\mixed--slides.pptx.json\n",
+ "role": "ingest",
+ "sha256": "a799b40573f42a5f427effac347cd0ac5897d5c7d696633714227d98237c46c5",
+ "units": [
+  "9c4b0cd1370e.png"
+ ]
+}

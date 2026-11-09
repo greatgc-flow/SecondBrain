@@ -1,0 +1,29 @@
+{
+ "adapter_errors": [],
+ "bytes": 4035,
+ "charset": null,
+ "conversion": {
+  "artifact": "reports/ocr--scan.pdf.converted.md",
+  "bytes": 0,
+  "excerpt": "",
+  "has_native_text": false,
+  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+ },
+ "design_revision": "r8",
+ "design_row_class_state_reason": [
+  8,
+  "ocr-required",
+  "awaiting-approval",
+  null
+ ],
+ "fixture": "ocr/scan.pdf",
+ "media": [],
+ "report": "reports/ocr--scan.pdf.json",
+ "report_exit": 0,
+ "report_stderr": "ocr-report: decision=ocr_recommended high=1 low=0 coverage=complete issues=0 -> <worktree>\\tests\\fixtures\\reports\\ocr--scan.pdf.json\n",
+ "role": "ingest",
+ "sha256": "67a756291ce24500fc3ff1c87bf26918045ca565b3b79d3bc5420047457cb9e2",
+ "units": [
+  "p1"
+ ]
+}

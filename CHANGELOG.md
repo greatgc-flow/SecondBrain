@@ -2,6 +2,10 @@
 
 ## 1.0.1 — Unreleased
 
+- Validate and pin `markitdown-gc==0.3.6`: replay all 36 gate-1b inputs with no conversion/report/classification differences.
+  Preserve completed 0.3.5 conversion bytes and provenance; unfinished retries record the version that actually converts them.
+  Refresh probes/expectations and the tool guide (new HWP5 OLE-stream extraction recipe).
+
 - OCR and LLM workflows share `ocr.ask_line()` and centralized peer defaults; transcription/summary asks include `--writable`,
   verification asks remain read-only. The operator runs peers; sb prepares commands and validates outputs.
 - Media-free Markdown/HTML becomes text-only and ready; unknown is reserved for incomplete inspection.

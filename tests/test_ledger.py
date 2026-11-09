@@ -268,6 +268,15 @@ def test_valid_declined_ocr(root):
     assert validate_meta(item.meta, item.path) == []
 
 
+def test_previous_converter_provenance_remains_readable_without_rewriting(root):
+    item = make_item(root)
+    item.meta["conversion"]["activity"]["version"] = "0.3.5"
+    save_meta(item)
+    before = tree(item.path)
+    assert load_item(item.path).meta == item.meta
+    assert tree(item.path) == before
+
+
 def test_decline_after_partial_ocr_preserves_attempts_and_verification_rules(root):
     item = make_item(root, classification="mixed", state="ocr-in-progress",
                      statuses=["verified", "recorded", "approved", "pending"])

@@ -9,7 +9,8 @@
   "has_native_text": true,
   "sha256": "b299ba35ac18bf0821f459b74fe3722f0b3015f77883296b83a5905c7b28c4bc"
  },
- "design_revision": "r8",
+ "converter_version": "0.3.6",
+ "design_revision": "v1.0.1",
  "design_row_class_state_reason": [
   9,
   "mixed",
@@ -18,6 +19,19 @@
  ],
  "fixture": "mixed/two-pages.pdf",
  "media": [],
+ "observed_classification": {
+  "class": "mixed",
+  "error_code": null,
+  "has_native_text": true,
+  "reason": null,
+  "state": "awaiting-approval",
+  "units": {
+   "u0001": {
+    "kind": "page",
+    "source": "p2"
+   }
+  }
+ },
  "report": "reports/mixed--two-pages.pdf.json",
  "report_exit": 0,
  "report_stderr": "ocr-report: decision=ocr_recommended high=1 low=0 coverage=complete issues=0 -> <worktree>\\tests\\fixtures\\reports\\mixed--two-pages.pdf.json\n",

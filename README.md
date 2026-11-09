@@ -16,7 +16,7 @@ Create a separate data directory with an `inbox/`, put files there, then run
 [usage guide](docs/USAGE.md) before approving OCR or invoking peers; it includes
 the required access restrictions, every command, and recovery steps.
 
-Runtime dependency: `markitdown-gc==0.3.5`, without optional extras.
+Runtime dependency: `markitdown-gc==0.3.6`, without optional extras.
 [Documentation map](docs/README.md) · [Release evidence](docs/renewal/RUBRIC.md).
 
 For development:

@@ -9,7 +9,8 @@
   "has_native_text": true,
   "sha256": "b299ba35ac18bf0821f459b74fe3722f0b3015f77883296b83a5905c7b28c4bc"
  },
- "design_revision": "r8",
+ "converter_version": "0.3.6",
+ "design_revision": "v1.0.1",
  "design_row_class_state_reason": [
   9,
   "mixed",
@@ -18,6 +19,19 @@
  ],
  "fixture": "mixed/same-page.pdf",
  "media": [],
+ "observed_classification": {
+  "class": "mixed",
+  "error_code": null,
+  "has_native_text": true,
+  "reason": null,
+  "state": "awaiting-approval",
+  "units": {
+   "u0001": {
+    "kind": "page",
+    "source": "p1"
+   }
+  }
+ },
  "report": "reports/mixed--same-page.pdf.json",
  "report_exit": 0,
  "report_stderr": "ocr-report: decision=review high=0 low=1 coverage=complete issues=0 -> <worktree>\\tests\\fixtures\\reports\\mixed--same-page.pdf.json\n",

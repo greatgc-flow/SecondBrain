@@ -6,7 +6,8 @@
   "exception": "FileConversionException",
   "message": "File conversion failed after 1 attempts: HwpConverter: ValueError: Encrypted files are not supported\n - HwpConverter threw ValueError with message: Encrypted files are not supported\n"
  },
- "design_revision": "r8",
+ "converter_version": "0.3.6",
+ "design_revision": "v1.0.1",
  "design_row_class_state_reason": [
   5,
   null,
@@ -15,6 +16,14 @@
  ],
  "fixture": "failed/encrypted.hwp",
  "media": [],
+ "observed_classification": {
+  "class": null,
+  "error_code": "conversion_failed",
+  "has_native_text": null,
+  "reason": "FileConversionException",
+  "state": "failed",
+  "units": {}
+ },
  "report": "reports/failed--encrypted.hwp.json",
  "report_exit": 0,
  "report_stderr": "ocr-report: decision=unknown high=0 low=0 coverage=none issues=1 -> <worktree>\\tests\\fixtures\\reports\\failed--encrypted.hwp.json\n",

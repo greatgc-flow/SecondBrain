@@ -9,7 +9,8 @@
   "has_native_text": false,
   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
  },
- "design_revision": "r8",
+ "converter_version": "0.3.6",
+ "design_revision": "v1.0.1",
  "design_row_class_state_reason": [
   8,
   "ocr-required",
@@ -18,6 +19,19 @@
  ],
  "fixture": "ocr/scan.pdf",
  "media": [],
+ "observed_classification": {
+  "class": "ocr-required",
+  "error_code": null,
+  "has_native_text": false,
+  "reason": null,
+  "state": "awaiting-approval",
+  "units": {
+   "u0001": {
+    "kind": "page",
+    "source": "p1"
+   }
+  }
+ },
  "report": "reports/ocr--scan.pdf.json",
  "report_exit": 0,
  "report_stderr": "ocr-report: decision=ocr_recommended high=1 low=0 coverage=complete issues=0 -> <worktree>\\tests\\fixtures\\reports\\ocr--scan.pdf.json\n",

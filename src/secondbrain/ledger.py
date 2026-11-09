@@ -72,7 +72,7 @@ def _activity(value, method=None):
     _date(value["date"])
     params = value["params"]
     if value["method"] == "convert":
-        _require(value["tool"] == "markitdown-gc" and value["version"] == CONVERTER_VERSION, "Wrong converter/version")
+        _require(value["tool"] == "markitdown-gc" and value["version"] in {"0.3.5", CONVERTER_VERSION}, "Wrong converter/version")
         _require(value["peer"] is None and value["model"] is None, "Conversion has no peer/model")
         _keys(params, "charset extract_media")
         _string(params["charset"], nullable=True)

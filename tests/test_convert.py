@@ -69,15 +69,16 @@ def install_converter(monkeypatch, directory, *, text="native text", error=None,
     return calls
 
 
-def test_gate_1b_probes_have_explicit_r9_plain_text_expectations():
+def test_gate_probes_match_the_characterized_converter_and_current_plain_text_rule():
     probes = sorted(REPORTS.glob("*.probe.json"))
     assert len(probes) == 36
     for path in probes:
         data = json.loads(path.read_text(encoding="utf-8"))
-        expected = data.get("design_row_class_state_reason_r9", data["design_row_class_state_reason"])
+        expected = data["design_row_class_state_reason"]
         assert len(expected) == 4
+        assert data["converter_version"] == convert.CONVERTER_VERSION
         if data["fixture"] == "text/korean-cp949.txt" or data["fixture"].startswith("llm/") and data["fixture"].endswith(".json"):
-            assert data["design_row_class_state_reason_r9"] == [11, "text-only", "ready", None]
+            assert expected == [11, "text-only", "ready", None]
 
 
 def test_at06_sample_adapter_is_field_exact_and_pure():
@@ -396,7 +397,7 @@ def test_local_source_contract_rejects_uris_before_tool_calls(root, monkeypatch,
         convert.run_report(source, root / "report.json")
 
 
-REAL_CASES = sorted(p for group in ("text", "ocr", "mixed", "unknown", "unsupported", "characterize", "failed")
+REAL_CASES = sorted(p for group in ("text", "ocr", "mixed", "unknown", "unsupported", "characterize", "failed", "llm", "peer-output")
                     for p in (FIXTURES / group).iterdir() if p.is_file())
 
 
@@ -405,10 +406,11 @@ def test_real_tool_classification_matches_characterization(root, source, subproc
     directory, stage = stage_file(root, source.relative_to(FIXTURES).as_posix())
     result = convert.classify_item(directory, stage)
     probe = raw(source.parent.name + "--" + source.name + ".probe.json")
-    _, cls, state, reason = probe.get("design_row_class_state_reason_r9", probe["design_row_class_state_reason"])
+    _, cls, state, reason = probe["design_row_class_state_reason"]
     assert (result["class"], result["state"], result["reason"]) == (cls, state, reason)
     assert len(result["ocr"]["units"]) == len(probe["units"])
-    should_report = source.suffix.lower() not in convert.PLAIN_TEXT_EXTENSIONS and result["conversion"] is not None
+    should_report = (source.suffix.lower() not in convert.PLAIN_TEXT_EXTENSIONS and result["conversion"] is not None
+                     and not (source.suffix.lower() in convert.MARKUP_EXTENSIONS and cls == "text-only"))
     assert len(subprocess_spy) == int(should_report)
     assert not (directory / "report.json").exists()
     if result["conversion"]:
@@ -459,6 +461,23 @@ def test_backend_without_completed_output_can_be_retried(root, monkeypatch):
     second_calls = install_converter(monkeypatch, directory)
     result = convert.classify_item(directory, load_stage(directory))
     assert result["class"] == "text-only" and len(first_calls) == len(second_calls) == 1
+
+
+@pytest.mark.parametrize("completed", [False, True])
+def test_converter_upgrade_preserves_completed_bytes_and_updates_only_new_attempts(root, monkeypatch, completed):
+    from secondbrain.ledger import activity
+    directory, stage = stage_file(root)
+    previous = activity("markitdown-gc", convert.CONVERTER_VERSION, "convert", params={"charset": None, "extract_media": False})
+    previous["version"] = "0.3.5"
+    stage["conversion"] = {"activity": previous, "sha256": None}
+    write_json_atomic(directory / "stage.json", stage)
+    if completed:
+        (directory / "converted.md").write_bytes(b"Previous converter bytes.\r\n")
+    calls = install_converter(monkeypatch, directory, text="Current converter bytes.")
+    record = convert.convert_document(directory, stage)
+    assert record["activity"]["version"] == ("0.3.5" if completed else convert.CONVERTER_VERSION)
+    assert len(calls) == (0 if completed else 1)
+    assert (directory / "converted.md").read_bytes() == (b"Previous converter bytes.\r\n" if completed else b"Current converter bytes.")
 
 
 def test_corrupt_cached_native_text_is_not_reused(root, monkeypatch):
@@ -572,7 +591,7 @@ def test_renamed_audio_never_reaches_optional_backends(root, monkeypatch, option
     audio_calls = []
     def guesses(self, *, file_stream, base_guess):
         # Simulate a sniffer recognizing MP3 behind the allowed PDF extension.
-        # This private 0.3.5 hook must be reviewed when upgrading markitdown-gc.
+        # This private hook was reviewed for 0.3.6; review it again on upgrades.
         return [base_guess, StreamInfo(extension=".mp3", mimetype="audio/mpeg")]
     def audio(self, *args, **kwargs):
         audio_calls.append(True)

@@ -624,7 +624,7 @@ def test_converter_version_is_checked_before_any_claim(root, tool, monkeypatch, 
 
 @pytest.mark.parametrize("group", ["text", "ocr", "mixed", "unknown", "unsupported", "characterize", "failed"])
 def test_real_fixture_ingest_matches_gate_and_retry(root, group):
-    """AT-08–13 at the ingest boundary, with real 0.3.5 conversion/report."""
+    """AT-08–13 at the ingest boundary, with real 0.3.6 conversion/report."""
     paths = sorted((FIXTURES / group).iterdir())
     for path in paths:
         fixture(root, f"{group}/{path.name}")
@@ -641,7 +641,7 @@ def test_real_fixture_ingest_matches_gate_and_retry(root, group):
     by_name = {i.meta["filename"]: i for i in committed(root)}
     for path in paths:
         probe = json.loads((FIXTURES / "reports" / f"{group}--{path.name}.probe.json").read_text(encoding="utf-8"))
-        expected = probe.get("design_row_class_state_reason_r9", probe["design_row_class_state_reason"])
+        expected = probe["design_row_class_state_reason"]
         item = by_name[path.name]
         assert [item.meta["class"], item.meta["state"], item.meta["reason"]] == expected[1:]
         assert len(item.meta["ocr"]["units"]) == len(probe["units"])

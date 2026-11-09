@@ -1,13 +1,13 @@
 # SecondBrain v1.0.1 — Design (2026-11-09)
 
 Status: v1.0.1 contract, updated after [independent audit](AUDIT_independent.md).
-Binding input: [BRIEF](BRIEF.md). Tool contract: `_mdgc_guide.txt` (markitdown-gc 0.3.5).
+Binding input: [BRIEF](BRIEF.md). Tool contract: `_mdgc_guide.txt` (markitdown-gc 0.3.6).
 Owner rules: VerySimpleGuide, Windows primary, English. Release evidence: [RUBRIC](RUBRIC.md).
 
 ## 1. Scope and non-goals
 
 **Goal.** `inbox/` -> `raws/` (original + conversion + verified OCR + ledger) -> `wiki/` (100% derived). One package `secondbrain`,
-CLI `sb`. Runtime dependency: `markitdown-gc==0.3.5` without optional extras (no audio/YouTube/Azure; brings `pdfplumber`).
+CLI `sb`. Runtime dependency: `markitdown-gc==0.3.6` without optional extras (no audio/YouTube/Azure; brings `pdfplumber`).
 
 `ingest` claims/converts/classifies; `status` shows counts before OCR; `ocr` requires approval and independent verification.
 `wiki build` is deterministic; `llm prepare/accept` explicitly requests and validates summaries. Scanning `raws/*/meta.json` is the index.
@@ -71,8 +71,11 @@ under the root and must not be a reparse point. Inbox files are moved (never del
 | `error` | `{code, message, date}` or null | non-null iff `state == failed` |
 
 **activity** (BRIEF provenance): `{tool, version: str|null, method, peer: str|null, model: str|null, date: UTC, params: object}`; `version`
-is null when `sb` did not observe it (peer tools). Methods: `convert` (markitdown-gc 0.3.5, params `{charset, extract_media: bool}`);
+is null when `sb` did not observe it (peer tools). Methods: `convert` (markitdown-gc 0.3.6, params `{charset, extract_media: bool}`);
 `ocr-vision` (peer, model required; `{prompt_rev, dpi, unit_file}`); `ocr-verify` (peer, model; `{prompt_rev}`); `summary` (operator-supplied peer/model; params `{prompt_rev}`).
+
+Completed conversion activities from the validated prior 0.3.5 release remain readable with their original provenance/digests.
+A pending 0.3.5 intent without completed text is refreshed to the actual 0.3.6 activity before a new attempt; completed bytes are reused.
 
 ## 3. Classification (MECE, staged with short-circuit)
 
@@ -88,7 +91,7 @@ records it (artifact rule, §2); a resume redoes a step only when it has no outp
    HWP/HWPX share `HwpConverter`; other allowed text uses `PlainTextConverter`. Never register fallback backends.
    Use resolved local regular paths. Containers extract media in the same call; all extracted bytes remain referenced.
    Plain-text inputs always get `StreamInfo(extension, mimetype="text/plain", charset)`; other extensions get a charset hint when
-   explicit (the bare charset keyword is ineffective in 0.3.5). Write `converted.md` atomically, then record output/media digests.
+   explicit (the bare charset keyword is ineffective in 0.3.6). Write `converted.md` atomically, then record output/media digests.
    Exceptions select rows 4–5; a completed output is reconciled after restart rather than converted again.
 3. **Triage**: skip the tool report for plain-text inputs (triage null). For markup, inspect the original source using the
    explicit charset or UTF-8 with optional BOM. If it contains neither Markdown image syntax (`![`, including reference/shortcut or
@@ -97,7 +100,7 @@ records it (artifact rule, §2); a resume redoes a step only when it has no outp
    `decision=no_candidates`, `coverage={state:complete,pages_total:null,pages_inspected:null}`, `scope=markup_source`,
    `image_occurrences=0`, empty candidates/issues. This proves there is no media to inspect and selects row 11 without a subprocess.
    If media syntax is present or source decoding is incomplete, retain conservative tool triage. For other triaged inputs:
-   `markitdown-gc <abs_path> --ocr-report -o <staging>/report.json`; exit != 0 -> `report_failed`. **Adapter** (observed 0.3.5
+   `markitdown-gc <abs_path> --ocr-report -o <staging>/report.json`; exit != 0 -> `report_failed`. **Adapter** (observed 0.3.6
    fields; anything else -> `report_invalid`): `schema_version == 1`; `decision` in `{ocr_recommended, review, no_candidates, unknown}`;
    `coverage.state` in `{complete, partial, none, not_applicable}`, `coverage.pages_total`/`pages_inspected` int|null; `summary.scope` str,
    `summary.image_occurrences` int; `candidates[]` objects with unique str `id`, `kind`, `page` int|null, `priority` (PDF ids `^p[1-9][0-9]*$`,
@@ -274,7 +277,7 @@ Recovery at build start: delete `wiki.tmp/`; `wiki.old/` without `wiki/` is rena
 `sb [--root PATH] [--json] <command>`; stdout = result, stderr = human warnings; with `--json`, stdout is exactly one object, also on parser failure.
 
 `ingest` rejects an unknown `--charset` before any write with `invalid_request` (exit 2); a missing `inbox/` is `io_error` (exit 1).
-It also checks that the installed converter is exactly 0.3.5 before recovery, retry or any claim; a missing/different version is
+It also checks that the installed converter is exactly 0.3.6 before recovery, retry or any claim; a missing/different version is
 `invalid_request` (exit 2, no writes). OCR verify's comma-separated lists trim surrounding whitespace and accept repeated flags.
 
 | Command | Writes | Item `result` |
@@ -336,7 +339,7 @@ independent-audit responses remain here. Human approval, peer faithfulness and l
 | B4 | LLM tier only on explicit command via peers; never overwrites deterministic pages | §6 | AT-28, AT-29 |
 | B5 | Classify first, show list with page counts, OCR only approved | §3, §4, §5, §8 | AT-09, AT-10, AT-16, AT-24 |
 | B6 | Sensitive or > 20 pages/images need explicit approval | §5 | AT-17 |
-| B7 | markitdown-gc 0.3.5; never OCRs; decision/coverage | §3 | AT-05, AT-06, AT-08, AT-12, AT-13 |
+| B7 | markitdown-gc 0.3.6; never OCRs; decision/coverage | §3 | AT-05, AT-06, AT-08, AT-12, AT-13 |
 | B8 | MECE classes incl. unsupported/unknown | §3 | AT-05, AT-07, AT-09, AT-10, AT-11 |
 | B9 | Never retranscribe; provenance | §2 activity, I2, §5 | AT-02, AT-14, AT-20, AT-22 |
 | B2, B10 | v0.1 discarded (tag history only); VerySimpleGuide; Windows; English | §1, §2, §12 | review evidence; AT-01, AT-35, AT-36 |
@@ -354,7 +357,7 @@ For v1.0.1, require all of the following on the exact release candidate:
 1. Every requirement/invariant in §11 and I1–I8 passes its tests; MECE, vertical and horizontal review has no unresolved gap.
    Score 0 for missing/failing implementation, 50 for missing/skipped evidence, 100 only with complete test/review evidence.
 2. All six Ubuntu/Windows × Python 3.11/3.13/3.15 CI suites pass without skips, including installed-console end-to-end tests and
-   the real peerhub help contract. Both offline clean installs pass with `secondbrain==1.0.1` and markitdown-gc 0.3.5.
+   the real peerhub help contract. Both offline clean installs pass with `secondbrain==1.0.1` and markitdown-gc 0.3.6.
 3. **Live peer smoke before tagging:** in disposable scratch, run one generated writable OCR ask, confirm the expected UTF-8 file exists, record it,
    run independent read-only verification, then finalize and build the wiki. Run one generated writable summary ask and accept its
    two outputs. Confirm workspace write boundaries, per-unit DPI, provenance, faithful text and summary scratch preservation.

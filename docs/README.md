@@ -7,7 +7,7 @@
 | [Implementation plan](renewal/IMPL_PLAN.md) | Slice ownership and release gates. |
 | [Brief](renewal/BRIEF.md) | Owner requirements. |
 | [Rubric](renewal/RUBRIC.md) | Test evidence, local results, scores, and remaining release gates. |
-| [Characterization](../tests/fixtures/EXPECTED.md) | Real markitdown-gc 0.3.5 observations and design resolutions. |
+| [Characterization](../tests/fixtures/EXPECTED.md) | Real markitdown-gc 0.3.6 observations and design resolutions. |
 | [Converter guide](renewal/_mdgc_guide.txt) | Tool contract retained as a design input; SecondBrain's approved rules take precedence. |
 
 The remaining [renewal records](renewal/) preserve design votes, reviews, and

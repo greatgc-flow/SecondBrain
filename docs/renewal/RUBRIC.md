@@ -6,9 +6,13 @@ The owner target is 100 in every area. Scores are not promoted until the integra
 ## Evidence
 
 - Local command: `python -m pytest -q -p no:cacheprovider`.
-- Round 4 merged local count: to be set by the orchestrator after both implementations merge.
-  cx's requested local verification is recorded in [the cx response](RESPONSE_independent_cx.md#round-4--cx-closeout);
-  it is not substituted for a post-merge result or CI evidence.
+- markitdown-gc **0.3.6** migration local result (Windows / Python 3.15.2): **661 passed, 6 skipped in 301.24s**.
+  Command: `python -m pytest -q -p no:cacheprovider`, using the shared 0.3.6 interpreter without an overlay.
+  The six installed-console e2e cases skip because `sb` is absent locally; renderer differential and peerhub CLI-help tests pass.
+- [0.3.6 re-characterization](../../tests/fixtures/EXPECTED.md#036-re-characterization): all **36** gate-1b inputs replayed through
+  both tool versions and the current adapter. Conversion/report/media/classification differences: **none**; four pre-existing
+  media-free Markdown expectations corrected. The refreshed guide adds an HWP5 extraction recipe. Three upgrade regressions preserve
+  completed 0.3.5 provenance/bytes and record the new version only for an unfinished attempt that actually converts again.
 - Verified CI workflow installation: `.github/workflows/ci.yml` full-matrix runs `python -m pip install --disable-pip-version-check -q -e ".[dev]"`;
   `pyproject.toml` pins `peerhub==0.24.1` and `markdown-it-py==4.2.0` in dev. `test_peerhub_contract.py` checks local help offline, never starts a peer, and fails if peerhub
   is missing in CI (only local absence skips). Both responses withdraw the prior offline-breaking objection.
@@ -17,8 +21,8 @@ The owner target is 100 in every area. Scores are not promoted until the integra
 - Latest recorded live smoke: **2026-11-09T02:12Z**, code commit **`22e3e85d3efd44c07d7c52a100e7d14c4e481112`**,
   in [LIVE_SMOKE_v1.0.1.md](LIVE_SMOKE_v1.0.1.md). It covers OCR, CLI-attributed summary acceptance and verify-on-ready
   preserving prepared LLM scratch. Observed versions: Python **3.15.2**, peerhub **0.24.0**, markitdown-gc **0.3.5**.
-  Round 4 changes wiki rendering, so the orchestrator will rerun the exact-candidate smoke after merge and set its new SHA/evidence.
-  The recorded prior smoke is not claimed to exercise Round 4 code or the newer dev pin.
+  Rendering changes and the 0.3.6 dependency migration require a new exact-candidate smoke; the orchestrator will set its SHA/evidence.
+  The recorded prior smoke is not claimed to exercise the newer rendering code, 0.3.6 converter or development pins.
 - Merge, main CI, tag `v1.0.1` and GitHub Release: release-operator actions, not established by local tests.
 
 ## Requirement evidence
@@ -35,7 +39,7 @@ All release scores remain **pending the integrated gate**; a previous all-100 sh
 | B4 | Explicit LLM workflow and accepted provenance | `test_llm.py`, `test_peerhub_contract.py` |
 | B5 | Classification/counts before selective approved OCR | `test_ingest.py`, `test_cli.py`, `test_ocr.py`, `test_e2e.py` |
 | B6 | Sensitive/large input approval | `test_ocr.py`, `test_cli.py`; operator permission review |
-| B7 | markitdown-gc 0.3.5 conversion and triage | `test_convert.py`, `test_ingest.py` |
+| B7 | markitdown-gc 0.3.6 conversion and triage | `test_convert.py`, `test_ingest.py` |
 | B8 | MECE; media-free markup ready; unknown means incomplete inspection | `test_convert.py::test_at05_full_domain_is_mece`, `test_ingest.py::test_markup_without_media_is_ready_but_uninspected_media_stays_unknown` |
 | B9 | No retranscription; complete per-unit provenance | `test_ingest.py`, `test_ocr.py::test_second_approve_with_other_dpi_keeps_earlier_units_provenance` |
 | B10 | VerySimpleGuide, Windows, English | `test_fsutil.py`, `test_ingest.py`; minimality and English review |

@@ -90,10 +90,10 @@ jobs:
               'from importlib.metadata import version; from importlib.util import find_spec; '
               'from pathlib import Path; import sys, secondbrain; '
               'assert version("secondbrain") == secondbrain.__version__ == "1.0.1"; '
-              'assert version("markitdown-gc") == "0.3.5"; '
+              'assert version("markitdown-gc") == "0.3.6"; '
               'assert Path(secondbrain.__file__).is_relative_to(Path(sys.prefix)); '
               'assert all(find_spec(name) is None for name in ("speech_recognition", "pydub")); '
-              'print("Installed metadata: secondbrain 1.0.1; markitdown-gc 0.3.5")'
+              'print("Installed metadata: secondbrain 1.0.1; markitdown-gc 0.3.6")'
           )
           subprocess.run([str(python), '-I', '-c', check], cwd=empty, env=env, check=True)
           done = subprocess.run([str(sb), '--root', str(empty), '--json', 'status'], cwd=empty, env=env, check=True, capture_output=True, encoding='utf-8')

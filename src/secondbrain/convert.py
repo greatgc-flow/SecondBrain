@@ -149,10 +149,13 @@ def convert_document(directory, stage):
         stage["conversion"] = previous
         write_json_atomic(directory / "stage.json", stage)
     if not converted.exists():
+        if previous["activity"]["version"] != CONVERTER_VERSION:
+            previous["activity"] = activity("markitdown-gc", check_version(), "convert", params=previous["activity"]["params"])
+            write_json_atomic(directory / "stage.json", stage)
         params = previous["activity"]["params"]
         options = {"charset": params["charset"]}
         if source.suffix.lower() in PLAIN_TEXT_EXTENSIONS or params["charset"] is not None:
-            # 0.3.5 reads charset from StreamInfo, not from the bare keyword.
+            # 0.3.6 reads charset from StreamInfo, not from the bare keyword.
             # Keep the declared keyword too; the hint makes it effective.
             from markitdown import StreamInfo
             options["stream_info"] = StreamInfo(extension=source.suffix.lower(),

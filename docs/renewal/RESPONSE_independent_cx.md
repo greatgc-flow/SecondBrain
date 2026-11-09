@@ -72,3 +72,25 @@ operator loop as sb’s security boundary. The independent audit stays unchanged
 - Required command `python -m pytest -q -p no:cacheprovider`: **612 passed, 6 skipped in 148.97s** (Windows/Python 3.15.2).
   The six existing console e2e cases skip because `sb` is absent locally; the real peerhub help contract passes. No git commands used;
   cc-owned runtime/tests and smoke evidence were not edited.
+
+## Round 3 — cx closeout
+
+- FIXED — R3 simplicity −1: `safe_delete(root, target, keep=())` preserves named direct children in place, while keeping the same
+  deletion allow-list, whole-tree reparse pre-scan (including retained subtrees), containment checks and read-only error handler.
+  With no retained child the target itself is removed as before. `ocr._clean` is now one call with `keep=("llm",)`; park/restore and
+  its unused os import are gone. No stranded `work/<id>.llm` path or rename crash window is introduced.
+- FIXED — R3 deletion regression coverage: nine test-first cases cover direct kept files/directories, non-kept nested names, repeat/
+  missing cleanup, reparse points in removed and kept subtrees, interrupted child removal/retry, Windows read-only versus other
+  permission failures, and an OCR cleanup that forbids every rename. All nine failed before implementation; all pass afterward.
+  Full filesystem/OCR focused run: **108 passed**.
+- FIXED — R3 vertical −1: DESIGN §7 exempts only properly closed top-level column-0 fences and unambiguously paired same-line code
+  spans. Indented/container/unclosed fences, unmatched/cross-line spans and ambiguous paragraph pairing receive no exemption;
+  everything outside the allowed code is escaped, including table/pipe lines.
+- FIXED — R3 LLM provenance contract (cx documentation portion of horizontal −2): DESIGN §§2/6/8 require
+  `sb llm accept ID --peer P --model M`, validate/canonicalize the operator peer with `ocr._peer`, use the operator peer/model for
+  activity attribution and keep peer self-report in `params.reported` as untrusted provenance. cc owns the runtime/CLI/tests.
+- Required command `python -m pytest -q -p no:cacheprovider`: **623 passed, 6 skipped in 125.90s**, Windows/Python 3.15.2.
+  Six installed-console cases skip because `sb` is absent locally. RUBRIC now records this exact cx worktree count; cc’s Round 3
+  wiki/LLM changes are not merged here yet, so final combined local evidence must be refreshed after that merge. CI counts remain
+  orchestrator-owned; no combined/CI result is inferred from this run.
+  No git commands used. Outside ocr.py's `_clean` and its now-unused import, no OCR runtime code was changed.

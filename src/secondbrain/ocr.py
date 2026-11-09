@@ -6,7 +6,6 @@ then records and verifies what comes back. meta.json is always written last (com
 import copy
 import hashlib
 import json
-import os
 from pathlib import Path
 import re
 import shutil
@@ -219,15 +218,7 @@ def record(root, item_id, peer, model, dpi=None):
 
 def _clean(root, work):
     """Delete the OCR scratch of a ready item; work/<id>/llm/ is the summary scratch and stays."""
-    if not (work / "llm").is_dir():
-        return safe_delete(root, work)
-    parked = checked_path(root, f"work/{work.name}.llm")  # safe_delete has no keep option: park llm/, delete, put it back
-    os.replace(work / "llm", parked)
-    try:
-        safe_delete(root, work)  # all of safe_delete's protections apply (reparse pre-scan, read-only files)
-    finally:
-        work.mkdir(exist_ok=True)
-        os.replace(parked, work / "llm")
+    safe_delete(root, work, keep=("llm",))
 
 
 @_io

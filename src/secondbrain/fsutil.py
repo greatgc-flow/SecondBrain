@@ -110,7 +110,12 @@ def checked_path(root, target):
     return target
 
 
-def safe_delete(root, target):
+def safe_delete(root, target, keep=()):
+    """Delete an allowed tree, preserving named direct children in place.
+
+    Scan the whole tree before deleting anything, including retained subtrees.
+    Remove the target itself when no children are retained.
+    """
     target = checked_path(root, target)
     parts = target.relative_to(Path(os.path.abspath(root))).parts
     allowed = (parts in (("wiki.tmp",), ("wiki.old",))
@@ -135,7 +140,19 @@ def safe_delete(root, target):
         os.chmod(path, stat.S_IWRITE)
         operation(path)
     try:
-        shutil.rmtree(target, onerror=remove_readonly)
+        children = list(target.iterdir())
+        removable = [child for child in children if child.name not in keep]
+        if len(removable) == len(children):
+            removable = [target]
+        for path in removable:
+            path = checked_path(root, path)
+            if path.is_dir():
+                shutil.rmtree(path, onerror=remove_readonly)
+            else:
+                try:
+                    path.unlink()
+                except OSError as error:
+                    remove_readonly(os.unlink, path, (type(error), error, None))
     except OSError as error:
         raise SbError(ErrorCode.IO_ERROR, 1, str(error)) from error
 

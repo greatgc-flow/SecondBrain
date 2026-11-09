@@ -6,7 +6,9 @@ The owner target is 100 in every area. Scores are not promoted until the integra
 ## Evidence
 
 - Local command: `python -m pytest -q -p no:cacheprovider`.
-- Current Round 2 cx result (Windows, Python 3.15.2): **612 passed, 6 skipped in 148.97s**.
+- Current Round 3 cx worktree result (Windows, Python 3.15.2): **623 passed, 6 skipped in 125.90s**.
+  cc’s Round 3 wiki/LLM changes are not yet merged here; this is a cx-only update, not the final combined-candidate count.
+  Refresh this local count after both merges; the orchestrator will finalize CI per-suite evidence.
   All six skips are installed-console e2e cases because `sb` is absent locally, including the mixed-PDF and Markdown-to-ready flows.
   The real local peerhub CLI-help contract passed; this run does not replace CI or live peer evidence.
 - Verified CI workflow installation: `.github/workflows/ci.yml` full-matrix runs `python -m pip install --disable-pip-version-check -q -e ".[dev]"`;
@@ -53,7 +55,7 @@ All release scores remain **pending the integrated gate**; a previous all-100 sh
 | I5 | Different recording/verifying peers | `test_ocr.py::test_at22_verify_request_validation` |
 | I6 | Unverified OCR excluded from transcript/wiki, including partial decline | `test_transcript.py`, `test_wiki.py`, `test_ledger.py` |
 | I7 | Wiki derived only from raws | `test_wiki.py::test_at30_build_twice_identical_and_only_expected_files` |
-| I8 | Restricted deletion and reparse guards | `test_fsutil.py`, `test_ingest.py`, `test_wiki.py` |
+| I8 | Restricted deletion, preserved direct children and reparse guards | `test_fsutil.py` keep/read-only/interruption regressions, `test_ingest.py`, `test_wiki.py` |
 
 ## Closeout
 

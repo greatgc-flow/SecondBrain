@@ -384,6 +384,21 @@ def test_verify_on_ready_item_keeps_llm_scratch(root):
     assert sorted(p.relative_to(scratch).as_posix() for p in scratch.rglob("*")) == ["llm", "llm/summary.md"]
 
 
+def test_ready_cleanup_keeps_llm_in_place_without_parking(root, monkeypatch):
+    import os
+    item = helpers.make_item(root, filename="r.txt")
+    scratch = work(root, item)
+    (scratch / "llm").mkdir(parents=True)
+    (scratch / "llm/prompt.txt").write_bytes(b"keep in place")
+    (scratch / "u0001.png").write_bytes(b"discard")
+    def refuse_move(*args, **kwargs):
+        pytest.fail("cleanup must never park or restore LLM scratch")
+    monkeypatch.setattr(os, "replace", refuse_move)
+    assert ocr.verify(root, item.meta["id"], "cc", "m")["result"] == "cleaned"
+    assert tree(scratch) == {"llm/prompt.txt": b"keep in place"}
+    assert sorted(p.name for p in scratch.parent.iterdir()) == [item.meta["id"]]
+
+
 def test_cleanup_keeping_llm_has_safe_delete_protections(root, monkeypatch):
     import os
     import stat

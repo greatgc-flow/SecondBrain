@@ -143,6 +143,102 @@ def test_at36_allowed_deletion(root, relative):
     assert not path.exists()
 
 
+def test_safe_delete_keep_preserves_only_named_direct_children(root):
+    target = root / "work/0123456789abcdef"
+    (target / "llm").mkdir(parents=True)
+    (target / "llm/prompt.txt").write_bytes(b"prepared summary")
+    (target / "note.md").write_bytes(b"retained file")
+    (target / "images/llm").mkdir(parents=True)
+    (target / "images/llm/discard.png").write_bytes(b"OCR image")
+    (target / "COMMANDS.txt").write_bytes(b"OCR instructions")
+    fsutil.safe_delete(root, target, keep=("llm", "note.md"))
+    assert sorted(p.relative_to(target).as_posix() for p in target.rglob("*")) == ["llm", "llm/prompt.txt", "note.md"]
+    assert (target / "llm/prompt.txt").read_bytes() == b"prepared summary"
+    assert (target / "note.md").read_bytes() == b"retained file"
+    fsutil.safe_delete(root, target, keep=("llm", "note.md"))  # repeat without moving retained children
+    assert (target / "llm/prompt.txt").read_bytes() == b"prepared summary"
+
+
+def test_safe_delete_keep_absent_removes_parent_and_tolerates_missing_target(root):
+    target = root / "work/0123456789abcdef"
+    target.mkdir(parents=True)
+    (target / "COMMANDS.txt").write_bytes(b"discard")
+    fsutil.safe_delete(root, target, keep=("llm",))
+    assert not target.exists()
+    fsutil.safe_delete(root, target, keep=("llm",))
+
+
+@pytest.mark.parametrize("relative", ["ocr.png", "images/linked", "llm/linked"])
+def test_safe_delete_keep_prescans_kept_and_removed_subtrees(root, monkeypatch, relative):
+    from helpers import tree
+    target = root / "work/0123456789abcdef"
+    (target / "llm").mkdir(parents=True)
+    (target / "llm/prompt.txt").write_bytes(b"keep")
+    (target / "COMMANDS.txt").write_bytes(b"must survive refusal")
+    link = target / relative
+    link.parent.mkdir(parents=True, exist_ok=True)
+    link.write_bytes(b"simulated reparse point")
+    original = fsutil.is_reparse_point
+    monkeypatch.setattr(fsutil, "is_reparse_point", lambda p: Path(p) == link or original(p))
+    before = tree(target)
+    with pytest.raises(SbError, match="Reparse"):
+        fsutil.safe_delete(root, target, keep=("llm",))
+    assert tree(target) == before
+
+
+def test_safe_delete_keep_recovers_after_interrupted_child_removal(root, monkeypatch):
+    target = root / "work/0123456789abcdef"
+    (target / "llm").mkdir(parents=True)
+    (target / "llm/prompt.txt").write_bytes(b"keep in place")
+    (target / "images").mkdir()
+    (target / "images/page.png").write_bytes(b"discard")
+    (target / "COMMANDS.txt").write_bytes(b"discard")
+    remove = fsutil.shutil.rmtree
+    def interrupted(path, **kwargs):
+        remove(path, **kwargs)
+        raise OSError("interrupted after child deletion")
+    monkeypatch.setattr(fsutil.shutil, "rmtree", interrupted)
+    with pytest.raises(SbError, match="interrupted"):
+        fsutil.safe_delete(root, target, keep=("llm",))
+    assert (target / "llm/prompt.txt").read_bytes() == b"keep in place"
+    assert sorted(p.name for p in target.parent.iterdir()) == [target.name]
+    monkeypatch.setattr(fsutil.shutil, "rmtree", remove)
+    fsutil.safe_delete(root, target, keep=("llm",))
+    assert list(target.iterdir()) == [target / "llm"]
+
+
+@pytest.mark.parametrize("readonly", [True, False])
+def test_safe_delete_keep_retries_only_readonly_file_errors(root, monkeypatch, readonly):
+    import stat
+    target = root / "work/0123456789abcdef"
+    (target / "llm").mkdir(parents=True)
+    (target / "llm/prompt.txt").write_bytes(b"keep")
+    file = target / "ocr.png"
+    file.write_bytes(b"discard")
+    original_stat, unlink = Path.stat, os.unlink
+    denied = []
+    def file_stat(path, *args, **kwargs):
+        info = original_stat(path, *args, **kwargs)
+        if path == file:
+            return SimpleNamespace(st_mode=info.st_mode, st_file_attributes=stat.FILE_ATTRIBUTE_READONLY if readonly else 0)
+        return info
+    def denied_once(path, *args, **kwargs):
+        if Path(path) == file and not denied:
+            denied.append(path)
+            raise PermissionError("simulated Windows deletion error")
+        return unlink(path, *args, **kwargs)
+    monkeypatch.setattr(Path, "stat", file_stat)
+    monkeypatch.setattr(os, "unlink", denied_once)
+    if readonly:
+        fsutil.safe_delete(root, target, keep=("llm",))
+        assert not file.exists()
+    else:
+        with pytest.raises(SbError, match="simulated Windows deletion error"):
+            fsutil.safe_delete(root, target, keep=("llm",))
+        assert file.read_bytes() == b"discard"
+    assert denied and (target / "llm/prompt.txt").read_bytes() == b"keep"
+
+
 @pytest.mark.parametrize("relative", [".", "raws", "raws/0123456789abcdef", "inbox", "wiki", "work", "../outside", "work/not-an-id"])
 def test_at36_other_deletion_targets_refused(root, relative):
     with pytest.raises(SbError) as error:

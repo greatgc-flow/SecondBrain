@@ -179,3 +179,54 @@ was pending and is not scored. The Ubuntu jobs show that `peerhub==0.24.1` resol
   (`_clean`, `safe_markdown`, markup triage). DESIGN.md:341,349 require the exact candidate and a check of "summary scratch preservation",
   but no verify-on-ready step after `llm prepare` is recorded. Fix: after the wiki fix, rerun the smoke on the final SHA, including
   `sb ocr verify` on the ready item with `work/<id>/llm/` present, and record that SHA.
+
+## Round 4 (2026-11-09, branch `fix/indep-core` @ 633e717)
+
+Same auditor. Inputs: the diffs 6906798..633e717, the Round 3 entries in both RESPONSE files, LIVE_SMOKE_v1.0.1.md, RUBRIC, DESIGN and USAGE.
+The local count (635 passed, 7 skipped) is the authors'. I was again not permitted to run Python, so the two wiki bypasses below are
+derived by hand from the CommonMark block rules: an ATX heading, list item or blockquote can interrupt a paragraph, and a fence indented
+0–3 spaces opens a block that a column-0 fence closes. I did not execute them in a renderer. 22e3e85..633e717 changes docs only, so the
+smoke ran on the code-final commit. PR #67 CI is not scored.
+
+| # | Dimension | R1 | R2 | R3 | R4 |
+|---|---|---|---|---|---|
+| 1 | Goal fulfilment | 82 | 98 | 96 | 97 |
+| 2 | Vertical closure | 85 | 100 | 99 | 99 |
+| 3 | Horizontal consistency | 84 | 95 | 97 | 98 |
+| 4 | MECE | 91 | 98 | 100 | 100 |
+| 5 | Simplicity | 70 | 97 | 99 | 100 |
+| 6 | Test adequacy | 82 | 97 | 98 | 98 |
+| 7 | Release readiness | 75 | 92 | 97 | 100 |
+
+### Disposition of round-3 deductions
+| R3 deduction | Verdict | Basis |
+|---|---|---|
+| 1 −4 raw HTML via split span / list fence | NOT OK (narrower) | Both cited cases are fixed (wiki.py:48,58-83). Two neighbouring cases still pass through (below) |
+| 6 −2 masker tested against its own model | FIXED (cases) / see below | test_wiki.py:281-297 covers all three cited cases. The markdown-it differential test never runs anywhere |
+| 2 −1 exemption missing from DESIGN | FIXED | DESIGN.md:250-253 states the conservative rule. The code does not yet meet it (see 1) |
+| 3 −2 LLM provenance self-reported | FIXED (attribution) | cli.py:68-71, llm.py:119-140 record the operator's `--peer`/`--model`, checked with `ocr._peer`. Smoke records cx/gpt-6.1-sol |
+| 3 −1 stale test count | FIXED | RUBRIC.md:9 reads 635/7 |
+| 5 −1 park/restore crash window | FIXED | fsutil.py:113-157 `keep=`, with the pre-scan covering kept subtrees. ocr.py:219-221 is one call. test_fsutil.py and test_ocr.py:387 |
+| 7 −3 smoke ran on a prior revision | FIXED | LIVE_SMOKE_v1.0.1.md:3,10 shows 22e3e85 and verify-on-ready with `llm/` kept. 22e3e85..HEAD changes docs only |
+
+### Remaining deductions (each with its fix)
+- **1 −3** Two cases still come out of `safe_markdown` byte-identical with raw HTML in them.
+  (a) wiki.py:58-83 pairs backtick runs per blank-line block, but the renderer pairs per paragraph or heading, and a heading, list item or
+  blockquote can interrupt a paragraph without a blank line. Take `` "x `\n# ` `<img src=x onerror=1>`" ``. The masker pairs line 1 with B1
+  and masks B2..B3 as one span. The renderer makes the heading's B1..B2 the span, so `<img onerror>` is raw (the same happens with `- ` or `> ` in place of `# `).
+  (b) wiki.py:48,104 only tracks column-0 fences. In `` "  ```\nx\n```\n<img src=x onerror=1>\n```" `` the 2-space fence opens a block and
+  the column-0 line closes it. The masker instead treats that line as an opener and masks lines 3–5, so `<img>` reaches the output raw.
+  Fix: (a) also end the block at any line whose first non-space character starts a block (`#`, `>`, `-`, `+`, `*`, `=`, a digit followed
+  by `.` or `)`, or a fence), or mask spans only in single-line blocks. (b) Recognise 0–3-space fences as openers. Skip each one and its
+  closer as prose, and exempt only blocks whose opener is at column 0.
+- **6 −2** test_wiki.py:304 uses `importorskip("markdown_it")`, but markdown-it-py is not in the dev extra (pyproject.toml:16-19). The
+  differential test therefore skips locally and in all CI suites, so it never checks anything. Fix: pin `markdown-it-py` in `dev`, add
+  (a), (b) and their `- `/`> `/`~~~` variants to BYPASSES, and render every case.
+- **2 −1** DESIGN.md:75 and :225 require the summary's self-report to be kept in `activity.params.reported`, and DESIGN.md:226 still
+  lists a "peer regex" check. llm.py:139-140 writes only `prompt_rev`, ledger.py:83 would reject `reported`, and llm.py:103-106 no
+  longer checks the peer. Fix: either store `reported={peer, model}` (allowed by the ledger, with a test), or remove `reported` and
+  "peer regex" from DESIGN.
+- **3 −2** USAGE.md:286 makes the same `params.reported` claim (−1). RUBRIC.md:17-20 still records the smoke as 2026-11-09T01:41:05Z
+  at e96ec02, but LIVE_SMOKE_v1.0.1.md:1,3 now records 02:12Z at 22e3e85 (−1). Fix: align USAGE with the decision above, and point RUBRIC
+  at the 22e3e85 run.
+- Note (not scored): the wiki fix changes code, so DESIGN §12 needs the smoke step 5 (wiki build) rerun on the new SHA, and RUBRIC must record that SHA.

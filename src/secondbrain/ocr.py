@@ -4,14 +4,13 @@
 then records and verifies what comes back. meta.json is always written last (commit).
 """
 import copy
-import functools
 import hashlib
 from pathlib import Path
 import re
 import shutil
 
 from .errors import LARGE, PEER, ErrorCode, SbError
-from .fsutil import checked_path, safe_delete, write_bytes_atomic, write_json_atomic
+from .fsutil import checked_path, io_errors as _io, safe_delete, write_bytes_atomic, write_json_atomic
 from .ledger import activity, load_item, validate_meta
 
 MAX_APPROVAL = 30
@@ -58,16 +57,6 @@ def _dpi(value, work=None):
 def _commit(item, meta):
     validate_meta(meta, item.path)
     write_json_atomic(item.path / "meta.json", meta)
-
-
-def _io(function):
-    @functools.wraps(function)
-    def wrapped(*args, **kwargs):
-        try:
-            return function(*args, **kwargs)
-        except OSError as error:
-            raise SbError(ErrorCode.IO_ERROR, 1, str(error)) from error
-    return wrapped
 
 
 def _scratch_name(item, key, unit):

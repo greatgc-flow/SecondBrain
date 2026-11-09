@@ -3,7 +3,6 @@ from copy import deepcopy
 from hashlib import sha256
 from itertools import product
 import json
-import inspect
 from pathlib import Path
 import re
 import shutil
@@ -20,10 +19,6 @@ from helpers import DATE
 
 FIXTURES = Path(__file__).parent / "fixtures"
 REPORTS = FIXTURES / "reports"
-
-
-def test_classification_has_no_ingest_path_precheck():
-    assert "path" not in inspect.signature(convert.classify).parameters
 
 
 def test_unit_overflow_is_reported_at_the_enumeration_boundary(root, monkeypatch):
@@ -154,8 +149,8 @@ ROW_CASES = [
     pytest.param(".pdf", {"conversion_error": "dependency"}, ("unsupported", "unsupported", "missing_dependency"), id="row-04-dependency"),
     pytest.param(".pdf", {"conversion_error": "conversion"}, (None, "failed", "FileConversionException"), id="row-05-conversion"),
     pytest.param(".pdf", {"conversion_error": "other"}, (None, "failed", "ValueError"), id="row-05-other"),
-    pytest.param(".pdf", {"report_error": "report_failed"}, (None, "failed", "report_failed"), id="row-06-exit"),
-    pytest.param(".pdf", {"report_error": "report_invalid"}, (None, "failed", "report_invalid"), id="row-06-invalid"),
+    pytest.param(".pdf", {"step_error": "report_failed"}, (None, "failed", "report_failed"), id="row-06-exit"),
+    pytest.param(".pdf", {"step_error": "report_invalid"}, (None, "failed", "report_invalid"), id="row-06-invalid"),
     pytest.param(".pdf", {"report": "row-07.json"}, (None, "failed", "no_candidate_ids"), id="row-07-no-candidates"),
     pytest.param(".pdf", {"report": "row-08.json", "unit_count": 1, "native": False}, ("ocr-required", "awaiting-approval", None), id="row-08-scan"),
     pytest.param(".pdf", {"report": "row-09.json", "unit_count": 1, "native": True}, ("mixed", "awaiting-approval", None), id="row-09-mixed"),
@@ -168,7 +163,7 @@ ROW_CASES = [
     pytest.param(".mp3", {"size": 0}, (None, "failed", "empty_file"), id="empty-before-extension"),
     pytest.param(".png", {"conversion_error": "other"}, ("ocr-required", "awaiting-approval", "raster"), id="raster-before-converter"),
     pytest.param(".mp3", {"conversion_error": "other"}, ("unsupported", "unsupported", "extension_not_allowed"), id="extension-before-converter"),
-    pytest.param(".pdf", {"conversion_error": "conversion", "report_error": "report_failed"}, (None, "failed", "FileConversionException"), id="conversion-before-report"),
+    pytest.param(".pdf", {"conversion_error": "conversion", "step_error": "report_failed"}, (None, "failed", "FileConversionException"), id="conversion-before-report"),
 ]
 
 
@@ -233,8 +228,8 @@ def test_at05_table_rows_and_shortcuts(ext, options, expected):
         options["triage"] = convert.adapt_report(raw(options.pop("report")), ext)
     if "conversion_error" in options:
         options["conversion_error"] = errors[options["conversion_error"]]
-    if "report_error" in options:
-        options["report_error"] = SbError(options["report_error"], 1)
+    if "step_error" in options:
+        options["step_error"] = SbError(options["step_error"], 1)
     options["units"] = {f"u{n:04}": {} for n in range(1, options.pop("unit_count", 0) + 1)}
     result = convert.classify(ext, date=DATE, **options)
     assert (result["class"], result["state"], result["reason"]) == expected
@@ -570,7 +565,7 @@ def test_only_extension_selected_converter_is_registered(monkeypatch, ext, expec
 
 
 @pytest.mark.parametrize("optional_text", ["", "ExifTool metadata / optional audio output"])
-def test_renamed_audio_never_reaches_optional_backends(root, monkeypatch, optional_text, subprocess_spy):
+def test_renamed_audio_never_reaches_optional_backends(root, monkeypatch, optional_text, subprocess_spy, network_guard):
     from markitdown import MarkItDown, StreamInfo, DocumentConverterResult
     from markitdown.converters import AudioConverter
     directory, stage = stage_file(root, "characterize/renamed-audio.pdf")
@@ -584,7 +579,9 @@ def test_renamed_audio_never_reaches_optional_backends(root, monkeypatch, option
         return DocumentConverterResult(markdown=optional_text)
     monkeypatch.setattr(MarkItDown, "_get_stream_info_guesses", guesses)
     monkeypatch.setattr(AudioConverter, "convert", audio)
+    network_calls_before = len(network_guard)
     result = convert.classify_item(directory, stage)
     assert (result["class"], result["state"], result["reason"]) == (None, "failed", "FileConversionException")
     assert result["error"]["code"] == "conversion_failed"
     assert audio_calls == [] and subprocess_spy == []
+    assert len(network_guard) == network_calls_before

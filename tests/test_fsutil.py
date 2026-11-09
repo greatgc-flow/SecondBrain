@@ -21,6 +21,20 @@ def test_codes_and_error():
     assert (error.code, error.exit, str(error)) == ("invalid_request", 2, "bad request")
 
 
+@pytest.mark.parametrize("failure", [OSError("disk failure"), SbError("invalid_request", 2), ValueError("invalid value")])
+def test_io_errors_translates_only_oserror(failure):
+    @fsutil.io_errors
+    def command():
+        raise failure
+    with pytest.raises(SbError if isinstance(failure, OSError) else type(failure)) as caught:
+        command()
+    if isinstance(failure, OSError):
+        assert (caught.value.code, caught.value.exit, str(caught.value)) == ("io_error", 1, str(failure))
+        assert caught.value.__cause__ is failure
+    else:
+        assert caught.value is failure
+
+
 def test_root_precedence(root, monkeypatch):
     monkeypatch.chdir(root)
     assert fsutil.resolve_root() == root

@@ -195,7 +195,7 @@ def enumerate_units(ext, triage=None, media=()):
             for n, source in enumerate(sources, 1)}
 
 
-def classify(ext, *, size=1, conversion_error=None, report_error=None, triage=None, native=None, units=None, date=None):
+def classify(ext, *, size=1, conversion_error=None, step_error=None, triage=None, native=None, units=None, date=None):
     """Apply the first matching §3 row; arguments are already adapted stage data."""
     ext = ext.lower()
     def result(cls, state, reason=None, code=None, message=None):
@@ -217,8 +217,8 @@ def classify(ext, *, size=1, conversion_error=None, report_error=None, triage=No
         return failed(ErrorCode.CONVERSION_FAILED, str(conversion_error), type(conversion_error).__name__)
     if ext in PLAIN_TEXT_EXTENSIONS:
         return result("text-only", "ready", None if native else "empty_document")
-    if report_error is not None:
-        return failed(report_error.code, str(report_error))
+    if step_error is not None:
+        return failed(step_error.code, str(step_error))
     if triage is None:
         return failed(ErrorCode.REPORT_INVALID)
     if triage["decision"] in {"ocr_recommended", "review"}:
@@ -277,10 +277,10 @@ def classify_item(directory, stage):
         except SbError as error:
             if error.code not in {ErrorCode.REPORT_FAILED, ErrorCode.REPORT_INVALID}:
                 raise
-            return finish(classify(ext, report_error=error))
+            return finish(classify(ext, step_error=error))
     if triage is None or triage["decision"] not in {"ocr_recommended", "review"} or triage["candidates"]:
         try:
             units = enumerate_units(ext, triage, conversion["media"])
         except SbError as error:
-            return finish(classify(ext, report_error=error))
+            return finish(classify(ext, step_error=error))
     return finish(classify(ext, triage=triage, native=native, units=units))

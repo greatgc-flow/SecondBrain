@@ -1,4 +1,5 @@
 """Small filesystem and Markdown primitives; no ledger or command imports."""
+from functools import wraps
 import hashlib
 import json
 import os
@@ -10,6 +11,17 @@ import unicodedata
 from urllib.parse import quote
 
 from .errors import ErrorCode, SbError
+
+
+def io_errors(function):
+    """Translate filesystem failures while preserving domain errors and metadata."""
+    @wraps(function)
+    def wrapped(*args, **kwargs):
+        try:
+            return function(*args, **kwargs)
+        except OSError as error:
+            raise SbError(ErrorCode.IO_ERROR, 1, str(error)) from error
+    return wrapped
 
 
 def require(condition, message):

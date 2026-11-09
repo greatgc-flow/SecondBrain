@@ -70,3 +70,13 @@ with Python 3.11 syntax. Combined validation: `python -m pytest -q -p no:cachepr
 - **N4 — FIXED.** errors.py now describes its shared codes and contract constants; renamed the stale test to test_status_reuses_ledger_scan_and_shared_unit_counts without changing its assertions.
 
 Round 2 validation: `python -m pytest -q -p no:cacheprovider` -> **578 passed, 4 skipped in 89.21s**. Skips require the locally absent installed `sb` console script. No git commands.
+
+## Round 3 score-gap closeout
+
+- **FIXED — AT-12 network assertion.** test_renamed_audio_never_reaches_optional_backends now takes network_guard, snapshots its call count immediately before classify_item, and requires the count to remain unchanged in both optional-backend scenarios.
+- **FIXED — Orphan signature test.** Removed test_classification_has_no_ingest_path_precheck and its inspect import. AT-35 and the representative row tests retain contract coverage without pinning an internal signature.
+- **FIXED — Step-error naming.** Renamed the internal classify parameter and all its callers/test options from report_error to step_error, reflecting both report and unit-enumeration failures. Persisted error codes, messages and states are unchanged; report-specific ingest fixture controls retain their descriptive names.
+- **FIXED — Shared IO mapping.** Moved the existing OCR wrapper into fsutil.io_errors, retaining wraps and exception chaining. OCR imports it as _io; LLM prepare/accept use the same decorator instead of duplicated inline catches. The three test_io_errors_translates_only_oserror cases failed before the helper existed and now verify io_error/1 for OSError plus identity-preserving propagation of SbError and ValueError.
+
+Round 3 validation: `python -m pytest -q -p no:cacheprovider` -> **580 passed, 4 skipped in 86.38s**. The existing skips require the locally absent installed `sb` console script.
+RUBRIC scores and evidence were not changed; new-head CI remains orchestrator-owned. No git commands.

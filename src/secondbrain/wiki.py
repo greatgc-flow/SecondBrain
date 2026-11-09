@@ -3,6 +3,7 @@ import json
 import os
 from pathlib import Path
 import re
+import string
 import unicodedata
 
 from .errors import ErrorCode, SbError
@@ -44,14 +45,70 @@ def _quote_safe(line):
     return head + line[len(head):].replace(">", "&gt;")
 
 
+_FENCE = re.compile(r" {0,3}(`{3,}|~{3,})(.*)")
+_BACKTICKS = re.compile(r"`+")
+
+
+def _closes(line, mark):
+    line = line.rstrip(" \t\r")
+    body = line.lstrip(" ")
+    return len(line) - len(body) <= 3 and len(body) >= len(mark) and set(body) == {mark[0]}
+
+
+def _mask_spans(line, keep):
+    """Single-line code spans become placeholders (backslash escapes and exact-length closers, as in CommonMark)."""
+    out, i = [], 0
+    while i < len(line):
+        if line[i] == "\\" and line[i + 1:i + 2] in tuple(string.punctuation):
+            out.append(line[i:i + 2])
+            i += 2
+        elif line[i] == "`":
+            n = _BACKTICKS.match(line, i).end() - i
+            closer = next((m.end() for m in _BACKTICKS.finditer(line, i + n) if m.end() - m.start() == n), None)
+            out.append(line[i:i + n] if closer is None else keep(line[i:closer]))
+            i += n if closer is None else closer - i
+        else:
+            out.append(line[i])
+            i += 1
+    return "".join(out)
+
+
+def _mask_code(text):
+    """Fenced blocks and code spans, which are inert, replaced by NUL placeholders; returns (text, kept).
+
+    Conservative on purpose: only column-0..3 fences and one-line spans outside table rows count as code
+    (anything else is escaped like prose), so the renderer can never see code where this pass saw prose.
+    """
+    kept, out, lines, i = [], [], text.split("\n"), 0
+
+    def keep(chunk):
+        kept.append(chunk)
+        return f"\x00{len(kept) - 1}\x00"
+    while i < len(lines):
+        opening = _FENCE.fullmatch(lines[i].rstrip("\r"))
+        if opening and not (opening[1][0] == "`" and "`" in opening[2]):
+            end = i + 1
+            while end < len(lines) and not _closes(lines[end], opening[1]):
+                end += 1
+            out.append(keep("\n".join(lines[i:end + 1])))  # an unclosed fence runs to the end
+            i = end + 1
+        else:
+            out.append(lines[i] if "|" in lines[i] else _mask_spans(lines[i], keep))  # "|" may split a table cell
+            i += 1
+    return "\n".join(out), kept
+
+
 def safe_markdown(text):
     """Untrusted Markdown made inert: no raw HTML, no image embeds, only http(s)/relative link targets.
 
     Nothing is fetched. Entities are used (not backslashes) so a hostile backslash cannot undo them.
+    Fenced code blocks and code spans are left byte-identical (they are inert and entities would show).
     """
+    text, kept = _mask_code(text.replace("\x00", "�"))
     text = text.replace("<", "&lt;").replace("![", "&#33;[")
     text = "\n".join(_quote_safe(line) for line in text.split("\n"))
-    return _LINK_DEFINITION.sub(_safe_dest, _INLINE_LINK.sub(_safe_dest, text))
+    text = _LINK_DEFINITION.sub(_safe_dest, _INLINE_LINK.sub(_safe_dest, text))
+    return re.sub(r"\x00(\d+)\x00", lambda m: kept[int(m[1])], text)
 
 
 def tags(meta):

@@ -6,12 +6,13 @@ then records and verifies what comes back. meta.json is always written last (com
 import copy
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 import shutil
 
 from .errors import LARGE, PEER, ErrorCode, SbError
-from .fsutil import checked_path, io_errors as _io, is_reparse_point, safe_delete, write_bytes_atomic, write_json_atomic
+from .fsutil import checked_path, io_errors as _io, safe_delete, write_bytes_atomic, write_json_atomic
 from .ledger import activity, load_item, validate_meta
 
 MAX_APPROVAL = 30
@@ -220,13 +221,13 @@ def _clean(root, work):
     """Delete the OCR scratch of a ready item; work/<id>/llm/ is the summary scratch and stays."""
     if not (work / "llm").is_dir():
         return safe_delete(root, work)
-    for child in work.iterdir():
-        if child.name == "llm":
-            continue
-        if child.is_dir() and not is_reparse_point(child):
-            shutil.rmtree(child)
-        else:
-            child.unlink()
+    parked = checked_path(root, f"work/{work.name}.llm")  # safe_delete has no keep option: park llm/, delete, put it back
+    os.replace(work / "llm", parked)
+    try:
+        safe_delete(root, work)  # all of safe_delete's protections apply (reparse pre-scan, read-only files)
+    finally:
+        work.mkdir(exist_ok=True)
+        os.replace(parked, work / "llm")
 
 
 @_io

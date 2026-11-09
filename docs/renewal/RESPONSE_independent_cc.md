@@ -42,3 +42,7 @@ Keep the offline CLI-help contract test: invoking local help is compatible with 
 missing under CI. The manual operator loop remains intentional because sb never runs peers; this rationale is explicit in DESIGN §§5–6.
 All wording items above are reflected in DESIGN, including `wiki/tags/<tag>.md`, partial decline, `dpi.json`, `ocr.ask_line()`, safe
 Markdown, authoritative JSON provenance and the live-peer release gate. No git commands were used for reconciliation.
+
+## Round 2
+- 1 −2 FIXED: `wiki.safe_markdown` masks fenced blocks (column 0–3 fences, unclosed runs to the end) and one-line code spans (not in table rows) before the safety pass and restores them byte-identical; indented code, table rows and multi-line "spans" are deliberately escaped like prose so the renderer never sees code where the pass saw prose. Test: `test_safety_pass_leaves_code_blocks_and_spans_untouched`.
+- 5 −3 FIXED (cc part): `ocr._clean` is now one `safe_delete` call on `work/<id>` with `llm/` parked beside it and restored in `finally` (fsutil has no `keep`, and its allow-list refuses child paths), so the reparse pre-scan and read-only handling apply. Test: `test_cleanup_keeping_llm_has_safe_delete_protections` (reparse refusal leaves everything intact; read-only scratch removed, `llm/` kept).

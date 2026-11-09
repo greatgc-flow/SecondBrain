@@ -262,6 +262,22 @@ def test_source_page_structure_and_link(root):
     assert text.endswith("## Transcript\n\nSynthetic text 123.\n") and "\nSynthetic text 123.\n```" not in text
 
 
+def test_safety_pass_leaves_code_blocks_and_spans_untouched(root):
+    code = ("Use `a < b` and ``x ![i](u) > y``.\n\n```c\nif (a < b && c > d) { /* ![x](javascript:1) <b> */ }\n```\n\n"
+            "~~~\n<tag>\n~~~\n\n")
+    prose = ("after <b>bold</b> and ![img](http://e/x.png) `unclosed\n\n    indented <i>\n\n| t |\n|---|\n| `a|<b>` |\n\n"
+             "`x\n# <script>\n`\n\n[`l`]: javascript:alert(1)\n\n```not a fence `<b>`\n")
+    item = helpers.make_item(root, filename="c.md", text=code + prose)
+    wiki.build(root)
+    body = page(root, item).split("## Transcript\n\n")[1]
+    assert body.startswith(code)  # byte-identical: no &lt;, &gt; or &#33; inside code
+    assert body[len(code):] == ("after &lt;b&gt;bold&lt;/b&gt; and &#33;[img](http://e/x.png) `unclosed\n\n    indented &lt;i&gt;\n\n"
+                                "| t |\n|---|\n| `a|&lt;b&gt;` |\n\n`x\n# &lt;script&gt;\n`\n\n[`l`]: #\n\n"
+                                "```not a fence `<b>`\n")  # indented code, table rows and multi-line "spans" are escaped like prose
+    assert wiki.safe_markdown("```\n<x>\n") == "```\n<x>\n"  # an unclosed fence runs to the end, like Markdown
+    assert wiki.safe_markdown("~~~\n<x>\n```\n<y>\n~~~~\n<z>") == "~~~\n<x>\n```\n<y>\n~~~~\n&lt;z&gt;"
+
+
 def test_tags_pages_index_links_and_back_links(root):
     a = helpers.make_item(root, filename="a.txt")
     b = helpers.make_item(root, state="awaiting-approval", filename="b.pdf", statuses=["pending"])

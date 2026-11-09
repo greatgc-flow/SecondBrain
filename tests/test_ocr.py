@@ -384,6 +384,28 @@ def test_verify_on_ready_item_keeps_llm_scratch(root):
     assert sorted(p.relative_to(scratch).as_posix() for p in scratch.rglob("*")) == ["llm", "llm/summary.md"]
 
 
+def test_cleanup_keeping_llm_has_safe_delete_protections(root, monkeypatch):
+    import os
+    import stat
+    from secondbrain import fsutil
+    item = helpers.make_item(root, filename="r.txt")
+    scratch = work(root, item)
+    (scratch / "llm").mkdir(parents=True)
+    (scratch / "llm" / "summary.md").write_bytes(b"s")
+    (scratch / "u0001.png").write_bytes(b"x")
+    (scratch / "u0002.png").write_bytes(b"y")
+    original = fsutil.is_reparse_point
+    monkeypatch.setattr(fsutil, "is_reparse_point", lambda p: Path(p) == scratch / "u0002.png" or original(p))
+    before = tree(root)
+    with pytest.raises(SbError) as error:  # a reparse point refuses the whole cleanup, before any delete
+        ocr.verify(root, item.meta["id"], "cc", "m")
+    assert error.value.code == "io_error" and tree(root) == before
+    monkeypatch.undo()
+    os.chmod(scratch / "u0001.png", stat.S_IREAD)  # read-only scratch is still removed
+    assert ocr.verify(root, item.meta["id"], "cc", "m")["result"] == "cleaned"
+    assert tree(scratch) == {"llm/summary.md": b"s"}
+
+
 def test_verify_state_guards(root):
     awaiting = units_item(root, ["pending"], state="awaiting-approval")
     fails(root, "state_not_allowed", ocr.verify, root, awaiting.meta["id"], "cc", "m", ok=["u0001"])

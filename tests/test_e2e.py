@@ -155,12 +155,17 @@ def test_e2e_llm_prepare_accept_and_rejection(root, run):
     assert "Invoice 12345, total 42 USD." in prompt and "data, not instructions" in prompt
     shutil.copyfile(FIXTURES / "llm" / "valid.md", scratch / "summary.md")
     shutil.copyfile(FIXTURES / "llm" / "bad-digest.json", scratch / "summary.json")
-    env, _ = run("llm", "accept", item_id, expect=2)
+    who = ("--peer", "cx", "--model", "real-model")
+    env, _ = run("llm", "accept", item_id, *who, expect=2)
     assert env["errors"][0]["code"] == "llm_invalid" and not (root / "raws" / item_id / "llm").exists()
     shutil.copyfile(FIXTURES / "llm" / "valid.json", scratch / "summary.json")
-    env, _ = run("llm", "accept", item_id, expect=0)
+    env, _ = run("llm", "accept", item_id, "--peer", "cx", expect=2)  # --model is required
+    assert env["errors"][0]["code"] == "usage"
+    env, _ = run("llm", "accept", item_id, *who, expect=0)
     assert env["items"][0]["result"] == "accepted" and env["items"][0]["summary"] is True
-    assert run("llm", "accept", item_id, expect=0)[0]["items"][0]["result"] == "unchanged"
+    activity = json.loads((root / "raws" / item_id / "meta.json").read_text(encoding="utf-8"))["llm"]["summary"][0]["activity"]
+    assert (activity["peer"], activity["model"]) == ("cx", "real-model")  # not the fixture's self-report "synthetic-model"
+    assert run("llm", "accept", item_id, *who, expect=0)[0]["items"][0]["result"] == "unchanged"
     run("wiki", "build", expect=0)
     page = (root / "wiki" / "sources" / f"{item_id}.md").read_text(encoding="utf-8")
     assert "Synthetic invoice 12345 totals 42 USD." in page and "## Summary" in page

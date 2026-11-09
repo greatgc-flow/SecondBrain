@@ -184,7 +184,7 @@ def prepare_cell(root, command, state):
             "approve": ["ocr", "approve", item_id], "decline": ["ocr", "decline", item_id],
             "record": ["ocr", "record", item_id, "--peer", "cx", "--model", "m"],
             "verify": ["ocr", "verify", item_id, "--peer", "cc", "--model", "m", "--ok", "u0001"],
-            "prepare": ["llm", "prepare", item_id], "accept": ["llm", "accept", item_id]}[command]
+            "prepare": ["llm", "prepare", item_id], "accept": ["llm", "accept", item_id, "--peer", "cx", "--model", "m"]}[command]
     return item_id, argv
 
 
@@ -218,7 +218,7 @@ def test_matrix_covers_every_cell():
 
 def test_at34_parser_failures_are_one_json_object(root, capsys):
     for argv in (["--bogus"], [], ["ocr"], ["ocr", "approve"], ["ocr", "approve", "x", "--dpi", "abc"], ["ingest", "--bogus"],
-                 ["status", "extra"], ["ocr", "record", "x"], ["wiki"], ["llm", "frobnicate", "x"], ["--root"]):
+                 ["status", "extra"], ["ocr", "record", "x"], ["llm", "accept", "x"], ["llm", "accept", "x", "--peer", "cx"], ["wiki"], ["llm", "frobnicate", "x"], ["--root"]):
         code = cli.main(["--json", *argv])
         captured = capsys.readouterr()
         env = json.loads(captured.out)
@@ -249,15 +249,18 @@ def test_at34_every_command_returns_a_valid_envelope(root, capsys, fake_render):
              (["wiki", "build"], 0), (["ocr", "approve", ghost], 2), (["ocr", "decline", ghost], 2),
              (["ocr", "record", ghost, "--peer", "cx", "--model", "m"], 2),
              (["ocr", "verify", ghost, "--peer", "cc", "--model", "m", "--ok", "u0001"], 2),
-             (["llm", "prepare", ghost], 2), (["llm", "accept", ghost], 2), (["llm", "accept", ready], 2),
+             (["llm", "prepare", ghost], 2), (["llm", "accept", ghost, "--peer", "cx", "--model", "m"], 2),
+             (["llm", "accept", ready, "--peer", "cx", "--model", "m"], 2), (["llm", "accept", ready, "--peer", "BAD PEER", "--model", "m"], 2),
              (["ocr", "verify", items["ocr-in-progress"].meta["id"], "--peer", "cx", "--model", "m", "--ok", "u0002"], 2)]
     for argv, expected in cases:
         code, env, _ = sb(capsys, root, *argv)
         assert code == expected, (argv, env["errors"])
     code, env, _ = sb(capsys, root, "ocr", "verify", items["ocr-in-progress"].meta["id"], "--peer", "cx", "--model", "m", "--ok", "u0002")
     assert env["errors"][0]["code"] == "same_peer"
-    code, env, _ = sb(capsys, root, "llm", "accept", ready)
+    code, env, _ = sb(capsys, root, "llm", "accept", ready, "--peer", "cx", "--model", "m")
     assert env["errors"][0]["code"] == "llm_invalid"
+    code, env, _ = sb(capsys, root, "llm", "accept", ready, "--peer", "BAD PEER", "--model", "m")
+    assert env["errors"][0]["code"] == "invalid_request"
 
 
 def test_at34_warnings_and_exit_precedence(root, capsys):

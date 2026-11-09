@@ -273,9 +273,41 @@ def test_safety_pass_leaves_code_blocks_and_spans_untouched(root):
     assert body.startswith(code)  # byte-identical: no &lt;, &gt; or &#33; inside code
     assert body[len(code):] == ("after &lt;b&gt;bold&lt;/b&gt; and &#33;[img](http://e/x.png) `unclosed\n\n    indented &lt;i&gt;\n\n"
                                 "| t |\n|---|\n| `a|&lt;b&gt;` |\n\n`x\n# &lt;script&gt;\n`\n\n[`l`]: #\n\n"
-                                "```not a fence `<b>`\n")  # indented code, table rows and multi-line "spans" are escaped like prose
-    assert wiki.safe_markdown("```\n<x>\n") == "```\n<x>\n"  # an unclosed fence runs to the end, like Markdown
+                                "```not a fence `&lt;b&gt;`\n")  # indented code, table rows, multi-line "spans" and blocks with an unmatched run are escaped like prose
+    assert wiki.safe_markdown("```\n<x>\n") == "```\n&lt;x&gt;\n"  # an unclosed fence: it and everything after it is escaped
     assert wiki.safe_markdown("~~~\n<x>\n```\n<y>\n~~~~\n<z>") == "~~~\n<x>\n```\n<y>\n~~~~\n&lt;z&gt;"
+
+
+BYPASSES = [
+    "`x\n`<script>alert(1)</script>`",                    # the renderer pairs line 1 with the first backtick of line 2
+    "`x\n`![t](http://e/p.png)`",
+    "x | `y\n`![t](http://e/p.png)`",
+    "- a\n  ```\n<img src=x onerror=alert(1)>\n  ```",     # the fence belongs to the list item; the <img> line ends it
+    "> ```\n<img src=x onerror=alert(1)>\n> ```",
+    "```\nx\n  ```\n<script>alert(1)</script>\n```",         # an indented closer still closes
+    "   ```\n<script>alert(1)</script>\n   ```",             # indented fence: not exempt
+    "```a`b\n<script>alert(1)</script>\n```",               # backtick in the info string: not a fence
+    "``a`\n<script>alert(1)</script>\n`b``",                # spans pair across lines, so nothing is masked
+]
+
+
+@pytest.mark.parametrize("hostile", BYPASSES)
+def test_safety_pass_bypasses_leave_no_raw_html_or_images(hostile):
+    out = wiki.safe_markdown(hostile + "\n")
+    assert "<script" not in out and "<img" not in out and "![" not in out
+
+
+def test_safety_pass_exemption_survives_a_lone_cr_line_ending():
+    assert wiki.safe_markdown("```\r<x>\r```") == "```\n<x>\n```"  # still one proper fence, exempt
+
+
+def test_safety_pass_rendered_by_markdown_it_has_no_raw_html_or_images():
+    markdown_it = pytest.importorskip("markdown_it")
+    parser = markdown_it.MarkdownIt("commonmark")
+    for hostile in BYPASSES + ["`a` <b>x</b> ![i](http://e/i.png)", "```\n<script>x</script>\n```\n<img src=x>"]:
+        html = parser.render(wiki.safe_markdown(hostile + "\n"))
+        assert "<script" not in re.sub(r"<code>.*?</code>", "", html, flags=re.S), (hostile, html)
+        assert "<img" not in html, (hostile, html)
 
 
 def test_tags_pages_index_links_and_back_links(root):

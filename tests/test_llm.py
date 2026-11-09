@@ -42,10 +42,14 @@ def valid_data():
     return json.loads((FIXTURES / "llm" / "valid.json").read_text(encoding="utf-8"))
 
 
+def accept(root, item_id, peer="cx", model="synthetic-model"):
+    return llm.accept(root, item_id, peer, model)
+
+
 def reject(root, item, code, exit_code=2):
     before = tree(root / "raws")
     with pytest.raises(SbError) as error:
-        llm.accept(root, item.meta["id"])
+        accept(root, item.meta["id"])
     assert error.value.code == code and error.value.exit == exit_code
     assert tree(root / "raws") == before
 
@@ -57,7 +61,7 @@ def test_fixture_digest_matches_view():
 def test_at28_accept_valid_records_revision_with_provenance(root):
     item = make(root)
     stage(root, item)
-    result = llm.accept(root, item.meta["id"])
+    result = accept(root, item.meta["id"])
     assert result == {"id": item.meta["id"], "result": "accepted", "revision": 1}
     body = (FIXTURES / "llm" / "valid.md").read_bytes()
     assert (item.path / "llm" / "summary.a1.md").read_bytes() == body
@@ -86,11 +90,11 @@ def test_at28_body_size_boundary(root):
     stage(root, item, body="a" * 8001)
     reject(root, item, "llm_invalid")
     stage(root, item, body="한" * 8000)  # 8000 characters, 24000 bytes
-    assert llm.accept(root, item.meta["id"])["result"] == "accepted"
+    assert accept(root, item.meta["id"])["result"] == "accepted"
 
 
 @pytest.mark.parametrize("change", [
-    {"extra": 1}, {"kind": "note"}, {"peer": "CX"}, {"peer": "x" * 33}, {"peer": 5}, {"model": ""}, {"version": 3},
+    {"extra": 1}, {"kind": "note"}, {"version": 3},
     {"date": "2026-11-09"}, {"date": "2026-11-09T00:00:00+00:00"}, {"date": "not-a-dateTZ"}, {"source_digest": "ab"},
 ])
 def test_at28_json_field_validation(root, change):
@@ -98,6 +102,26 @@ def test_at28_json_field_validation(root, change):
     data = {**valid_data(), **change}
     stage(root, item, data=data)
     reject(root, item, "llm_invalid")
+
+
+def test_peer_and_model_come_from_the_command_not_from_the_peers_self_report(root):
+    item = make(root)
+    stage(root, item, data={**valid_data(), "peer": "codex", "model": "gpt-6"})  # whatever the peer claims is ignored
+    assert accept(root, item.meta["id"], "CC", "real-model")["result"] == "accepted"
+    activity = load_item(item.path).meta["llm"]["summary"][0]["activity"]
+    assert (activity["peer"], activity["model"]) == ("cc", "real-model")
+    stage(root, item, body="Another.", data={**valid_data(), "peer": 5, "model": None})  # even malformed claims
+    assert accept(root, item.meta["id"], "cx", "m2")["revision"] == 2
+
+
+@pytest.mark.parametrize("peer,model", [("", "m"), ("x" * 33, "m"), ("bad peer", "m"), ("cx", ""), ("cx", "  ")])
+def test_accept_rejects_invalid_peer_or_model_without_writes(root, peer, model):
+    item = make(root)
+    stage(root, item)
+    before = tree(root)
+    with pytest.raises(SbError) as error:
+        llm.accept(root, item.meta["id"], peer, model)
+    assert error.value.code == "invalid_request" and error.value.exit == 2 and tree(root) == before
 
 
 def test_at28_unreadable_or_missing_files(root):
@@ -118,7 +142,7 @@ def test_at28_unreadable_or_missing_files(root):
 def test_at28_hostile_summary_rendered_inside_fence(root):
     item = make(root)
     stage(root, item, md="hostile.md")
-    llm.accept(root, item.meta["id"])
+    accept(root, item.meta["id"])
     hostile = (FIXTURES / "llm" / "hostile.md").read_bytes().decode("utf-8")
     wiki.build(root)
     text = (root / "wiki" / "sources" / f"{item.meta['id']}.md").read_text(encoding="utf-8")
@@ -129,16 +153,16 @@ def test_at28_hostile_summary_rendered_inside_fence(root):
 def test_at27_new_revision_unchanged_and_history(root):
     item = make(root)
     stage(root, item)
-    llm.accept(root, item.meta["id"])
+    accept(root, item.meta["id"])
     before = tree(item.path)
-    assert llm.accept(root, item.meta["id"])["result"] == "unchanged"
+    assert accept(root, item.meta["id"])["result"] == "unchanged"
     assert tree(item.path) == before
     stage(root, item, body="A different summary.")
-    assert llm.accept(root, item.meta["id"]) == {"id": item.meta["id"], "result": "accepted", "revision": 2}
+    assert accept(root, item.meta["id"]) == {"id": item.meta["id"], "result": "accepted", "revision": 2}
     summary = load_item(item.path).meta["llm"]["summary"]
     assert [r["file"] for r in summary] == ["llm/summary.a1.md", "llm/summary.a2.md"]
     assert (item.path / "llm" / "summary.a1.md").read_bytes() == (FIXTURES / "llm" / "valid.md").read_bytes()
-    assert llm.accept(root, item.meta["id"])["result"] == "unchanged"
+    assert accept(root, item.meta["id"])["result"] == "unchanged"
     wiki.build(root)
     text = (root / "wiki" / "sources" / f"{item.meta['id']}.md").read_text(encoding="utf-8")
     assert "A different summary." in text and "Synthetic invoice" not in text
@@ -147,11 +171,11 @@ def test_at27_new_revision_unchanged_and_history(root):
 def test_at27_fault_after_body_copy_leaves_orphan_then_recovers(root, fault_after):
     item = make(root)
     stage(root, item)
-    llm.accept(root, item.meta["id"])
+    accept(root, item.meta["id"])
     stage(root, item, body="Second summary.")
     fault_after("summary.a2.md")
     with pytest.raises(SbError) as error:
-        llm.accept(root, item.meta["id"])
+        accept(root, item.meta["id"])
     assert error.value.code == "io_error"
     loaded = load_item(item.path)
     assert [w["code"] for w in loaded.warnings] == ["orphan"] and loaded.warnings[0]["path"] == "llm/summary.a2.md"
@@ -160,10 +184,10 @@ def test_at27_fault_after_body_copy_leaves_orphan_then_recovers(root, fault_afte
     assert [w["code"] for w in result["warnings"]] == ["orphan"]
     text = (root / "wiki" / "sources" / f"{item.meta['id']}.md").read_text(encoding="utf-8")
     assert "Synthetic invoice" in text and "Second summary." not in text
-    assert llm.accept(root, item.meta["id"])["revision"] == 2
+    assert accept(root, item.meta["id"])["revision"] == 2
     loaded = load_item(item.path)
     assert not loaded.warnings and len(loaded.meta["llm"]["summary"]) == 2
-    assert llm.accept(root, item.meta["id"])["result"] == "unchanged"
+    assert accept(root, item.meta["id"])["result"] == "unchanged"
 
 
 def test_at29_prepare_prompt_fence_contract_and_no_subprocess(root, subprocess_spy):
@@ -179,7 +203,7 @@ def test_at29_prepare_prompt_fence_contract_and_no_subprocess(root, subprocess_s
     for needle in (digest, str(scratch / "summary.md"), str(scratch / "summary.json"), "8000", "[a-z][a-z0-9-]{0,31}"):
         assert needle in prompt
     commands = (scratch / "COMMANDS.txt").read_text(encoding="utf-8")
-    assert f"sb llm accept {item.meta['id']}" in commands and str(scratch / "prompt.txt") in commands
+    assert f"sb llm accept {item.meta['id']} --peer cx --model <model>" in commands and str(scratch / "prompt.txt") in commands
     asks = [l.strip() for l in commands.splitlines() if l.strip().startswith("peerhub ask")]
     assert len(asks) == 1 and " --writable " in asks[0] and f'-w "{scratch}"' in asks[0]
     assert subprocess_spy == []
@@ -208,7 +232,7 @@ def test_at29_not_eligible_cases_write_nothing(root):
     helpers.save_meta(declined)
     empty = helpers.make_item(root, filename="empty.txt", text="")
     for item in (declined, empty):
-        for command in (llm.prepare, llm.accept):
+        for command in (llm.prepare, accept):
             with pytest.raises(SbError) as error:
                 command(root, item.meta["id"])
             assert error.value.code == "not_eligible" and error.value.exit == 2
@@ -220,7 +244,7 @@ def test_state_and_id_guards(root):
     unsupported = helpers.make_item(root, state="unsupported", filename="u.xyz")
     failed = helpers.make_item(root, state="failed", filename="f.pdf")
     for item in (pending, unsupported, failed):
-        for command in (llm.prepare, llm.accept):
+        for command in (llm.prepare, accept):
             with pytest.raises(SbError) as error:
                 command(root, item.meta["id"])
             assert error.value.code == "state_not_allowed" and error.value.exit == 2

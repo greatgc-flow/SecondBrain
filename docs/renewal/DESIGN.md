@@ -89,7 +89,8 @@ records it (artifact rule, §2); a resume redoes a step only when it has no outp
    Exceptions select rows 4–5; a completed output is reconciled after restart rather than converted again.
 3. **Triage**: skip the tool report for plain-text inputs (triage null). For markup, inspect the original source using the
    explicit charset or UTF-8 with optional BOM. If it contains neither Markdown image syntax (`![`, including reference/shortcut or
-   malformed images) nor `<img>`, `<svg>`, `<object>`, `<iframe>` tags (case-insensitive), store local evidence:
+   malformed images) nor media tags (`img`, `svg`, `object`, `iframe`, `embed`, `video`, `audio`, `picture`, `source`),
+   image inputs (`input type=image`) or `src`/`srcset`/`poster` attributes in tags (case-insensitive), store local evidence:
    `decision=no_candidates`, `coverage={state:complete,pages_total:null,pages_inspected:null}`, `scope=markup_source`,
    `image_occurrences=0`, empty candidates/issues. This proves there is no media to inspect and selects row 11 without a subprocess.
    If media syntax is present or source decoding is incomplete, retain conservative tool triage. For other triaged inputs:

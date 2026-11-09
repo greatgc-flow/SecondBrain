@@ -172,6 +172,17 @@ def test_alias_is_validated_before_commit_and_recovery_keeps_source(root, tool, 
     (".html", '<object data="scan.pdf"></object>', "unknown"),
     (".html", '<iframe src="scan.pdf"></iframe>', "unknown"),
     (".md", '<img src="photo.png">', "unknown"),
+    pytest.param(".html", '<embed src="scan.pdf">', "unknown", id="r2-embed"),
+    pytest.param(".md", '<video poster="scan.png"></video>', "unknown", id="r2-video"),
+    pytest.param(".html", '<audio src="recording.wav"></audio>', "unknown", id="r2-audio"),
+    pytest.param(".html", '<picture><source srcset="scan.png 1x"></picture>', "unknown", id="r2-picture"),
+    pytest.param(".html", '<source srcset="scan.png 1x">', "unknown", id="r2-source"),
+    pytest.param(".html", '<div SRCSET = "scan.png 1x">scan</div>', "unknown", id="r2-srcset"),
+    pytest.param(".html", '<input type=image>', "unknown", id="r2-input-unquoted"),
+    pytest.param(".html", '<INPUT name="scan" TYPE = "IMAGE">', "unknown", id="r2-input-double-quoted"),
+    pytest.param(".html", "<input\n type='image'>", "unknown", id="r2-input-single-quoted"),
+    pytest.param(".html", '<input type="text" value="prose">', "text-only", id="r2-input-text"),
+    pytest.param(".html", '<p>Prose mentioning video and embed.</p>', "text-only", id="r2-prose"),
 ])
 def test_markup_without_media_is_ready_but_uninspected_media_stays_unknown(root, ext, body, expected, subprocess_spy):
     # Real conversion matters: HTML conversion can remove objects/iframes entirely.

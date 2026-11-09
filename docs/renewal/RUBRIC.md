@@ -6,15 +6,19 @@ The owner target is 100 in every area. Scores are not promoted until the integra
 ## Evidence
 
 - Local command: `python -m pytest -q -p no:cacheprovider`.
-- Current combined cx/cc candidate result (Windows, Python 3.15.2): **601 passed, 6 skipped in 160.76s**.
+- Current Round 2 cx result (Windows, Python 3.15.2): **612 passed, 6 skipped in 148.97s**.
   All six skips are installed-console e2e cases because `sb` is absent locally, including the mixed-PDF and Markdown-to-ready flows.
   The real local peerhub CLI-help contract passed; this run does not replace CI or live peer evidence.
 - Verified CI workflow installation: `.github/workflows/ci.yml` full-matrix runs `python -m pip install --disable-pip-version-check -q -e ".[dev]"`;
-  `pyproject.toml` declares peerhub in dev. `test_peerhub_contract.py` checks local help offline, never starts a peer, and fails if peerhub
+  `pyproject.toml` pins `peerhub==0.24.1` in dev. `test_peerhub_contract.py` checks local help offline, never starts a peer, and fails if peerhub
   is missing in CI (only local absence skips). Both responses withdraw the prior offline-breaking objection.
 - CI: the integrated v1.0.1 candidate must pass all eight jobs (six full suites and two offline clean installs).
   Record one consistent passed/skipped count per suite from that run; prior-revision counts are not release evidence.
-- Live peer smoke: pending operator execution of DESIGN §12 step 3; offline help proves flag availability, not peer write behavior.
+- Live peer smoke: **OCR and LLM halves passed**, recorded at **2026-11-09T01:41:05Z** in
+  [LIVE_SMOKE_v1.0.1.md](LIVE_SMOKE_v1.0.1.md), including the orchestrator's appended summary/accept, DPI and provenance evidence.
+  Observed source revision: `e96ec022242e3d4fcde72636905935af89f633c2`; Python **3.15.2**, peerhub **0.24.0**, markitdown-gc **0.3.5**.
+  This records the actual smoke environment; the new dev pin **0.24.1** is not represented as having been used in that smoke.
+  Exact-candidate release checks remain governed by DESIGN §12.
 - Merge, main CI, tag `v1.0.1` and GitHub Release: release-operator actions, not established by local tests.
 
 ## Requirement evidence
@@ -55,8 +59,8 @@ All release scores remain **pending the integrated gate**; a previous all-100 sh
 
 [Independent audit](AUDIT_independent.md) deductions are answered in [cx response](RESPONSE_independent_cx.md) and [cc response](RESPONSE_independent_cc.md).
 Retain the independent scores until the integrated candidate is reviewed. Required checks are the complete matrix with no skips,
-both offline clean installs, live writable OCR/summary smoke and independent verification, then release actions in DESIGN §12.
+both offline clean installs and exact-candidate evidence review against the recorded live smoke, then release actions in DESIGN §12.
 
 Reconciled DESIGN now includes the exact tag layout/rule, partial-decline lifecycle, `dpi.json` and shared `ocr.ask_line()` contract,
-safe Markdown pass and authoritative JSON provenance. The manual operator loop remains intentional: sb never runs peers. The live
-writable/read-only peer smoke in DESIGN §12 remains required before tagging; offline help does not replace it.
+safe Markdown pass and authoritative JSON provenance. The manual operator loop remains intentional: sb never runs peers.
+The recorded live writable/read-only OCR and summary smoke is linked above; offline help does not replace its observed evidence.

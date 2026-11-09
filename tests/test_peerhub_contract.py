@@ -34,7 +34,7 @@ def subprocess_spy(monkeypatch, tmp_path):
 
 def test_dev_extra_installs_peerhub():
     project = tomllib.loads((Path(__file__).parents[1] / "pyproject.toml").read_text(encoding="utf-8"))
-    assert "peerhub" in project["project"]["optional-dependencies"]["dev"]
+    assert "peerhub==0.24.1" in project["project"]["optional-dependencies"]["dev"]
 
 
 def test_generated_flags_exist_in_real_peerhub_ask_help(root, monkeypatch):

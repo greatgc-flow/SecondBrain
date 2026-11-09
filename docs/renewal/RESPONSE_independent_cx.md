@@ -55,3 +55,20 @@ Decision shared with the cc response: retain the real local CLI-help contract te
 remains protected by a help-only subprocess guard plus child network/DNS guard. The existing CI full-matrix installation of `.[dev]`
 includes peerhub; CI absence fails rather than silently skipping. Retain live peer smoke as a separate release gate and the manual
 operator loop as sb’s security boundary. The independent audit stays unchanged. No git commands were run.
+
+## Round 2 — cx closeout
+
+- FIXED — R2 MECE −2 and test-adequacy −3 (cx portion): source media detection now includes embed/video/audio/picture/source,
+  src/srcset/poster attributes in tags, and quoted/unquoted, case-insensitive image inputs. Eleven new real-ingest cases cover these
+  boundaries plus text inputs and ordinary prose staying ready. Before the fix nine media cases failed; after it all eleven pass.
+- FIXED — R2 horizontal −3: USAGE now documents tag pages/navigation, decline from awaiting or ocr-in-progress with retained verified
+  text/history, and OCR cleanup preserving LLM scratch. Updated per-unit DPI and safe Markdown descriptions to match current behavior.
+- FIXED — R2 horizontal −2: RUBRIC links [LIVE_SMOKE_v1.0.1.md](LIVE_SMOKE_v1.0.1.md) and records the smoke date, source revision,
+  Python/peerhub/converter versions and both observed OCR/LLM outcomes. The orchestrator owns the full appended smoke evidence;
+  the recorded peerhub 0.24.0 smoke is distinguished from the new 0.24.1 dev pin. This supersedes the earlier pending-smoke wording.
+- FIXED — R2 release −2: dev extra pins `peerhub==0.24.1`; the dependency contract test asserts the exact pin. It failed before the pin
+  and passed afterward. CI still installs `.[dev]`; the real local CLI-help contract remains offline and never starts a peer.
+- Test-first targeted run: 10 failed, 2 passed before implementation; **12 passed** after implementation (media cases + pin check).
+- Required command `python -m pytest -q -p no:cacheprovider`: **612 passed, 6 skipped in 148.97s** (Windows/Python 3.15.2).
+  The six existing console e2e cases skip because `sb` is absent locally; the real peerhub help contract passes. No git commands used;
+  cc-owned runtime/tests and smoke evidence were not edited.

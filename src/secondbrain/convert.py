@@ -52,7 +52,9 @@ def _inspect_markup(source, charset):
         text = source.read_text(encoding=charset or "utf-8-sig")
     except UnicodeError:
         return None
-    if re.search(r"!\s*\[|<\s*(?:img|svg|object|iframe)\b", text, re.I):
+    if re.search(r"!\s*\[|<\s*(?:img|svg|object|iframe|embed|video|audio|picture|source)\b"
+                 r"|<[^>]*\b(?:src|srcset|poster)\s*="
+                 r"""|<\s*input\b[^>]*\btype\s*=\s*["']?image\b""", text, re.I):
         return None
     return {"decision": "no_candidates", "coverage": {"state": "complete", "pages_total": None, "pages_inspected": None},
             "scope": "markup_source", "image_occurrences": 0, "candidates": [], "issues": []}

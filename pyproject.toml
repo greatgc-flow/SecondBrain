@@ -15,7 +15,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=9",
-    "peerhub",
+    "peerhub==0.24.1",
 ]
 
 [project.scripts]

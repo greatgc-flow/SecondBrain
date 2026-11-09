@@ -1,14 +1,13 @@
 """Schema-1 ledgers and referenced-artifact validation, with no command imports."""
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-import json
 import os
 from pathlib import Path
 import re
 import unicodedata
 
-from .errors import ErrorCode, SbError, WarningCode
-from .fsutil import checked_path, is_reparse_point, sha256_file
+from .errors import CONVERTER_VERSION, LARGE, PEER, PLAIN_TEXT_EXTENSIONS, RASTER_EXTENSIONS, TRIAGE_EXTENSIONS, ErrorCode, SbError, WarningCode
+from .fsutil import checked_path, is_reparse_point, load_json_strict, require as _require, sha256_file
 
 
 @dataclass
@@ -16,11 +15,6 @@ class Item:
     path: Path
     meta: dict
     warnings: list = field(default_factory=list)
-
-
-def _require(condition, message):
-    if not condition:
-        raise ValueError(message)
 
 
 def _keys(value, names):
@@ -78,13 +72,13 @@ def _activity(value, method=None):
     _date(value["date"])
     params = value["params"]
     if value["method"] == "convert":
-        _require(value["tool"] == "markitdown-gc" and value["version"] == "0.3.5", "Wrong converter/version")
+        _require(value["tool"] == "markitdown-gc" and value["version"] == CONVERTER_VERSION, "Wrong converter/version")
         _require(value["peer"] is None and value["model"] is None, "Conversion has no peer/model")
         _keys(params, "charset extract_media")
         _string(params["charset"], nullable=True)
         _boolean(params["extract_media"])
     else:
-        _require(isinstance(value["peer"], str) and re.fullmatch(r"[a-z][a-z0-9-]{0,31}", value["peer"]), "Invalid peer id")
+        _require(isinstance(value["peer"], str) and PEER.fullmatch(value["peer"]), "Invalid peer id")
         _require(isinstance(value["model"], str) and value["model"], "Missing peer model")
         _keys(params, "prompt_rev dpi unit_file" if value["method"] == "ocr-vision" else "prompt_rev")
         _require(isinstance(params["prompt_rev"], str) and params["prompt_rev"], "Invalid prompt revision")
@@ -188,7 +182,7 @@ def _ocr(value, meta, directory, referenced):
         elif unit["kind"] == "asset":
             _require(meta["conversion"] is not None and unit["source"] in {m["file"] for m in meta["conversion"]["media"]}, "Asset is not conversion media")
         else:
-            _require(unit["source"] == "self" and meta["ext"] in {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tif", ".tiff", ".webp"}, "Invalid raster source")
+            _require(unit["source"] == "self" and meta["ext"] in RASTER_EXTENSIONS, "Invalid raster source")
             _require(len(units) == 1, "Raster must have one unit")
         _require(unit["status"] in {"pending", "approved", "recorded", "verified"}, "Invalid unit status")
         attempts = unit["attempts"]
@@ -216,7 +210,7 @@ def _ocr(value, meta, directory, referenced):
             _require(last == "mismatch", "Pending/approved attempt must be mismatch")
     approved = any(u["status"] != "pending" for u in units.values())
     _require((value["disposition"] == "approved") == approved, "Disposition/unit mismatch")
-    if approved and len(units) > 20:
+    if approved and len(units) > LARGE:
         _require(value["large_ack"], "Missing large approval acknowledgement")
     if meta["state"] == "awaiting-approval":
         _require(value["disposition"] == "none", "Awaiting item has OCR disposition")
@@ -287,18 +281,17 @@ def _validate_meta(meta, directory):
     if meta["has_native_text"] is not None:
         _boolean(meta["has_native_text"])
     _triage(meta["triage"], meta["ext"] == ".pdf")
-    rasters = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tif", ".tiff", ".webp"}
-    if meta["ext"] in rasters:
+    if meta["ext"] in RASTER_EXTENSIONS:
         _require(meta["conversion"] is None, "Raster must not have a conversion")
-    if meta["class"] in {"text-only", "mixed", "unknown"} or meta["class"] == "ocr-required" and meta["ext"] not in rasters:
+    if meta["class"] in {"text-only", "mixed", "unknown"} or meta["class"] == "ocr-required" and meta["ext"] not in RASTER_EXTENSIONS:
         _require(meta["conversion"] is not None, "Missing successful conversion")
     if meta["class"] == "mixed":
         _require(meta["has_native_text"] is True, "Mixed item requires native text")
     if meta["class"] == "ocr-required":
         _require(not meta["has_native_text"], "OCR-only item has native text")
-    if meta["ext"] in {".pdf", ".docx", ".pptx", ".xlsx", ".hwp", ".hwpx", ".md", ".html", ".htm"} and meta["state"] not in {"failed", "unsupported"}:
+    if meta["ext"] in TRIAGE_EXTENSIONS and meta["state"] not in {"failed", "unsupported"}:
         _require(meta["triage"] is not None, "Missing successful triage")
-    if meta["ext"] in {".txt", ".csv", ".log", ".json", ".xml", ".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tif", ".tiff", ".webp"}:
+    if meta["ext"] in PLAIN_TEXT_EXTENSIONS | RASTER_EXTENSIONS:
         _require(meta["triage"] is None, "Unexpected triage on plain text/raster")
     _ocr(meta["ocr"], meta, directory, referenced)
     _llm(meta["llm"], meta, directory, referenced)
@@ -327,20 +320,36 @@ def validate_meta(meta, directory):
 
 
 def _read(directory, name):
-    path = checked_path(directory, name)
-    def unique(pairs):
-        result = {}
-        for key, value in pairs:
-            _require(key not in result, "Duplicate JSON key")
-            result[key] = value
-        return result
-    return json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=unique)
+    return load_json_strict(checked_path(directory, name))
 
 
 def load_item(directory):
     directory = Path(directory)
     meta = _corrupt(lambda: _read(directory, "meta.json"))
     return Item(directory, meta, validate_meta(meta, directory))
+
+
+def scan(root):
+    """Return valid items, warnings and corruption notes without modifying raws."""
+    root = Path(os.path.abspath(root))
+    raws = checked_path(root, "raws")
+    items, warnings, errors = [], [], []
+    if not raws.exists():
+        return items, warnings, errors
+    for path in sorted(raws.iterdir()):
+        if path.name.startswith("."):
+            continue
+        note = {"id": path.name, "path": path.relative_to(root).as_posix()}
+        if is_reparse_point(path):
+            warnings.append({**note, "code": str(WarningCode.SKIPPED_REPARSE), "message": "Reparse point skipped"})
+        elif path.is_dir():
+            try:
+                item = load_item(path)
+                items.append(item)
+                warnings.extend(item.warnings)
+            except SbError as error:
+                errors.append({**note, "code": error.code, "message": str(error)})
+    return items, warnings, errors
 
 
 def _validate_stage(stage, directory):

@@ -16,9 +16,7 @@ FIXTURES = Path(__file__).parent / "fixtures"
 SOURCE = (FIXTURES / "reports" / "text--plain.txt.converted.md").read_bytes().decode("utf-8")
 
 
-def tree(path):
-    path = Path(path)
-    return {p.relative_to(path).as_posix(): p.read_bytes() for p in sorted(path.rglob("*")) if p.is_file()}
+tree = helpers.tree
 
 
 def make(root, **kwargs):

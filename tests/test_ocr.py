@@ -2,6 +2,7 @@
 import hashlib
 from pathlib import Path
 import re
+import shutil
 
 import pytest
 
@@ -13,9 +14,7 @@ from secondbrain.ledger import load_item
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
-def tree(path):
-    path = Path(path)
-    return {p.relative_to(path).as_posix(): p.read_bytes() for p in sorted(path.rglob("*")) if p.is_file()} if path.exists() else {}
+tree = helpers.tree
 
 
 def fails(root, code, function, *args, **kwargs):
@@ -41,8 +40,12 @@ def units_item(root, statuses, state="ocr-in-progress", filename="doc.pdf", **kw
     return helpers.make_item(root, state=state, classification="mixed", filename=filename, statuses=statuses, **kwargs)
 
 
+def work_dir(root, item_id):
+    return root / "work" / item_id
+
+
 def work(root, item):
-    return root / "work" / item.meta["id"]
+    return work_dir(root, item.meta["id"])
 
 
 def put(root, item, key, body):
@@ -163,6 +166,28 @@ def test_at19_assets_and_rasters_copied_byte_equal(root, subprocess_spy):
     assert (work(root, item) / "u0001.png").read_bytes() == asset
     assert (work(root, raster) / "u0001.jpg").read_bytes() == (raster.path / "src" / "photo.jpg").read_bytes()
     assert subprocess_spy == []
+
+
+@pytest.mark.parametrize("name", ["slides.pptx", "image.hwp", "image.hwpx", "image.xlsx"])
+def test_at19_real_containers_ingest_then_approve(root, subprocess_spy, name):
+    from secondbrain import ingest
+    shutil.copyfile(FIXTURES / "mixed" / name, root / "inbox" / name)
+    result = ingest.ingest(root)
+    assert not result["errors"], result["errors"]
+    item_id = result["items"][0]["id"]
+    directory = root / "raws" / item_id
+    meta = load_item(directory).meta
+    assert meta["class"] == "mixed" and meta["state"] == "awaiting-approval" and meta["ocr"]["units"]
+    converted, conversion, calls = (directory / "converted.md").read_bytes(), meta["conversion"], len(subprocess_spy)
+    assert [m["file"] for m in conversion["media"]] == [u["source"] for u in meta["ocr"]["units"].values()]
+    ocr.approve(root, item_id)
+    for key, unit in meta["ocr"]["units"].items():
+        assert unit["kind"] == "asset"
+        scratch = work_dir(root, item_id) / (key + Path(unit["source"]).suffix)
+        assert scratch.read_bytes() == (directory / unit["source"]).read_bytes()  # the committed source image
+    # approve never converts: no new subprocess, converted.md and the conversion ledger unchanged
+    assert len(subprocess_spy) == calls and (directory / "converted.md").read_bytes() == converted
+    assert load_item(directory).meta["conversion"] == conversion
 
 
 def test_approve_rerenders_missing_scratch_for_approved_units(root, fake_render):
@@ -289,7 +314,7 @@ def test_at22_verify_request_validation(root):
     fails(root, "invalid_request", ocr.verify, root, item_id, "cc", "m", ok=["u0042"])
     fails(root, "invalid_request", ocr.verify, root, item_id, "1x", "m", ok=["u0001"])
     fails(root, "invalid_request", ocr.verify, root, item_id, "cc", "", ok=["u0001"])
-    result = ocr.verify(root, item_id, "cc", "m2", ok="u0001")
+    result = ocr.verify(root, item_id, "cc", "m2", ok=["u0001"])
     assert result["result"] == "verified"
     loaded = load_item(item.path)
     attempt = loaded.meta["ocr"]["units"]["u0001"]["attempts"][0]

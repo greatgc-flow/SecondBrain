@@ -5,17 +5,15 @@ The command-by-state matrix (section 4) is enforced by the command modules thems
 """
 import argparse
 import json
-import os
 from pathlib import Path
 import sys
 
 from . import ingest, llm, ocr, wiki
-from .errors import ErrorCode, SbError, WarningCode
-from .fsutil import is_reparse_point, resolve_root
-from .ledger import load_item
+from .errors import LARGE, ErrorCode, SbError, WarningCode
+from .fsutil import load_json_strict, resolve_root
+from .ledger import load_item, scan
 
 STATES = ("ready", "awaiting-approval", "ocr-in-progress", "unsupported", "failed")
-LARGE = 20
 
 
 class UsageError(Exception):
@@ -78,13 +76,6 @@ def _note(note):
     return {"code": code, "id": note.get("id"), "path": note.get("path"), "message": note.get("message") or code}
 
 
-def _units(meta):
-    units = list(meta["ocr"]["units"].values())
-    return {"total": len(units), "approved": sum(u["status"] != "pending" for u in units),
-            "recorded": sum(u["status"] in ("recorded", "verified") for u in units),
-            "verified": sum(u["status"] == "verified" for u in units)}
-
-
 def row(meta, result):
     triage = meta["triage"]
     return {"id": meta["id"], "filename": meta["filename"], "filename_nfc": meta["filename_nfc"], "ext": meta["ext"],
@@ -93,7 +84,7 @@ def row(meta, result):
             "pages_total": triage["coverage"]["pages_total"] if triage else None,
             "image_occurrences": triage["image_occurrences"] if triage else None,
             "coverage": {"state": triage["coverage"]["state"] if triage else None, "scope": triage["scope"] if triage else None},
-            "units": _units(meta), "summary": bool(meta["llm"] and meta["llm"]["summary"]), "result": result}
+            "units": wiki.unit_counts(meta), "summary": meta["llm"] is not None, "result": result}
 
 
 def corrupt_row(item_id, result):
@@ -128,7 +119,7 @@ def _staged_collisions(root):
     warnings = []
     for directory in sorted((root / "raws" / ".staging").glob("tmp-*")):
         try:
-            stage = json.loads((directory / "stage.json").read_text(encoding="utf-8"))
+            stage = load_json_strict(directory / "stage.json")
         except (OSError, ValueError):
             continue
         if isinstance(stage, dict) and stage.get("collision") is True:
@@ -139,27 +130,9 @@ def _staged_collisions(root):
 
 
 def run_status(root):
-    items, warnings, errors = [], [], []
-    raws = root / "raws"
-    for path in sorted(raws.iterdir()) if raws.is_dir() else []:
-        if path.name.startswith("."):
-            continue
-        if is_reparse_point(path):
-            warnings.append({"code": str(WarningCode.SKIPPED_REPARSE), "id": path.name, "path": _relative(root, path),
-                             "message": "Reparse point skipped"})
-        elif path.is_dir():
-            try:
-                item = load_item(path)
-            except SbError as error:
-                errors.append({"code": error.code, "id": path.name, "path": _relative(root, path), "message": str(error)})
-                items.append(corrupt_row(path.name, "corrupt"))
-                continue
-            items.append(row(item.meta, "listed"))
-            warnings.extend(item.warnings)
-            stale = _stale_work(root, item)
-            if stale:
-                warnings.append(stale)
-    warnings.extend(_staged_collisions(root))
+    loaded, warnings, errors = scan(root)
+    items = [row(item.meta, "listed") for item in loaded] + [corrupt_row(error["id"], "corrupt") for error in errors]
+    warnings = [*warnings, *filter(None, (_stale_work(root, item) for item in loaded)), *_staged_collisions(root)]
     counts = {state: sum(1 for i in items if i["state"] == state) for state in STATES}
     return {"items": items, "warnings": warnings, "errors": errors, "extra": {"counts": counts}, "messages": []}
 
@@ -167,7 +140,7 @@ def run_status(root):
 # ------------------------------------------------------------------ dispatch
 
 def _keys(values):
-    return [key for value in values or [] for key in value.split(",") if key.strip()]
+    return [key.strip() for value in values or [] for key in value.split(",") if key.strip()]
 
 
 def run_command(args, root):

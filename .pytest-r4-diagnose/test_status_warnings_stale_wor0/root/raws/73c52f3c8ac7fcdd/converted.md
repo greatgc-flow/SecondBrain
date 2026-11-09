@@ -1,1 +1,0 @@
-Synthetic text 123.

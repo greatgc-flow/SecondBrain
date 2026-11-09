@@ -230,3 +230,36 @@ smoke ran on the code-final commit. PR #67 CI is not scored.
   at e96ec02, but LIVE_SMOKE_v1.0.1.md:1,3 now records 02:12Z at 22e3e85 (−1). Fix: align USAGE with the decision above, and point RUBRIC
   at the 22e3e85 run.
 - Note (not scored): the wiki fix changes code, so DESIGN §12 needs the smoke step 5 (wiki build) rerun on the new SHA, and RUBRIC must record that SHA.
+
+## Round 5 (2026-11-09, branch `fix/indep-core` @ eddf8e6)
+
+Same auditor. Inputs: the diffs 633e717..eddf8e6, wiki.py, test_wiki.py, pyproject, ci.yml, DESIGN, USAGE, RUBRIC and LIVE_SMOKE_v1.0.1.md.
+Python execution was again denied, so the authors' count (661 passed, 6 skipped) is unverified. PR #67 CI is not scored.
+
+| # | Dimension | R1 | R2 | R3 | R4 | R5 |
+|---|---|---|---|---|---|---|
+| 1 | Goal fulfilment | 82 | 98 | 96 | 97 | 100 |
+| 2 | Vertical closure | 85 | 100 | 99 | 99 | 100 |
+| 3 | Horizontal consistency | 84 | 95 | 97 | 98 | 99 |
+| 4 | MECE | 91 | 98 | 100 | 100 | 100 |
+| 5 | Simplicity | 70 | 97 | 99 | 100 | 100 |
+| 6 | Test adequacy | 82 | 97 | 98 | 98 | 100 |
+| 7 | Release readiness | 75 | 92 | 97 | 100 | 98 |
+
+### Disposition of round-4 deductions
+| R4 deduction | Verdict | Basis |
+|---|---|---|
+| 1 −3 bypasses (a)/(b) | FIXED | wiki.py:55 escapes every `<` before anything else. CommonMark raw HTML and autolinks both need a literal `<`, so no backtick or fence pairing can bring them back. `![` → `&#33;[` stops inline, reference, nested and Obsidian `![[ ]]` embeds. Summary and JSON are fenced (wiki.py:160-163) |
+| 6 −2 differential test never runs | FIXED | pyproject.toml:19 pins markdown-it-py==4.2.0 in `dev`. ci.yml:35 installs `.[dev]`, and test_wiki.py:298-299 makes the import mandatory under CI. BYPASSES (test_wiki.py:276-283) covers (a), (b) and the `- `/`> `/`~~~`/indented-fence variants. Each case is rendered with `html: True` |
+| 2 −1 `params.reported` / peer regex in DESIGN | FIXED | Neither appears in DESIGN or USAGE any more. cli.py:70 states the CLI-attribution rule |
+| 3 −2 USAGE claim; RUBRIC smoke ref | USAGE FIXED / RUBRIC NOT OK | See below |
+
+Judgment on code showing `&lt;`: **acceptable**. It is documented (DESIGN.md:256-258, USAGE.md:135-136) and pinned by a test (test_wiki.py:266). It only affects how the derived wiki displays code, and raws keep the original bytes. Removing the code exemption also removes a renderer model that had failed in three audit rounds.
+
+### Remaining deductions (each with its fix)
+- **3 −1** RUBRIC.md:21-25 still records the smoke as **02:12Z** with markitdown-gc **0.3.5**, and says that "the 0.3.6 dependency migration
+  require[s] a new exact-candidate smoke". LIVE_SMOKE_v1.0.1.md:1,3 records that smoke as done: 02:55Z on d7e4ae0 with 0.3.6, including
+  step 5 (wiki build with escape-all). Fix: change RUBRIC.md:21-25 to 02:55Z and markitdown-gc 0.3.6, and delete the "require a new smoke" and "not claimed to exercise" sentences.
+- **7 −2** Commit f68dbf1 added a pytest basetemp directory, `.pytest-r4-diagnose/` (123 files: test roots, raws, wiki pages and
+  `network-guard/sitecustomize.py` copies). RESPONSE_independent_cx.md:121 calls it temporary, and .gitignore:9-11 does not cover it.
+  Fix: `git rm -r .pytest-r4-diagnose` and add `.pytest-*/` to .gitignore.

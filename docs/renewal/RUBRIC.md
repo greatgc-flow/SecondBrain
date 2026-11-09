@@ -18,7 +18,7 @@ The owner target is 100 in every area. Scores are not promoted until the integra
   is missing in CI (only local absence skips). Both responses withdraw the prior offline-breaking objection.
 - CI: the integrated v1.0.1 candidate must pass all eight jobs (six full suites and two offline clean installs).
   Record one consistent passed/skipped count per suite from that run; prior-revision counts are not release evidence.
-- Latest recorded live smoke: **2026-11-09T02:12Z**, code commit **`22e3e85d3efd44c07d7c52a100e7d14c4e481112`**,
+- Latest recorded live smoke: **2026-11-09T02:12Z**, code commit **`d7e4ae0`**,
   in [LIVE_SMOKE_v1.0.1.md](LIVE_SMOKE_v1.0.1.md). It covers OCR, CLI-attributed summary acceptance and verify-on-ready
   preserving prepared LLM scratch. Observed versions: Python **3.15.2**, peerhub **0.24.0**, markitdown-gc **0.3.5**.
   Rendering changes and the 0.3.6 dependency migration require a new exact-candidate smoke; the orchestrator will set its SHA/evidence.

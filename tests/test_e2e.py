@@ -67,9 +67,11 @@ def test_e2e_text_ingest_duplicates_and_wiki(root, run):
     assert json.loads(meta_after_alias.decode("utf-8"))["conversion"] == ledger
     assert [p for p in (root / "raws").iterdir() if p.name != ".staging"] == [directory] and not list((root / "raws" / ".staging").iterdir())
     env, _ = run("wiki", "build", expect=0)
-    assert env["pages"] == 2 and env["items"][0]["result"] == "built"
+    assert env["pages"] == 5 and env["items"][0]["result"] == "built"
     first = {p.relative_to(root).as_posix(): p.read_bytes() for p in (root / "wiki").rglob("*") if p.is_file()}
-    assert "plain.txt" in first["wiki/index.md"].decode("utf-8") and set(first) == {"wiki/index.md", f"wiki/sources/{item['id']}.md"}
+    assert "plain.txt" in first["wiki/index.md"].decode("utf-8")
+    assert set(first) == {"wiki/index.md", f"wiki/sources/{item['id']}.md", "wiki/tags/class-text-only.md", "wiki/tags/ext-txt.md",
+                          "wiki/tags/collected-" + json.loads((directory / "meta.json").read_text(encoding="utf-8"))["ingested_at"][:7] + ".md"}
     run("wiki", "build", expect=0)
     assert {p.relative_to(root).as_posix(): p.read_bytes() for p in (root / "wiki").rglob("*") if p.is_file()} == first
     env, _ = run("status", expect=0)
@@ -100,6 +102,47 @@ def test_e2e_raster_ocr_approve_record_verify(root, run):
     assert "SYNTHETIC INVOICE" in page and "## OCR u0001 (source self;" in page
     env, _ = run("ocr", "verify", item_id, "--peer", "cc", "--model", "m", expect=0)
     assert env["items"][0]["result"] == "cleaned"
+
+
+def test_e2e_mixed_pdf_selective_approval_record_verify_wiki(root, run):
+    shutil.copyfile(FIXTURES / "mixed" / "two-pages.pdf", root / "inbox" / "two-pages.pdf")
+    shutil.copyfile(FIXTURES / "ocr" / "scan.pdf", root / "inbox" / "scan.pdf")
+    shutil.copyfile(FIXTURES / "text" / "plain.txt", root / "inbox" / "plain.txt")
+    env, _ = run("ingest", expect=0)
+    items = {i["filename"]: i for i in env["items"]}
+    assert items["plain.txt"]["state"] == "ready"
+    mixed, scan = items["two-pages.pdf"], items["scan.pdf"]
+    assert mixed["class"] == "mixed" and mixed["state"] == scan["state"] == "awaiting-approval"
+    # selective approval: only the mixed PDF is OCRed; the scan is declined
+    env, _ = run("ocr", "approve", mixed["id"], expect=0)
+    work = root / "work" / mixed["id"]
+    units = sorted(p.stem for p in work.glob("u*.png"))
+    assert env["items"][0]["state"] == "ocr-in-progress" and units and len(units) == mixed["units"]["total"]
+    for unit in units:
+        shutil.copyfile(FIXTURES / "peer-output" / "u0001.md", work / f"{unit}.md")
+    env, _ = run("ocr", "record", mixed["id"], "--peer", "cx", "--model", "m", expect=0)
+    assert env["items"][0]["units"]["recorded"] == len(units)
+    env, _ = run("ocr", "verify", mixed["id"], "--peer", "cc", "--model", "m", "--ok", ",".join(units), expect=0)
+    assert env["items"][0]["state"] == "ready" and not work.exists()
+    env, _ = run("ocr", "decline", scan["id"], expect=0)
+    assert env["items"][0]["state"] == "ready"
+    env, _ = run("wiki", "build", expect=0)
+    pages = {name: (root / "wiki" / "sources" / f"{i['id']}.md").read_text(encoding="utf-8") for name, i in items.items()}
+    assert "SYNTHETIC INVOICE" in pages["two-pages.pdf"] and "OCR verified" in pages["two-pages.pdf"]
+    assert "OCR declined" in pages["scan.pdf"] and "SYNTHETIC INVOICE" not in pages["scan.pdf"]
+    index = (root / "wiki" / "index.md").read_text(encoding="utf-8")
+    assert "[class-mixed](tags/class-mixed.md) (1)" in index and "[ext-pdf](tags/ext-pdf.md) (2)" in index
+    assert f"(../sources/{mixed['id']}.md)" in (root / "wiki" / "tags" / "class-mixed.md").read_text(encoding="utf-8")
+    assert "[class-mixed](../tags/class-mixed.md)" in pages["two-pages.pdf"]
+
+
+def test_e2e_markdown_note_goes_straight_to_ready(root, run):
+    (root / "inbox" / "note.md").write_text("# Meeting\n\nBudget 42 USD.\n", encoding="utf-8")
+    env, _ = run("ingest", expect=0)
+    item = env["items"][0]
+    assert item["state"] == "ready" and item["class"] == "text-only" and item["disposition"] == "none"
+    run("wiki", "build", expect=0)
+    assert "## Transcript\n\n# Meeting\n\nBudget 42 USD.\n" in (root / "wiki" / "sources" / f"{item['id']}.md").read_text(encoding="utf-8")
 
 
 def test_e2e_llm_prepare_accept_and_rejection(root, run):

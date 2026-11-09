@@ -27,6 +27,42 @@ def fence(body, info="text"):
     return f"{mark}{info}\n{body}\n{mark}\n"
 
 
+_DEST = re.compile(r"https?://|[^:&\\/?#]*(?:[/?#]|$)", re.I)  # http(s), or relative: no scheme/entity/escape before the first "/?#"
+_INLINE_LINK = re.compile(r"(\]\(\s*)([^\s)]*)")
+_LINK_DEFINITION = re.compile(r"(\[(?:[^\]\\]|\\.)+\]:\s*)(\S+)")
+_QUOTE = re.compile(r"[ ]{0,3}(?:> ?)*")
+
+
+def _safe_dest(match):
+    dest = match.group(2)
+    return match.group(0) if _DEST.match(dest) else match.group(1) + "#"
+
+
+def _quote_safe(line):
+    """Escape ">" except in the leading blockquote marker."""
+    head = _QUOTE.match(line).group()
+    return head + line[len(head):].replace(">", "&gt;")
+
+
+def safe_markdown(text):
+    """Untrusted Markdown made inert: no raw HTML, no image embeds, only http(s)/relative link targets.
+
+    Nothing is fetched. Entities are used (not backslashes) so a hostile backslash cannot undo them.
+    """
+    text = text.replace("<", "&lt;").replace("![", "&#33;[")
+    text = "\n".join(_quote_safe(line) for line in text.split("\n"))
+    return _LINK_DEFINITION.sub(_safe_dest, _INLINE_LINK.sub(_safe_dest, text))
+
+
+def tags(meta):
+    """Deterministic tags: class, extension, collected year-month (all derived from meta)."""
+    found = [f"collected-{meta['ingested_at'][:7]}"]
+    if meta["class"]:
+        found.append(f"class-{meta['class']}")
+    found.append("ext-" + (meta["ext"][1:] if re.fullmatch(r"\.[a-z0-9]{1,16}", meta["ext"]) else "other"))
+    return sorted(found)
+
+
 def recover(root):
     """Build-start recovery: drop wiki.tmp; restore or drop wiki.old."""
     root = Path(root)
@@ -113,7 +149,8 @@ def _json_subset(item):
 def source_page(item):
     meta = item.meta
     parts = [f"# {esc(meta['filename_nfc'])}\n\n", fence(_json_subset(item), "json"), "\n",
-             f"[Original file](../../raws/{meta['id']}/src/{percent_encode(meta['filename'])})\n\n"]
+             f"[Original file](../../raws/{meta['id']}/src/{percent_encode(meta['filename'])})\n\n",
+             "Tags: " + ", ".join(f"[{t}](../tags/{t}.md)" for t in tags(meta)) + " · [Index](../index.md)\n\n"]
     text = banner(meta)
     if text:
         parts += [fence(text), "\n"]
@@ -122,8 +159,23 @@ def source_page(item):
         body = (item.path / revision["file"]).read_bytes().decode("utf-8")
         parts += ["## Summary\n\n", fence(body), "\n"]
     if meta["state"] != "unsupported" and (meta["state"] != "failed" or meta["conversion"] is not None):
-        parts += ["## Transcript\n\n", fence(view(item))]
+        parts += ["## Transcript\n\n", safe_markdown(view(item))]  # last section: an unclosed fence cannot swallow more
     return "".join(parts).rstrip("\n") + "\n"
+
+
+def tag_members(items):
+    """{tag: [meta, ...]} in item order."""
+    members = {}
+    for item in items:
+        for tag in tags(item.meta):
+            members.setdefault(tag, []).append(item.meta)
+    return members
+
+
+def tag_page(tag, metas):
+    """Links back to the index and to every source page that carries the tag."""
+    return "\n".join([f"# Tag: {tag}", "", "[Index](../index.md)", "",
+                      *(f"- [{esc(m['filename_nfc'])}](../sources/{m['id']}.md)" for m in metas)]) + "\n"
 
 
 def index_page(items):
@@ -136,6 +188,9 @@ def index_page(items):
         cells = [label, esc(meta["ext"]), meta["class"] or "-", meta["state"], meta["ingested_at"][:10],
                  _ocr_cell(meta), _coverage(meta) or "-", "yes" if _summary(meta) else "no"]
         lines.append("| " + " | ".join(cells) + " |")
+    members = tag_members(items)
+    if members:
+        lines += ["", "## Tags", "", *(f"- [{tag}](tags/{tag}.md) ({len(members[tag])})" for tag in sorted(members))]
     return "\n".join(lines) + "\n"
 
 
@@ -150,6 +205,9 @@ def build(root):
         write_text(tmp / "index.md", index_page(items))
         for item in items:
             write_text(tmp / "sources" / f"{item.meta['id']}.md", source_page(item))
+        members = tag_members(items)
+        for tag, metas in members.items():
+            write_text(tmp / "tags" / f"{tag}.md", tag_page(tag, metas))
         if _exists(root / "wiki"):
             os.rename(root / "wiki", root / "wiki.old")
         os.rename(tmp, root / "wiki")
@@ -157,4 +215,4 @@ def build(root):
             safe_delete(root, root / "wiki.old")
     except OSError as error:
         raise SbError(ErrorCode.IO_ERROR, 1, str(error)) from error
-    return {"pages": len(items) + 1, "items": items, "warnings": warnings, "errors": errors}
+    return {"pages": len(items) + len(members) + 1, "items": items, "warnings": warnings, "errors": errors}

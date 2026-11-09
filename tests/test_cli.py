@@ -146,7 +146,7 @@ MATRIX = {
     "dup": dict.fromkeys(STATES, "A"),
     "retry": {"ready": "0", "awaiting-approval": "0", "ocr-in-progress": "0", "unsupported": "0", "failed": "M"},
     "approve": {"ready": "-", "awaiting-approval": "M", "ocr-in-progress": "M", "unsupported": "-", "failed": "-"},
-    "decline": {"ready": "-", "awaiting-approval": "M", "ocr-in-progress": "-", "unsupported": "-", "failed": "-"},
+    "decline": {"ready": "-", "awaiting-approval": "M", "ocr-in-progress": "M", "unsupported": "-", "failed": "-"},
     "record": {"ready": "-", "awaiting-approval": "-", "ocr-in-progress": "M", "unsupported": "-", "failed": "-"},
     "verify": {"ready": "S", "awaiting-approval": "-", "ocr-in-progress": "M", "unsupported": "-", "failed": "-"},
     "prepare": {"ready": "S", "awaiting-approval": "-", "ocr-in-progress": "-", "unsupported": "-", "failed": "-"},
@@ -269,7 +269,7 @@ def test_at34_warnings_and_exit_precedence(root, capsys):
     bad.mkdir()
     (bad / "meta.json").write_text("{", encoding="utf-8")
     code, env, _ = sb(capsys, root, "wiki", "build")
-    assert code == 1 and env["pages"] == 2 and [e["code"] for e in env["errors"]] == ["corrupt_meta"]
+    assert code == 1 and env["pages"] == 5 and [e["code"] for e in env["errors"]] == ["corrupt_meta"]
     assert [i["result"] for i in env["items"]] == ["built"]
     code, env, _ = sb(capsys, root, "ocr", "approve", "ffffffffffffffff")
     assert code == 1 and env["errors"][0]["code"] == "corrupt_meta" and env["items"] == []
@@ -288,7 +288,7 @@ def test_verify_lists_tolerate_spaces_around_keys(root, capsys):
 def test_wiki_build_envelope_and_pages(root, capsys):
     helpers.make_item(root, filename="a.txt")
     code, env, _ = sb(capsys, root, "wiki", "build")
-    assert code == 0 and env["command"] == "wiki build" and env["pages"] == 2 and (root / "wiki" / "index.md").is_file()
+    assert code == 0 and env["command"] == "wiki build" and env["pages"] == 5 and (root / "wiki" / "index.md").is_file()
 
 
 def test_ingest_exit_one_when_inbox_is_missing(tmp_path, capsys):

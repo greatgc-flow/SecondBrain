@@ -1,5 +1,17 @@
 """Stable v1 error and warning codes; independent of other package modules."""
 from enum import StrEnum
+import re
+
+CONVERTER_VERSION = "0.3.5"
+PEER = re.compile(r"[a-z][a-z0-9-]{0,31}")
+LARGE = 20
+PLAIN_TEXT_EXTENSIONS = frozenset({".txt", ".csv", ".log", ".json", ".xml"})
+MARKUP_EXTENSIONS = frozenset({".md", ".html", ".htm"})
+CONTAINER_EXTENSIONS = frozenset({".docx", ".pptx", ".xlsx", ".hwp", ".hwpx"})
+RASTER_EXTENSIONS = frozenset({".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tif", ".tiff", ".webp"})
+TRIAGE_EXTENSIONS = MARKUP_EXTENSIONS | CONTAINER_EXTENSIONS | {".pdf"}
+CONVERTIBLE_EXTENSIONS = PLAIN_TEXT_EXTENSIONS | TRIAGE_EXTENSIONS
+ALLOWED_EXTENSIONS = CONVERTIBLE_EXTENSIONS | RASTER_EXTENSIONS
 
 
 class ErrorCode(StrEnum):

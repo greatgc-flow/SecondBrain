@@ -12,6 +12,26 @@ from urllib.parse import quote
 from .errors import ErrorCode, SbError
 
 
+def require(condition, message):
+    if not condition:
+        raise ValueError(message)
+
+
+def load_json_strict(source):
+    """Decode a UTF-8 Path, JSON text or bytes, rejecting duplicate object keys."""
+    if isinstance(source, Path):
+        source = source.read_bytes()
+    if isinstance(source, bytes):
+        source = source.decode("utf-8")
+    def unique(pairs):
+        value = {}
+        for key, data in pairs:
+            require(key not in value, "Duplicate JSON key")
+            value[key] = data
+        return value
+    return json.loads(source, object_pairs_hook=unique)
+
+
 def resolve_root(path=None):
     return Path(path if path is not None else os.environ.get("SB_ROOT", Path.cwd())).expanduser().resolve()
 
@@ -23,16 +43,21 @@ def write_text(path, text):
     path.write_text(text.replace("\r\n", "\n").replace("\r", "\n"), encoding="utf-8", newline="\n")
 
 
-def write_json_atomic(path, value):
+def write_bytes_atomic(path, data):
+    """Preserve exact bytes; flush and fsync the sibling temp before replace."""
     path = Path(path)
     temporary = path.with_name(path.name + ".tmp")
     path.parent.mkdir(parents=True, exist_ok=True)
-    with temporary.open("w", encoding="utf-8", newline="\n") as stream:
-        json.dump(value, stream, ensure_ascii=False, sort_keys=True, indent=1)
-        stream.write("\n")
+    with temporary.open("wb") as stream:
+        stream.write(data)
         stream.flush()
         os.fsync(stream.fileno())
     os.replace(temporary, path)
+
+
+def write_json_atomic(path, value):
+    data = json.dumps(value, ensure_ascii=False, sort_keys=True, indent=1) + "\n"
+    write_bytes_atomic(path, data.encode("utf-8"))
 
 
 def sha256_file(path):

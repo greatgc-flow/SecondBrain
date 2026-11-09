@@ -3,6 +3,8 @@ from copy import deepcopy
 from hashlib import sha256
 import json
 import os
+import subprocess
+import sys
 from pathlib import Path
 from types import SimpleNamespace
 import unicodedata
@@ -522,6 +524,82 @@ def test_plain_ingest_does_not_scan_unrelated_committed_items(root, tool, monkey
     assert not result["errors"] and len(result["items"]) == 1
     assert result["items"][0]["result"] == "new"
     assert (item.path / "meta.json").read_bytes() == b"{"
+
+
+def test_retry_validates_outcome_before_committing_meta(root, tool, monkeypatch):
+    tool.error = ValueError("first attempt")
+    drop(root)
+    ingest.ingest(root)
+    item, = committed(root)
+    before = (item.path / "meta.json").read_bytes()
+    tool.error = None
+    classify = convert.classify_item
+    def invalid(directory, stage):
+        outcome = classify(directory, stage)
+        outcome["class"] = "unsupported"  # incompatible with ready
+        return outcome
+    monkeypatch.setattr(convert, "classify_item", invalid)
+    assert ingest.ingest(root, retry=True)["errors"][0]["code"] == "corrupt_meta"
+    assert (item.path / "meta.json").read_bytes() == before
+    monkeypatch.setattr(convert, "classify_item", classify)
+    assert not ingest.ingest(root, retry=True)["errors"]
+    assert load_item(item.path).meta["state"] == "ready" and len(tool.convert) == 2
+
+
+@pytest.mark.parametrize("installed", ["9.9.9", None])
+def test_converter_version_is_checked_before_any_claim(root, tool, monkeypatch, installed):
+    from importlib.metadata import PackageNotFoundError
+    source = drop(root)
+    def observed(name):
+        if installed is None:
+            raise PackageNotFoundError(name)
+        return installed
+    monkeypatch.setattr(convert, "version", observed)
+    with pytest.raises(SbError) as error:
+        ingest.ingest(root)
+    assert (error.value.code, error.value.exit) == ("invalid_request", 2)
+    assert source.exists() and not (root / "raws").exists() and not tool.convert
+
+
+@pytest.mark.parametrize("name", ["slides.pptx", "image.hwp", "image.hwpx", "image.xlsx"])
+def test_at19_real_containers_ingest_then_approve(root, name):
+    # Extend the existing child network guard with an observation-only spy.
+    # The child writes its call ledger; no converter or OCR render is mocked.
+    calls = root / "conversion-calls.jsonl"
+    guard = root.parent / "network-guard/sitecustomize.py"
+    with guard.open("a", encoding="utf-8") as stream:
+        stream.write(
+            "\nimport json\nfrom markitdown import MarkItDown\n"
+            "_convert = MarkItDown.convert\n"
+            "def observed(self, *args, **kwargs):\n"
+            f"    with open({str(calls)!r}, 'a', encoding='utf-8') as output:\n"
+            "        output.write(json.dumps({'source': str(args[0]), 'method': 'convert'}) + '\\n')\n"
+            "    return _convert(self, *args, **kwargs)\n"
+            "MarkItDown.convert = observed\n"
+        )
+    fixture(root, "mixed/" + name)
+    def run(*args):
+        done = subprocess.run([sys.executable, "-m", "secondbrain", "--root", str(root), "--json", *args],
+                              capture_output=True, encoding="utf-8")
+        assert done.returncode == 0, done.stderr
+        return json.loads(done.stdout)
+    run("ingest")
+    item, = committed(root)
+    identity = item.meta["id"]
+    conversion = item.meta["conversion"]
+    assert item.meta["class"] == "mixed" and conversion["media"]
+    artifacts = [item.path / "converted.md", item.path / "src" / name,
+                 *(item.path / asset["file"] for asset in conversion["media"])]
+    before = {p: (p.read_bytes(), p.stat().st_mtime_ns) for p in artifacts}
+    run("ocr", "approve", identity)
+    approved = load_item(item.path)
+    for key, unit in approved.meta["ocr"]["units"].items():
+        source = item.path / unit["source"]
+        assert (root / "work" / identity / (key + source.suffix)).read_bytes() == source.read_bytes()
+    assert approved.meta["conversion"] == load_stage(item.path)["conversion"] == conversion
+    assert before == {p: (p.read_bytes(), p.stat().st_mtime_ns) for p in artifacts}
+    log = [json.loads(line) for line in calls.read_text(encoding="utf-8").splitlines()]
+    assert len(log) == 1 and log[0]["method"] == "convert"
 
 
 @pytest.mark.parametrize("group", ["text", "ocr", "mixed", "unknown", "unsupported", "characterize", "failed"])

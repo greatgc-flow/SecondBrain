@@ -3,6 +3,7 @@ from copy import deepcopy
 from hashlib import sha256
 from itertools import product
 import json
+import inspect
 from pathlib import Path
 import re
 import shutil
@@ -19,6 +20,22 @@ from helpers import DATE
 
 FIXTURES = Path(__file__).parent / "fixtures"
 REPORTS = FIXTURES / "reports"
+
+
+def test_classification_has_no_ingest_path_precheck():
+    assert "path" not in inspect.signature(convert.classify).parameters
+
+
+def test_unit_overflow_is_reported_at_the_enumeration_boundary(root, monkeypatch):
+    directory, stage = stage_file(root, "ocr/scan.pdf")
+    install_converter(monkeypatch, directory)
+    monkeypatch.setattr(convert, "run_report", lambda *args: convert.adapt_report(raw(), ".pdf"))
+    def overflow(*args):
+        raise SbError("too_many_units", 1)
+    monkeypatch.setattr(convert, "enumerate_units", overflow)
+    outcome = convert.classify_item(directory, stage)
+    assert outcome["class"] is None and outcome["state"] == "failed"
+    assert outcome["error"]["code"] == outcome["reason"] == "too_many_units"
 
 
 def raw(name="row-08.json"):
@@ -151,10 +168,7 @@ ROW_CASES = [
     pytest.param(".mp3", {"size": 0}, (None, "failed", "empty_file"), id="empty-before-extension"),
     pytest.param(".png", {"conversion_error": "other"}, ("ocr-required", "awaiting-approval", "raster"), id="raster-before-converter"),
     pytest.param(".mp3", {"conversion_error": "other"}, ("unsupported", "unsupported", "extension_not_allowed"), id="extension-before-converter"),
-    pytest.param(".pdf", {"path": "x" * 240, "report": "row-11.json", "native": True}, ("text-only", "ready", None), id="path-240"),
-    pytest.param(".pdf", {"path": "x" * 241}, (None, "failed", "path_too_long"), id="path-241"),
     pytest.param(".pdf", {"conversion_error": "conversion", "report_error": "report_failed"}, (None, "failed", "FileConversionException"), id="conversion-before-report"),
-    pytest.param(".pdf", {"report": "row-09.json", "unit_count": 10000, "native": True}, (None, "failed", "too_many_units"), id="unit-overflow"),
 ]
 
 

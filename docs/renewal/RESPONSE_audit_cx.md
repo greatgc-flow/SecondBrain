@@ -1,0 +1,49 @@
+# Final audit — cx response
+
+Ownership follows the orchestrator's assignment. FIXED below describes the cx
+portion when cc adoption is explicitly pending; it does not certify other
+worktrees or close the release gate. Each finding id in AUDIT_v1.md is listed.
+
+Tests first: the focused run had **12 failures** before implementation (missing
+shared helpers, dead path argument, retry metadata overwritten, and converter
+version drift accepted after claim). After implementation, **325 focused tests
+passed**. The real AT-19 chain also passed all four fixture cases, using actual
+conversion and child-process call ledgers, with no mocked converter or assets.
+
+- **V1 — FIXED.** `tests/test_ingest.py::test_at19_real_containers_ingest_then_approve` parametrizes real slides.pptx, image.hwp, image.hwpx and image.xlsx through `python -m secondbrain ingest` then `ocr approve`. The existing child network guard adds an observation-only converter spy that writes a JSONL call ledger. Each case requires exactly one actual conversion, unchanged source/conversion/media bytes and mtimes, matching committed/staging conversion provenance, and byte-equal approved scratch assets.
+- **V2 — FIXED.** Removed `classify(path=...)` and its two artificial path cases. `test_classification_has_no_ingest_path_precheck` failed first and now passes; AT-35 still verifies rejection before claiming a source. DESIGN §2 explicitly describes the command error with no committed item, and §3 row 1 now contains only empty_file. AT-35 now describes the already-tested platform-valid components/long-root construction rather than a 600-byte filename Linux cannot create.
+- **R1 — REJECTED as a cx implementation change (valid gate; orchestrator-owned).** No rubric scores were promoted and no release action was taken. Six-job release-revision CI, offline installs, final review and release remain with the orchestrator.
+- **H1 — FIXED (DESIGN §4).** Listed identity/collision and every optional persisted step-output key, including classification, native text, triage and OCR, plus the pending-conversion shape. Existing durable-boundary tests cover the persistence protocol.
+- **H2 — FIXED (DESIGN §2/§5).** Added dpi.txt to scratch and documented effective DPI persistence/inheritance/defaults, matching `test_effective_dpi_is_persisted_listed_and_inherited_by_record`.
+- **H3 — FIXED (DESIGN §6).** Added the UTF-8, 64 KiB summary.json cap; code already enforces it and `test_at28_unreadable_or_missing_files` includes an oversized JSON file.
+- **H4 — FIXED (DESIGN §8).** Defined stale_work for non-in-progress items, with the ready-item llm exception and read-only status behavior. `test_status_warnings_stale_work_and_staged_collision` covers the warning.
+- **H5 — FIXED (cx documentation).** Changed the failed-item transcript gate in DESIGN §7 to non-null meta.conversion, consistent with the artifact rule. The wiki implementation/test change is cc-owned and is not claimed fixed by this worktree; no wiki file was edited.
+- **H6 — FIXED (DESIGN §7).** Documented escaping of the index ext scalar alongside title and label, matching the existing implementation.
+- **H7 — FIXED.** `convert.check_version()` rejects a missing or non-0.3.5 installation with invalid_request/2; ingest invokes it before recovery, retry or claim. `test_converter_version_is_checked_before_any_claim` first failed for both cases and now proves no writes/move. DESIGN §8 records the precondition.
+- **V3 — REJECTED as a cx code change (valid finding; cc owns CLI/OCR).** No CLI/OCR code was changed here. DESIGN §8 now specifies trimmed, repeatable comma-separated verify lists to match cc's requested fix.
+- **V4 — FIXED.** Retry calls validate_meta on the merged outcome before replacing meta.json. `test_retry_validates_outcome_before_committing_meta` first proved an invalid outcome overwrote the old ledger; it now requires preservation and successful next retry using the already completed conversion.
+- **M1 — FIXED.** Removed the unreachable classifier overflow guard and its artificial ROW_CASE. Overflow remains checked by enumerate_units; `test_unit_overflow_is_reported_at_the_enumeration_boundary` exercises the real classify_item error route, and the existing enumeration boundary test still covers 9999/10000. DESIGN §3 row 6 now includes unit-enumeration overflow.
+- **S1 — FIXED (cx callers).** Added fsutil.load_json_strict(source): pathlib.Path reads UTF-8; str is JSON text; bytes decode UTF-8; duplicate object keys are rejected at any nesting depth. Ledger, staged-meta recovery and report loading use it. New path/text/bytes, nested-duplicate, encoding and syntax tests pass. cc must replace its remaining JSON loader(s) with this helper.
+- **S2 — FIXED (cx caller).** Added ledger.scan(root) returning (items, warnings, errors), with the existing dot-skip, reparse-skip, artifact validation and corruption semantics. Ingest retry uses it; plain ingest still validates only its targets. New scan tests prove empty-root no-write behavior and valid/corrupt/orphan/reparse handling without mutation. cc owns migration of wiki/status callers and their projections.
+- **S3 — FIXED (cx callers).** Added fsutil.write_bytes_atomic(path, data), preserving exact bytes and fsync-before-replace; conversion and write_json_atomic use it. Tests cover byte preservation, sync order and preservation of the old artifact on failed sync. cc owns OCR/LLM writer migration. Callers retain containment/reparse checks and ledger-last ordering.
+- **S4 — FIXED (cx portion).** errors.py exports the shared converter version, PEER, LARGE and extension sets; convert and ledger import these rather than redeclaring them. The duplicate constraint primitive is fsutil.require (imported as _require). Existing classifier/ledger peer, extension and threshold tests cover the same contracts. cc owns adoption in OCR/LLM/CLI and its count-projection consolidation.
+- **S5 — REJECTED as a cx code change (valid simplification; cc owns wiki and its tests).** No wiki projection or malformed-meta test was changed here. Valid nullable fields still need explicit null handling when cc replaces permissive get/default chains with schema indexing.
+- **S6 — FIXED (cx test portion).** Consolidated three temp-config tests into one parametrized test_basetemp_configuration, preserving default selection/cache reset, outside-root refusal, and Windows permission fallback coverage. The distinct CI audio-extra contract test remains. Shared tree(), __main__ cleanup and OCR wraps are cc-owned and unchanged here.
+
+Shared APIs for cc:
+
+```text
+fsutil.load_json_strict(source: Path | str JSON text | bytes) -> decoded JSON
+fsutil.write_bytes_atomic(path, data: bytes) -> None  # flush + fsync + replace
+fsutil.require(condition, message) -> None           # ValueError on failure
+ledger.scan(root) -> (list[Item], warnings, errors)   # no mutations
+errors.CONVERTER_VERSION, PEER, LARGE, *_EXTENSIONS
+```
+
+`scan` returns valid items sorted by directory/id. Corrupt items are represented
+by errors with id/path/code/message; callers can add corrupt-row projections.
+It already includes item orphan warnings and reparse warnings. Callers add
+their own sorting, stale-work notes, counts, and output projections.
+
+Full validation: `python -m pytest -q -p no:cacheprovider` -> **576 passed, 4 skipped in 118.92s**. The skips are the existing installed-console e2e cases because this interpreter has no installed `sb`; AT-19 uses the real module entry point and all four cases passed.
+No git commands, cc-owned production edits, rubric changes or release actions.

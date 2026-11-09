@@ -44,6 +44,60 @@ def test_utf8_lf_and_atomic_json(root, monkeypatch):
     assert target.read_bytes() == before
 
 
+@pytest.mark.parametrize("form", ["path", "text", "bytes"])
+def test_load_json_strict_reads_utf8_and_rejects_nested_duplicate_keys(root, form):
+    valid = '{"name":"한글","nested":{"n":1}}'
+    duplicate = '{"nested":{"n":1,"n":2}}'
+    def source(text):
+        if form == "path":
+            path = root / "input.json"
+            path.write_bytes(text.encode("utf-8"))
+            return path
+        return text.encode("utf-8") if form == "bytes" else text
+    assert fsutil.load_json_strict(source(valid)) == {"name": "한글", "nested": {"n": 1}}
+    with pytest.raises(ValueError, match="Duplicate"):
+        fsutil.load_json_strict(source(duplicate))
+
+
+def test_load_json_strict_rejects_invalid_utf8_and_syntax(root):
+    source = root / "bad.json"
+    source.write_bytes(b"\xff")
+    with pytest.raises(UnicodeError):
+        fsutil.load_json_strict(source)
+    with pytest.raises(ValueError):
+        fsutil.load_json_strict("{")
+
+
+def test_write_bytes_atomic_preserves_bytes_and_fsync_order(root, monkeypatch):
+    target = root / "nested/output.md"
+    data = b"\xef\xbb\xbfExact\r\nbytes\r\n"
+    events = []
+    sync, replace = os.fsync, os.replace
+    def synced(fd):
+        assert target.with_name("output.md.tmp").read_bytes() == data
+        events.append("fsync")
+        return sync(fd)
+    def replaced(source, destination):
+        assert events == ["fsync"]
+        events.append("replace")
+        return replace(source, destination)
+    monkeypatch.setattr(os, "fsync", synced)
+    monkeypatch.setattr(os, "replace", replaced)
+    fsutil.write_bytes_atomic(target, data)
+    assert target.read_bytes() == data and events == ["fsync", "replace"]
+
+
+def test_write_bytes_atomic_failed_fsync_keeps_previous_artifact(root, monkeypatch):
+    target = root / "output.md"
+    target.write_bytes(b"committed")
+    def failed(fd):
+        raise OSError("fsync failed")
+    monkeypatch.setattr(os, "fsync", failed)
+    with pytest.raises(OSError, match="fsync failed"):
+        fsutil.write_bytes_atomic(target, b"new bytes")
+    assert target.read_bytes() == b"committed"
+
+
 def test_fault_after_committed_meta_is_once(root, fault_after):
     target = root / "meta.json"
     fault_after("meta.json")
@@ -264,22 +318,35 @@ def test_safe_delete_readonly_error_handler(root, monkeypatch):
     assert not target.exists()
 
 
-def test_basetemp_defaults_and_resets_cached_factory(tmp_path, monkeypatch):
+@pytest.mark.parametrize("scenario", ["default", "outside", "permission"])
+def test_basetemp_configuration(tmp_path, monkeypatch, scenario):
     import conftest
     monkeypatch.setattr(conftest, "WORKTREE", tmp_path)
-    factory = SimpleNamespace(_given_basetemp=None, _basetemp=tmp_path / "old")
-    config = SimpleNamespace(option=SimpleNamespace(basetemp=None), _tmp_path_factory=factory)
-    conftest.configure_basetemp(config)
-    assert Path(config.option.basetemp) == tmp_path / ".pytest-tmp"
-    assert factory._given_basetemp == tmp_path / ".pytest-tmp" and factory._basetemp is None
-
-
-def test_explicit_basetemp_outside_worktree_is_refused(tmp_path, monkeypatch):
-    import conftest
-    monkeypatch.setattr(conftest, "WORKTREE", tmp_path)
-    config = SimpleNamespace(option=SimpleNamespace(basetemp=str(tmp_path.parent / "outside")))
-    with pytest.raises(pytest.UsageError):
+    base = tmp_path / ".pytest-tmp"
+    selected = None if scenario == "default" else str(tmp_path.parent / "outside" if scenario == "outside" else base)
+    factory = SimpleNamespace(_given_basetemp=base, _basetemp=tmp_path / "old")
+    config = SimpleNamespace(option=SimpleNamespace(basetemp=selected), _tmp_path_factory=factory)
+    expected = base
+    if scenario == "outside":
+        with pytest.raises(pytest.UsageError):
+            conftest.configure_basetemp(config)
+        return
+    if scenario == "permission":
+        monkeypatch.setattr(conftest, "os", SimpleNamespace(name="nt"))
+        base.mkdir()
+        original = Path.iterdir
+        def denied(path):
+            if path == base:
+                raise PermissionError("private Windows ACL")
+            return original(path)
+        monkeypatch.setattr(Path, "iterdir", denied)
+        expected = tmp_path / "work/pytest-foundation"
+        with pytest.warns(pytest.PytestWarning, match="Inaccessible"):
+            conftest.configure_basetemp(config)
+    else:
         conftest.configure_basetemp(config)
+    assert Path(config.option.basetemp) == factory._given_basetemp == expected
+    assert factory._basetemp is None
 
 
 def test_audio_extra_check_is_strict_in_ci(monkeypatch):
@@ -290,27 +357,6 @@ def test_audio_extra_check_is_strict_in_ci(monkeypatch):
         conftest.check_audio_extras()
     monkeypatch.setattr(conftest.importlib.util, "find_spec", lambda name: None)
     assert conftest.check_audio_extras() == []
-
-
-def test_inaccessible_basetemp_fallback_resets_cached_factory(tmp_path, monkeypatch):
-    import conftest
-    monkeypatch.setattr(conftest, "WORKTREE", tmp_path)
-    monkeypatch.setattr(conftest, "os", SimpleNamespace(name="nt"))
-    base = tmp_path / ".pytest-tmp"
-    base.mkdir()
-    original = Path.iterdir
-    def denied(path):
-        if path == base:
-            raise PermissionError("private Windows ACL")
-        return original(path)
-    monkeypatch.setattr(Path, "iterdir", denied)
-    factory = SimpleNamespace(_given_basetemp=base, _basetemp=base)
-    config = SimpleNamespace(option=SimpleNamespace(basetemp=str(base)), _tmp_path_factory=factory)
-    with pytest.warns(pytest.PytestWarning, match="Inaccessible"):
-        conftest.configure_basetemp(config)
-    fallback = tmp_path / "work/pytest-foundation"
-    assert Path(config.option.basetemp) == factory._given_basetemp == fallback
-    assert factory._basetemp is None
 
 
 def test_safe_delete_does_not_retry_other_permission_failures(root, monkeypatch):

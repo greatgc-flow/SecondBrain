@@ -1,28 +1,26 @@
 """DESIGN §3 conversion and classification; no ingest or OCR command imports."""
 from datetime import datetime, timezone
-from importlib.metadata import version
-import json
+from importlib.metadata import PackageNotFoundError, version
 import os
 from pathlib import Path
 import re
 import subprocess
 
-from .errors import ErrorCode, SbError
-from .fsutil import checked_path, sha256_file, write_json_atomic
+from .errors import (ALLOWED_EXTENSIONS, CONTAINER_EXTENSIONS, CONVERTER_VERSION, CONVERTIBLE_EXTENSIONS,
+                     MARKUP_EXTENSIONS, PLAIN_TEXT_EXTENSIONS, RASTER_EXTENSIONS, ErrorCode, SbError)
+from .fsutil import checked_path, load_json_strict, require as _require, sha256_file, write_bytes_atomic, write_json_atomic
 from .ledger import activity, validate_stage
 from .transcript import has_native_text
 
-PLAIN_TEXT_EXTENSIONS = frozenset({".txt", ".csv", ".log", ".json", ".xml"})
-MARKUP_EXTENSIONS = frozenset({".md", ".html", ".htm"})
-CONTAINER_EXTENSIONS = frozenset({".docx", ".pptx", ".xlsx", ".hwp", ".hwpx"})
-RASTER_EXTENSIONS = frozenset({".png", ".jpg", ".jpeg", ".gif", ".bmp", ".tif", ".tiff", ".webp"})
-CONVERTIBLE_EXTENSIONS = PLAIN_TEXT_EXTENSIONS | MARKUP_EXTENSIONS | CONTAINER_EXTENSIONS | {".pdf"}
-ALLOWED_EXTENSIONS = CONVERTIBLE_EXTENSIONS | RASTER_EXTENSIONS
-
-
-def _require(condition, message):
-    if not condition:
-        raise ValueError(message)
+def check_version():
+    """Reject environment drift before ingest writes or claims any source."""
+    try:
+        observed = version("markitdown-gc")
+    except PackageNotFoundError as error:
+        raise SbError(ErrorCode.INVALID_REQUEST, 2, "markitdown-gc is not installed") from error
+    if observed != CONVERTER_VERSION:
+        raise SbError(ErrorCode.INVALID_REQUEST, 2, f"markitdown-gc must be {CONVERTER_VERSION}; observed {observed}")
+    return observed
 
 
 def _count(value, nullable=False, minimum=0):
@@ -80,14 +78,6 @@ def _local_file(source):
         raise SbError(ErrorCode.IO_ERROR, 1, str(error)) from error
 
 
-def _unique_pairs(pairs):
-    result = {}
-    for key, value in pairs:
-        _require(key not in result, "Duplicate report JSON key")
-        result[key] = value
-    return result
-
-
 def run_report(source, output):
     """Run real triage into the caller's staging/scratch path; discard the JSON."""
     source = _local_file(source)
@@ -105,15 +95,11 @@ def run_report(source, output):
         if process.returncode != 0:
             raise SbError(ErrorCode.REPORT_FAILED, 1, process.stderr or "Report command failed")
         try:
-            text = output.read_text(encoding="utf-8")
-        except UnicodeError as error:
+            report = load_json_strict(output)
+        except ValueError as error:
             raise SbError(ErrorCode.REPORT_INVALID, 1, str(error)) from error
         except OSError as error:
             raise SbError(ErrorCode.REPORT_FAILED, 1, str(error)) from error
-        try:
-            report = json.loads(text, object_pairs_hook=_unique_pairs)
-        except ValueError as error:
-            raise SbError(ErrorCode.REPORT_INVALID, 1, str(error)) from error
         return adapt_report(report, source.suffix)
     finally:
         output.unlink(missing_ok=True)
@@ -163,7 +149,7 @@ def convert_document(directory, stage):
     if converted.exists() and previous is None:
         raise SbError(ErrorCode.CORRUPT_META, 1, "Completed conversion has no ledger intent")
     if previous is None:
-        previous = {"activity": activity("markitdown-gc", version("markitdown-gc"), "convert",
+        previous = {"activity": activity("markitdown-gc", check_version(), "convert",
                                         params={"charset": stage["charset"], "extract_media": source.suffix.lower() in CONTAINER_EXTENSIONS}),
                     "sha256": None}
         stage["conversion"] = previous
@@ -184,12 +170,8 @@ def convert_document(directory, stage):
             data = _make_converter(source.suffix.lower()).convert(str(source), **options).text_content.encode("utf-8")
         except Exception as error:
             raise SbError(ErrorCode.CONVERSION_FAILED, 1, str(error)) from error
-        temporary = checked_path(directory, "converted.md.tmp")
-        with temporary.open("wb") as stream:
-            stream.write(data)
-            stream.flush()
-            os.fsync(stream.fileno())
-        os.replace(temporary, converted)
+        checked_path(directory, "converted.md.tmp")
+        write_bytes_atomic(converted, data)
     stage["conversion"] = _conversion_record(directory, previous["activity"])
     write_json_atomic(directory / "stage.json", stage)
     return stage["conversion"]
@@ -214,7 +196,7 @@ def enumerate_units(ext, triage=None, media=()):
             for n, source in enumerate(sources, 1)}
 
 
-def classify(ext, *, size=1, path=None, conversion_error=None, report_error=None, triage=None, native=None, units=None, date=None):
+def classify(ext, *, size=1, conversion_error=None, report_error=None, triage=None, native=None, units=None, date=None):
     """Apply the first matching §3 row; arguments are already adapted stage data."""
     ext = ext.lower()
     def result(cls, state, reason=None, code=None, message=None):
@@ -225,8 +207,6 @@ def classify(ext, *, size=1, path=None, conversion_error=None, report_error=None
         return result(None, "failed", str(code) if reason is None else reason, code, message)
     if size == 0:
         return failed(ErrorCode.EMPTY_FILE)
-    if path is not None and len(str(path)) > 240:
-        return failed(ErrorCode.PATH_TOO_LONG)
     if ext not in ALLOWED_EXTENSIONS:
         return result("unsupported", "unsupported", "extension_not_allowed")
     if ext in RASTER_EXTENSIONS:
@@ -246,8 +226,6 @@ def classify(ext, *, size=1, path=None, conversion_error=None, report_error=None
         if not triage["candidates"]:
             return failed(ErrorCode.NO_CANDIDATE_IDS)
         if units:
-            if len(units) > 9999:
-                return failed(ErrorCode.TOO_MANY_UNITS)
             return result("mixed" if native else "ocr-required", "awaiting-approval")
         return result("unknown", "awaiting-approval", "no_units")
     if triage["decision"] == "no_candidates" and triage["coverage"]["state"] in {"complete", "not_applicable"}:

@@ -2,7 +2,7 @@
 from enum import StrEnum
 import re
 
-CONVERTER_VERSION = "0.3.5"
+CONVERTER_VERSION = "0.3.6"
 PEER = re.compile(r"[a-z][a-z0-9-]{0,31}")
 LARGE = 20
 PLAIN_TEXT_EXTENSIONS = frozenset({".txt", ".csv", ".log", ".json", ".xml"})

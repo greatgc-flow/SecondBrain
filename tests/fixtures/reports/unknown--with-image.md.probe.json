@@ -9,7 +9,8 @@
   "has_native_text": true,
   "sha256": "089422445444a8e38ddb4c1f934d90647d6450e4b09e2a9257dcb3878a1929ce"
  },
- "design_revision": "r8",
+ "converter_version": "0.3.6",
+ "design_revision": "v1.0.1",
  "design_row_class_state_reason": [
   12,
   "unknown",
@@ -18,6 +19,14 @@
  ],
  "fixture": "unknown/with-image.md",
  "media": [],
+ "observed_classification": {
+  "class": "unknown",
+  "error_code": null,
+  "has_native_text": true,
+  "reason": "media_not_inspected",
+  "state": "awaiting-approval",
+  "units": {}
+ },
  "report": "reports/unknown--with-image.md.json",
  "report_exit": 0,
  "report_stderr": "ocr-report: decision=unknown high=0 low=0 coverage=none issues=1 -> <worktree>\\tests\\fixtures\\reports\\unknown--with-image.md.json\n",

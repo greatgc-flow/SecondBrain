@@ -9,7 +9,8 @@
   "has_native_text": false,
   "sha256": "0bef335d3bbd83efcef6ac78bd2e310d872142d336828a953e2baa0810700695"
  },
- "design_revision": "r8",
+ "converter_version": "0.3.6",
+ "design_revision": "v1.0.1",
  "design_row_class_state_reason": [
   11,
   "text-only",
@@ -18,6 +19,14 @@
  ],
  "fixture": "text/empty-table.docx",
  "media": [],
+ "observed_classification": {
+  "class": "text-only",
+  "error_code": null,
+  "has_native_text": false,
+  "reason": "empty_document",
+  "state": "ready",
+  "units": {}
+ },
  "report": "reports/text--empty-table.docx.json",
  "report_exit": 0,
  "report_stderr": "ocr-report: decision=no_candidates high=0 low=0 coverage=complete issues=0 -> <worktree>\\tests\\fixtures\\reports\\text--empty-table.docx.json\n",

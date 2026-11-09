@@ -9,7 +9,8 @@
   "has_native_text": true,
   "sha256": "f03fd6cbd8de9e8d8d79dac5439d5b8101a81c3173298441f56cfc0aff965d75"
  },
- "design_revision": "r8",
+ "converter_version": "0.3.6",
+ "design_revision": "v1.0.1",
  "design_row_class_state_reason": [
   11,
   "text-only",
@@ -18,6 +19,14 @@
  ],
  "fixture": "text/note.hwpx",
  "media": [],
+ "observed_classification": {
+  "class": "text-only",
+  "error_code": null,
+  "has_native_text": true,
+  "reason": null,
+  "state": "ready",
+  "units": {}
+ },
  "report": "reports/text--note.hwpx.json",
  "report_exit": 0,
  "report_stderr": "ocr-report: decision=no_candidates high=0 low=0 coverage=complete issues=0 -> <worktree>\\tests\\fixtures\\reports\\text--note.hwpx.json\n",

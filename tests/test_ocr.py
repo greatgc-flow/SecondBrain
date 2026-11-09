@@ -145,8 +145,10 @@ def test_commands_peerhub_lines_have_no_inner_quotes(root, fake_render):
     lines = [l for l in commands.splitlines() if l.startswith("peerhub ask")]
     assert len(lines) == 4  # 2 asks + 2 verify groups
     for line in lines:
-        match = re.fullmatch(r'peerhub ask (cx|cc) -p \1\.effort -w "[^"]+" --stream \S+ "([^"\$`]+)"', line)
+        match = re.fullmatch(r'peerhub ask (cx|cc) -p \1\.effort -w "[^"]+"(?: --writable)? --stream \S+ "([^"\$`]+)"', line)
         assert match, line
+        # write asks (cx transcription) need --writable; read-only verify asks (cc) must not have it
+        assert (" --writable " in line) == (match[1] == "cx"), line
         assert "u0001.png" in line or "u0004.png" in line  # relative names inside the -w folder
         assert str(work(root, item)) not in match[2]
 
@@ -232,10 +234,21 @@ def test_at11_decline_unknown_item_and_state_guards(root, fake_render):
     unknown = helpers.make_item(root, state="awaiting-approval", classification="unknown", filename="u.md")
     ocr.decline(root, unknown.meta["id"])
     assert load_item(unknown.path).meta["ocr"]["disposition"] == "declined"
-    progress = units_item(root, ["approved"], filename="p.pdf")
     ready = helpers.make_item(root, filename="r.txt")
-    fails(root, "state_not_allowed", ocr.decline, root, progress.meta["id"])
     fails(root, "state_not_allowed", ocr.decline, root, ready.meta["id"])
+
+
+def test_decline_abandons_in_progress_item_keeping_verified_units(root, fake_render):
+    item = units_item(root, ["verified", "recorded", "approved", "pending"], filename="p.pdf")
+    work(root, item).mkdir(parents=True)
+    (work(root, item) / "u0003.png").write_bytes(b"png")
+    assert ocr.decline(root, item.meta["id"])["result"] == "declined"
+    loaded = load_item(item.path)
+    assert loaded.meta["state"] == "ready" and loaded.meta["ocr"]["disposition"] == "declined"
+    assert status(item) == {"u0001": "verified", "u0002": "recorded", "u0003": "approved", "u0004": "pending"}
+    assert not work(root, item).exists() and not loaded.warnings
+    assert "Verified synthetic OCR 1." in transcript.view(loaded) and "OCR 2." not in transcript.view(loaded)
+    fails(root, "state_not_allowed", ocr.approve, root, item.meta["id"])
 
 
 # ---------------------------------------------------------------- 5a record
@@ -361,6 +374,53 @@ def test_verify_on_ready_item_cleans_stale_scratch(root):
     assert ocr.verify(root, item.meta["id"], "cc", "m")["result"] == "cleaned"  # nothing left, still fine
 
 
+def test_verify_on_ready_item_keeps_llm_scratch(root):
+    item = helpers.make_item(root, filename="r.txt")
+    scratch = work(root, item)
+    (scratch / "llm").mkdir(parents=True)
+    (scratch / "llm" / "summary.md").write_bytes(b"s")
+    (scratch / "u0001.png").write_bytes(b"x")
+    assert ocr.verify(root, item.meta["id"], "cc", "m")["result"] == "cleaned"
+    assert sorted(p.relative_to(scratch).as_posix() for p in scratch.rglob("*")) == ["llm", "llm/summary.md"]
+
+
+def test_ready_cleanup_keeps_llm_in_place_without_parking(root, monkeypatch):
+    import os
+    item = helpers.make_item(root, filename="r.txt")
+    scratch = work(root, item)
+    (scratch / "llm").mkdir(parents=True)
+    (scratch / "llm/prompt.txt").write_bytes(b"keep in place")
+    (scratch / "u0001.png").write_bytes(b"discard")
+    def refuse_move(*args, **kwargs):
+        pytest.fail("cleanup must never park or restore LLM scratch")
+    monkeypatch.setattr(os, "replace", refuse_move)
+    assert ocr.verify(root, item.meta["id"], "cc", "m")["result"] == "cleaned"
+    assert tree(scratch) == {"llm/prompt.txt": b"keep in place"}
+    assert sorted(p.name for p in scratch.parent.iterdir()) == [item.meta["id"]]
+
+
+def test_cleanup_keeping_llm_has_safe_delete_protections(root, monkeypatch):
+    import os
+    import stat
+    from secondbrain import fsutil
+    item = helpers.make_item(root, filename="r.txt")
+    scratch = work(root, item)
+    (scratch / "llm").mkdir(parents=True)
+    (scratch / "llm" / "summary.md").write_bytes(b"s")
+    (scratch / "u0001.png").write_bytes(b"x")
+    (scratch / "u0002.png").write_bytes(b"y")
+    original = fsutil.is_reparse_point
+    monkeypatch.setattr(fsutil, "is_reparse_point", lambda p: Path(p) == scratch / "u0002.png" or original(p))
+    before = tree(root)
+    with pytest.raises(SbError) as error:  # a reparse point refuses the whole cleanup, before any delete
+        ocr.verify(root, item.meta["id"], "cc", "m")
+    assert error.value.code == "io_error" and tree(root) == before
+    monkeypatch.undo()
+    os.chmod(scratch / "u0001.png", stat.S_IREAD)  # read-only scratch is still removed
+    assert ocr.verify(root, item.meta["id"], "cc", "m")["result"] == "cleaned"
+    assert tree(scratch) == {"llm/summary.md": b"s"}
+
+
 def test_verify_state_guards(root):
     awaiting = units_item(root, ["pending"], state="awaiting-approval")
     fails(root, "state_not_allowed", ocr.verify, root, awaiting.meta["id"], "cc", "m", ok=["u0001"])
@@ -399,18 +459,31 @@ def test_effective_dpi_is_persisted_listed_and_inherited_by_record(root, fake_re
     item = units_item(root, ["pending"] * 31, state="awaiting-approval")
     item_id = item.meta["id"]
     ocr.approve(root, item_id, yes_large=True, dpi=300)
-    assert "--dpi 300" in (work(root, item) / "COMMANDS.txt").read_text(encoding="utf-8")
+    assert "--dpi" not in (work(root, item) / "COMMANDS.txt").read_text(encoding="utf-8")  # record inherits per unit
     for n in range(1, 31):
         put(root, item, f"u{n:04}", f"text {n}")
     ocr.record(root, item_id, "cx", "m")  # no --dpi: inherits 300
     attempts = [u["attempts"][0]["recorded"]["params"]["dpi"] for u in load_item(item.path).meta["ocr"]["units"].values() if u["attempts"]]
     assert attempts == [300] * 30
     fake_render.clear()
-    ocr.approve(root, item_id)  # second batch renders at the same dpi
-    assert fake_render == [("u0031", 300)]
+    ocr.approve(root, item_id)  # a later batch uses the default unless --dpi is given
+    assert fake_render == [("u0031", 200)]
     put(root, item, "u0031", "last")
     ocr.record(root, item_id, "cx", "m", dpi=150)  # an explicit value wins
     assert load_item(item.path).meta["ocr"]["units"]["u0031"]["attempts"][0]["recorded"]["params"]["dpi"] == 150
+
+
+def test_second_approve_with_other_dpi_keeps_earlier_units_provenance(root, fake_render):
+    item = units_item(root, ["pending"] * 32, state="awaiting-approval")
+    item_id = item.meta["id"]
+    ocr.approve(root, item_id, yes_large=True, dpi=150)  # u0001..u0030 at 150, not yet recorded
+    ocr.approve(root, item_id, dpi=300)  # u0031..u0032 at 300
+    for n in (1, 30, 31, 32):
+        put(root, item, f"u{n:04}", f"text {n}")
+    ocr.record(root, item_id, "cx", "m")
+    units = load_item(item.path).meta["ocr"]["units"]
+    assert {k: u["attempts"][0]["recorded"]["params"]["dpi"] for k, u in units.items() if u["attempts"]} == {
+        "u0001": 150, "u0030": 150, "u0031": 300, "u0032": 300}
 
 
 def test_record_without_any_approve_dpi_defaults_to_200(root):

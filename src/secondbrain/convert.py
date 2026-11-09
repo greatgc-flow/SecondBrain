@@ -7,9 +7,9 @@ import re
 import subprocess
 
 from .errors import (ALLOWED_EXTENSIONS, CONTAINER_EXTENSIONS, CONVERTER_VERSION, CONVERTIBLE_EXTENSIONS,
-                     PLAIN_TEXT_EXTENSIONS, RASTER_EXTENSIONS, ErrorCode, SbError)
+                     MARKUP_EXTENSIONS, PLAIN_TEXT_EXTENSIONS, RASTER_EXTENSIONS, ErrorCode, SbError)
 from .fsutil import checked_path, load_json_strict, require as _require, sha256_file, write_bytes_atomic, write_json_atomic
-from .ledger import activity, validate_stage
+from .ledger import activity, validate_stage, validate_triage
 from .transcript import has_native_text
 
 def check_version():
@@ -23,47 +23,41 @@ def check_version():
     return observed
 
 
-def _count(value, nullable=False, minimum=0):
-    _require(nullable and value is None or type(value) is int and value >= minimum, "Invalid report count")
-
-
 def adapt_report(report, ext):
-    """Reduce observed 0.3.5 evidence to the exact persisted triage fields."""
+    """Project tool evidence; share the persisted triage validator with the ledger."""
     try:
         _require(type(report["schema_version"]) is int and report["schema_version"] == 1, "Unsupported report schema")
-        decision = report["decision"]
-        _require(decision in {"ocr_recommended", "review", "no_candidates", "unknown"}, "Invalid decision")
-        coverage = {name: report["coverage"][name] for name in ("state", "pages_total", "pages_inspected")}
-        _require(coverage["state"] in {"complete", "partial", "none", "not_applicable"}, "Invalid coverage")
-        for name in ("pages_total", "pages_inspected"):
-            _count(coverage[name], nullable=True)
-        if coverage["pages_total"] is not None and coverage["pages_inspected"] is not None:
-            _require(coverage["pages_inspected"] <= coverage["pages_total"], "Inspected pages exceed total")
-        scope = report["summary"]["scope"]
-        occurrences = report["summary"]["image_occurrences"]
-        _require(isinstance(scope, str), "Invalid summary scope")
-        _count(occurrences)
         _require(isinstance(report["candidates"], list), "Invalid candidates")
-        candidates, ids = [], set()
-        for value in report["candidates"]:
-            candidate = {name: value[name] for name in ("id", "kind", "page", "priority")}
-            for name in ("id", "kind", "priority"):
-                _require(isinstance(candidate[name], str), "Invalid candidate field")
-            _count(candidate["page"], nullable=True, minimum=1)
-            _require(candidate["id"] not in ids, "Duplicate candidate id")
-            ids.add(candidate["id"])
-            if ext.lower() == ".pdf":
-                _require(re.fullmatch(r"p[1-9][0-9]*", candidate["id"]), "Invalid PDF candidate id")
-                if coverage["pages_total"] is not None:
-                    _require(int(candidate["id"][1:]) <= coverage["pages_total"], "PDF candidate exceeds page count")
-            candidates.append(candidate)
         _require(isinstance(report["issues"], list), "Invalid issues")
         issues = [issue["code"] for issue in report["issues"]]
         _require(all(isinstance(code, str) for code in issues), "Invalid issue code")
-        return {"decision": decision, "coverage": coverage, "scope": scope,
-                "image_occurrences": occurrences, "candidates": candidates, "issues": issues[:20]}
+        triage = {"decision": report["decision"],
+                  "coverage": {name: report["coverage"][name] for name in ("state", "pages_total", "pages_inspected")},
+                  "scope": report["summary"]["scope"], "image_occurrences": report["summary"]["image_occurrences"],
+                  "candidates": [{name: value[name] for name in ("id", "kind", "page", "priority")}
+                                 for value in report["candidates"]], "issues": issues[:20]}
+        validate_triage(triage, pdf=ext.lower() == ".pdf")
+        return triage
     except (KeyError, TypeError, ValueError, AttributeError) as error:
         raise SbError(ErrorCode.REPORT_INVALID, 1, str(error)) from error
+
+
+def _inspect_markup(source, charset):
+    """Prove absence of media from source bytes, before HTML conversion strips tags.
+
+    Image references (including malformed/shortcut references) remain conservative;
+    undecodable sources still need the tool report and operator inspection.
+    """
+    try:
+        text = source.read_text(encoding=charset or "utf-8-sig")
+    except UnicodeError:
+        return None
+    if re.search(r"!\s*\[|<\s*(?:img|svg|object|iframe|embed|video|audio|picture|source)\b"
+                 r"|<[^>]*\b(?:src|srcset|poster)\s*="
+                 r"""|<\s*input\b[^>]*\btype\s*=\s*["']?image\b""", text, re.I):
+        return None
+    return {"decision": "no_candidates", "coverage": {"state": "complete", "pages_total": None, "pages_inspected": None},
+            "scope": "markup_source", "image_occurrences": 0, "candidates": [], "issues": []}
 
 
 def _local_file(source):
@@ -155,10 +149,13 @@ def convert_document(directory, stage):
         stage["conversion"] = previous
         write_json_atomic(directory / "stage.json", stage)
     if not converted.exists():
+        if previous["activity"]["version"] != CONVERTER_VERSION:
+            previous["activity"] = activity("markitdown-gc", check_version(), "convert", params=previous["activity"]["params"])
+            write_json_atomic(directory / "stage.json", stage)
         params = previous["activity"]["params"]
         options = {"charset": params["charset"]}
         if source.suffix.lower() in PLAIN_TEXT_EXTENSIONS or params["charset"] is not None:
-            # 0.3.5 reads charset from StreamInfo, not from the bare keyword.
+            # 0.3.6 reads charset from StreamInfo, not from the bare keyword.
             # Keep the declared keyword too; the hint makes it effective.
             from markitdown import StreamInfo
             options["stream_info"] = StreamInfo(extension=source.suffix.lower(),
@@ -271,7 +268,9 @@ def classify_item(directory, stage):
     if ext not in PLAIN_TEXT_EXTENSIONS:
         try:
             if stage.get("triage") is None:
-                stage["triage"] = run_report(source, directory / "report.json")
+                stage["triage"] = (_inspect_markup(source, stage["charset"]) if ext in MARKUP_EXTENSIONS else None)
+                if stage["triage"] is None:
+                    stage["triage"] = run_report(source, directory / "report.json")
                 write_json_atomic(directory / "stage.json", stage)
             triage = stage["triage"]
         except SbError as error:

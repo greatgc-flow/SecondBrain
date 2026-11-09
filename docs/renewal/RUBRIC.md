@@ -1,86 +1,69 @@
-# SecondBrain v1 release rubric
+# SecondBrain v1.0.1 release rubric
 
-Release preparation, 2026-11-09. This records the validated release revision;
-v1.0.0 promotion, tag and GitHub Release remain orchestrator actions.
+Candidate closeout, 2026-11-09. The independent audit remains the baseline; this sheet records current evidence and release gates.
+The owner target is 100 in every area. Scores are not promoted until the integrated candidate satisfies DESIGN §12.
 
-**R1 — release evidence:** head `6113a8f0883f0ca2b51b9e556035ca3fe103a67e`
-(`6113a8f`), [CI run 42542262213](https://github.com/greatgc-flow/SecondBrain/actions/runs/42542262213),
-attempt 1: **all eight jobs passed**. The six full-suite logs each report
-**584 passed, 0 skipped**, including all four installed-console e2e cases.
-Both offline clean installs passed on that revision.
+## Evidence
 
-| CI jobs | Python | Result |
-| --- | --- | --- |
-| Full suite: ubuntu-latest | 3.11 / 3.13 / 3.15 | PASS, 582 passed / 0 skipped in each job |
-| Full suite: windows-latest | 3.11 / 3.13 / 3.15 | PASS, 582 passed / 0 skipped in each job |
-| Offline clean install: ubuntu-latest / windows-latest | 3.13 | PASS on both OSes |
+- Local command: `python -m pytest -q -p no:cacheprovider`.
+- markitdown-gc **0.3.6** migration local result (Windows / Python 3.15.2): **661 passed, 6 skipped in 301.24s**.
+  Command: `python -m pytest -q -p no:cacheprovider`, using the shared 0.3.6 interpreter without an overlay.
+  The six installed-console e2e cases skip because `sb` is absent locally; renderer differential and peerhub CLI-help tests pass.
+- [0.3.6 re-characterization](../../tests/fixtures/EXPECTED.md#036-re-characterization): all **36** gate-1b inputs replayed through
+  both tool versions and the current adapter. Conversion/report/media/classification differences: **none**; four pre-existing
+  media-free Markdown expectations corrected. The refreshed guide adds an HWP5 extraction recipe. Three upgrade regressions preserve
+  completed 0.3.5 provenance/bytes and record the new version only for an unfinished attempt that actually converts again.
+- Verified CI workflow installation: `.github/workflows/ci.yml` full-matrix runs `python -m pip install --disable-pip-version-check -q -e ".[dev]"`;
+  `pyproject.toml` pins `peerhub==0.24.1` and `markdown-it-py==4.2.0` in dev. `test_peerhub_contract.py` checks local help offline, never starts a peer, and fails if peerhub
+  is missing in CI (only local absence skips). Both responses withdraw the prior offline-breaking objection.
+- CI: the integrated v1.0.1 candidate must pass all eight jobs (six full suites and two offline clean installs).
+  Record one consistent passed/skipped count per suite from that run; prior-revision counts are not release evidence.
+- Latest recorded live smoke: **2026-11-09T02:55Z**, code commit **`d7e4ae0`** (the v1.0.1 candidate code; later commits are docs only),
+  in [LIVE_SMOKE_v1.0.1.md](LIVE_SMOKE_v1.0.1.md). It covers OCR transcribe/verify, CLI-attributed summary acceptance,
+  verify-on-ready preserving prepared LLM scratch, and escape-all wiki rendering of a raw `<img onerror>` note.
+  Observed versions: Python **3.15.2**, peerhub **0.24.0**, markitdown-gc **0.3.6**.
+- Merge, main CI, tag `v1.0.1` and GitHub Release: release-operator actions, not established by local tests.
 
-**Current local result:** Windows, Python 3.15.2,
-`python -m pytest -q -p no:cacheprovider` -> **580 passed, 4 skipped in 86.02s**.
-The four local skips require the absent installed `sb`; they passed in CI.
-Local skips are not represented as CI passes.
+## Requirement evidence
 
-DESIGN §12 scores: **0** = no/failing test; **50** = missing/skipped cases;
-**100** = all listed tests pass on Ubuntu/Windows × Python 3.11/3.13/3.15,
-with no gaps in the MECE/vertical/horizontal review. All 25 rows are **100**:
-their cited tests passed in CI R1 and [final audit r3](AUDIT_v1_r3.md) found
-no remaining blocker, major or minor finding or traceability gap.
-“PASS / CI R1 + audit r3” below refers to that run and cross-check.
+The original **25 rows** are retained: 10 brief requirements, 4 guide requirements, 3 cross-cutting requirements and 8 invariants.
+0 = implementation absent/failing; 50 = required evidence missing/skipped; 100 = all relevant local/CI tests and review complete.
+All release scores remain **pending the integrated gate**; a previous all-100 sheet does not override the independent findings.
 
-| Id | Requirement / invariant | Test evidence (file::test) | Release evidence result | Score |
-| --- | --- | --- | --- | --- |
-| B1 | inbox -> raws -> wiki | `tests/test_ingest.py::test_at01_two_payload_renames_and_source_identity`; `tests/test_wiki.py::test_at30_build_twice_identical_and_only_expected_files` | PASS / CI R1 + audit r3 | 100 |
-| B2 | Discard v0.1; tag history only | `tests/test_bootstrap.py::test_v1_discard_boundary`; `tests/test_bootstrap.py::test_package_version` | PASS / CI R1 + audit r3 | 100 |
-| B3 | Deterministic wiki pages, index and links | `tests/test_wiki.py::test_at30_build_twice_identical_and_only_expected_files`; `tests/test_wiki.py::test_at31_index_sort_columns_and_label`; `tests/test_wiki.py::test_source_page_structure_and_link` | PASS / CI R1 + audit r3 | 100 |
-| B4 | Explicit LLM tier through operator peers | `tests/test_llm.py::test_at29_prepare_prompt_fence_contract_and_no_subprocess`; `tests/test_llm.py::test_at28_accept_valid_records_revision_with_provenance` | PASS / CI R1 + audit r3 | 100 |
-| B5 | Classify and list counts before approved OCR | `tests/test_ingest.py::test_real_fixture_ingest_matches_gate_and_retry`; `tests/test_cli.py::test_at16_status_json_fields_counts_errors_warnings_and_no_writes`; `tests/test_ocr.py::test_at21_only_files_of_approved_units_are_taken` | PASS / CI R1 + audit r3 | 100 |
-| B6 | Explicit approval for sensitive or large inputs | `tests/test_ocr.py::test_at17_large_item_needs_acknowledgement`; `tests/test_ocr.py::test_at17_large_boundary_is_21_units`; `tests/test_cli.py::test_approve_prints_notice_and_next_step` | PASS / CI R1 + audit r3 | 100 |
-| B7 | markitdown-gc 0.3.5 conversion and triage | `tests/test_convert.py::test_real_tool_classification_matches_characterization`; `tests/test_convert.py::test_at06_every_characterized_real_report`; `tests/test_convert.py::test_at12_shortcuts_never_reach_converter_or_report` | PASS / CI R1 + audit r3 | 100 |
-| B8 | MECE classes, including unsupported and unknown | `tests/test_convert.py::test_at05_full_domain_is_mece`; `tests/test_convert.py::test_at05_table_rows_and_shortcuts`; `tests/test_transcript.py::test_at07_native_text` | PASS / CI R1 + audit r3 | 100 |
-| B9 | Never retranscribe; retain provenance | `tests/test_ingest.py::test_at02_at03_duplicate_and_alias_in_every_state`; `tests/test_ingest.py::test_at14_retry_reuses_completed_conversion_and_assets`; `tests/test_ocr.py::test_at20_record_copies_text_with_provenance` | PASS / CI R1 + audit r3 | 100 |
-| B10 | VerySimpleGuide, Windows, English | `tests/test_ingest.py::test_at35_long_destination_is_rejected_before_claim`; `tests/test_ingest.py::test_at35_nfd_filename_stays_exact`; `tests/test_fsutil.py::test_utf8_lf_and_atomic_json` | PASS / CI R1 + audit r3 | 100 |
-| G1 | OCR prompt, batching, pilot, concurrency, approval cap | `tests/test_ocr.py::test_at18_pdf_page_rendered_and_commands`; `tests/test_ocr.py::test_commands_ask_grouping_of_three_with_stream_names`; `tests/test_ocr.py::test_at17_cap_of_30_then_second_approval_then_full_flow`; `tests/test_ocr.py::test_at19_real_containers_ingest_then_approve` | PASS / CI R1 + audit r3 | 100 |
-| G2 | Independent verification of every unit; exact digits | `tests/test_ocr.py::test_at22_verify_request_validation`; `tests/test_ocr.py::test_verify_accumulates_and_every_unit_needs_verification`; `tests/test_ocr.py::test_at18_pdf_page_rendered_and_commands` | PASS / CI R1 + audit r3 | 100 |
-| G3 | OCR ledger, no cache, scratch cleanup | `tests/test_ocr.py::test_at23_mismatch_reopens_unit_and_blocks_stale_rerecord`; `tests/test_ocr.py::test_at25_fault_after_meta_write_then_verify_cleans`; `tests/test_ocr.py::test_at25_fault_after_copy_before_meta_then_record_again` | PASS / CI R1 + audit r3 | 100 |
-| G4 | Offline CI; peerhub as an operator workflow | `tests/test_fsutil.py::test_at37_network_and_dns_blocked`; `tests/test_fsutil.py::test_at37_converter_child_is_guarded`; `tests/test_fsutil.py::test_audio_extra_check_is_strict_in_ci`; `tests/test_llm.py::test_at29_prepare_prompt_fence_contract_and_no_subprocess` | PASS / CI R1 + audit r3 | 100 |
-| X1 | Crash safety and corruption handling | `tests/test_ingest.py::test_at26_all_durable_boundaries_recover_once`; `tests/test_ocr.py::test_at25_fault_after_copy_before_meta_then_record_again`; `tests/test_wiki.py::test_fault_after_wiki_old_rename_recovers`; `tests/test_llm.py::test_at27_fault_after_body_copy_leaves_orphan_then_recovers` | PASS / CI R1 + audit r3 | 100 |
-| X2 | Untrusted content handling | `tests/test_ocr.py::test_at27_hostile_peer_output_is_stored_as_data_only`; `tests/test_llm.py::test_at28_hostile_summary_rendered_inside_fence`; `tests/test_wiki.py::test_at32_view_inside_five_backtick_fence_and_hostile_content` | PASS / CI R1 + audit r3 | 100 |
-| X3 | Complete CLI, JSON and exit contract | `tests/test_cli.py::test_at15_command_by_state_matrix`; `tests/test_cli.py::test_at34_parser_failures_are_one_json_object`; `tests/test_cli.py::test_at34_every_command_returns_a_valid_envelope`; `tests/test_cli.py::test_at34_warnings_and_exit_precedence` | PASS / CI R1 + audit r3 | 100 |
-| I1 | Source unchanged after rename 1 | `tests/test_ingest.py::test_at26_all_durable_boundaries_recover_once`; `tests/test_ingest.py::test_at14_retry_reuses_completed_conversion_and_assets` | PASS / CI R1 + audit r3 | 100 |
-| I2 | Completed conversion output produced at most once | `tests/test_convert.py::test_completed_output_reconciled_after_crash`; `tests/test_ingest.py::test_retry_faults_never_redo_completed_output`; `tests/test_ingest.py::test_ag_b2_pending_conversion_recovery_respects_completed_output`; `tests/test_ocr.py::test_at19_real_containers_ingest_then_approve` | PASS / CI R1 + audit r3 | 100 |
-| I3 | Pure transcript view | `tests/test_transcript.py::test_view_only_verified_and_pure`; `tests/test_transcript.py::test_view_keeps_recorded_text_line_endings` | PASS / CI R1 + audit r3 | 100 |
-| I4 | Approved OCR keys and new digests only | `tests/test_ocr.py::test_at21_only_files_of_approved_units_are_taken`; `tests/test_ocr.py::test_at23_mismatch_reopens_unit_and_blocks_stale_rerecord` | PASS / CI R1 + audit r3 | 100 |
-| I5 | Verifying peer differs from recording peer | `tests/test_ocr.py::test_at22_verify_request_validation` | PASS / CI R1 + audit r3 | 100 |
-| I6 | Unverified OCR excluded from view and wiki | `tests/test_transcript.py::test_view_only_verified_and_pure`; `tests/test_wiki.py::test_at33_only_verified_text_in_view` | PASS / CI R1 + audit r3 | 100 |
-| I7 | Wiki derived only from raws | `tests/test_wiki.py::test_at30_build_twice_identical_and_only_expected_files`; `tests/test_wiki.py::test_at30_staging_and_hidden_dirs_ignored` | PASS / CI R1 + audit r3 | 100 |
-| I8 | Restricted deletion targets | `tests/test_fsutil.py::test_at36_allowed_deletion`; `tests/test_fsutil.py::test_at36_other_deletion_targets_refused`; `tests/test_fsutil.py::test_at36_reparse_ancestor_refused_before_delete`; `tests/test_ingest.py::test_at36_hidden_and_reparse_are_skipped_without_following` | PASS / CI R1 + audit r3 | 100 |
+| Id | Requirement / invariant | Test evidence |
+|---|---|---|
+| B1 | inbox → raws → wiki | `test_ingest.py`, `test_wiki.py`, `test_e2e.py` |
+| B2 | v0.1 discarded; history only | `test_bootstrap.py::test_v1_discard_boundary` |
+| B3 | Deterministic source pages, index, tag pages and related-source links | `test_wiki.py::test_tags_pages_index_links_and_back_links` |
+| B4 | Explicit LLM workflow and accepted provenance | `test_llm.py`, `test_peerhub_contract.py` |
+| B5 | Classification/counts before selective approved OCR | `test_ingest.py`, `test_cli.py`, `test_ocr.py`, `test_e2e.py` |
+| B6 | Sensitive/large input approval | `test_ocr.py`, `test_cli.py`; operator permission review |
+| B7 | markitdown-gc 0.3.6 conversion and triage | `test_convert.py`, `test_ingest.py` |
+| B8 | MECE; media-free markup ready; unknown means incomplete inspection | `test_convert.py::test_at05_full_domain_is_mece`, `test_ingest.py::test_markup_without_media_is_ready_but_uninspected_media_stays_unknown` |
+| B9 | No retranscription; complete per-unit provenance | `test_ingest.py`, `test_ocr.py::test_second_approve_with_other_dpi_keeps_earlier_units_provenance` |
+| B10 | VerySimpleGuide, Windows, English | `test_fsutil.py`, `test_ingest.py`; minimality and English review |
+| G1 | Prompt, batching, pilot, concurrency and approval cap | `test_ocr.py`; operator live smoke |
+| G2 | Independent verification of every accepted unit | `test_ocr.py`; operator fidelity review |
+| G3 | Attempt history, no image cache, cleanup preserving LLM scratch | `test_ocr.py::test_verify_on_ready_item_keeps_llm_scratch`, `test_ledger.py::test_decline_after_partial_ocr_preserves_attempts_and_verification_rules` |
+| G4 | Offline operation; peerhub is an operator workflow | `test_fsutil.py`, `test_peerhub_contract.py` |
+| X1 | Crash safety and corruption handling | `test_ingest.py`, `test_ledger.py`, `test_ocr.py`, `test_wiki.py`, `test_llm.py` fault tests |
+| X2 | Untrusted text, safe Markdown and summary rendering | `test_ocr.py`, `test_wiki.py::test_at32_transcript_is_markdown_but_inert`, `test_llm.py` |
+| X3 | CLI, JSON and exit contract | `test_cli.py` |
+| I1 | Source unchanged after claim | `test_ingest.py::test_at26_all_durable_boundaries_recover_once` |
+| I2 | Completed conversion at most once | `test_convert.py::test_completed_output_reconciled_after_crash`, `test_ingest.py` retry fault tests |
+| I3 | Pure transcript projection | `test_transcript.py` |
+| I4 | Approved keys and new attempt digests only | `test_ocr.py` |
+| I5 | Different recording/verifying peers | `test_ocr.py::test_at22_verify_request_validation` |
+| I6 | Unverified OCR excluded from transcript/wiki, including partial decline | `test_transcript.py`, `test_wiki.py`, `test_ledger.py` |
+| I7 | Wiki derived only from raws | `test_wiki.py::test_at30_build_twice_identical_and_only_expected_files` |
+| I8 | Restricted deletion, preserved direct children and reparse guards | `test_fsutil.py` keep/read-only/interruption regressions, `test_ingest.py`, `test_wiki.py` |
 
-Gate closeout and remaining release actions:
+## Closeout
 
-- R1 is closed for the revision above. All six matrix jobs passed, including
-  `tests/test_e2e.py::test_e2e_text_ingest_duplicates_and_wiki`,
-  `tests/test_e2e.py::test_e2e_raster_ocr_approve_record_verify`,
-  `tests/test_e2e.py::test_e2e_llm_prepare_accept_and_rejection`, and
-  `tests/test_e2e.py::test_e2e_status_on_empty_root_and_usage_error`.
-  The separate `test_e2e_python_dash_m_entry_point` also passed.
-- Both `.github/workflows/ci.yml::jobs.offline-clean-install` jobs passed.
-  They built/downloaded wheels online, created fresh venvs, installed
-  `secondbrain==1.0.0` with `--no-index`, verified installed package/module
-  versions and location (plus markitdown-gc 0.3.5 and absent audio extras),
-  then verified installed `sb --json status` exits 0 on an empty root.
-- Final audit r3 completed the MECE/vertical/horizontal cross-check and voted
-  APPROVE RELEASE. B2's removal assertions are automated; history-tag
-  preservation is operator review evidence
-  ([README history](../../README.md#history)). B10's simplicity and English,
-  B6's owner permission, and G1/G2's pilot/concurrency/faithfulness remain
-  review/operator responsibilities. Tests verify notices, caps, prompt
-  content, schemas and peer identity; they do not prove that external peers
-  followed instructions or enforce their profiles. See
-  [USAGE prerequisites](../USAGE.md#operator-and-security-prerequisites).
-- With all rows at 100 and clean installs passing, the orchestrator collects
-  unanimous final release votes, promotes to `main`, runs the full matrix
-  there, tags `v1.0.0`, and creates the GitHub Release with this sheet.
-  No PyPI publication. These release actions are not claimed complete here.
+[Independent audit](AUDIT_independent.md) deductions are answered in [cx response](RESPONSE_independent_cx.md) and [cc response](RESPONSE_independent_cc.md).
+Retain the independent scores until the integrated candidate is reviewed. Required checks are the complete matrix with no skips,
+both offline clean installs and exact-candidate evidence review against the recorded live smoke, then release actions in DESIGN §12.
 
-Only this rubric and the cx release vote were edited in this evidence update;
-no git commands, promotion, tag or release were performed.
+Reconciled DESIGN now includes the exact tag layout/rule, partial-decline lifecycle, `dpi.json` and shared `ocr.ask_line()` contract,
+safe Markdown pass and authoritative JSON provenance. The manual operator loop remains intentional: sb never runs peers.
+The recorded live writable/read-only OCR and summary smoke is linked above; offline help does not replace its observed evidence.

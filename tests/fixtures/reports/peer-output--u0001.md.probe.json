@@ -9,15 +9,24 @@
   "has_native_text": true,
   "sha256": "5646de45361b300585cf745f99ed357efba0630531d2802f6c5f18fc5825c349"
  },
- "design_revision": "r8",
+ "converter_version": "0.3.6",
+ "design_revision": "v1.0.1",
  "design_row_class_state_reason": [
-  12,
-  "unknown",
-  "awaiting-approval",
-  "media_not_inspected"
+  11,
+  "text-only",
+  "ready",
+  null
  ],
  "fixture": "peer-output/u0001.md",
  "media": [],
+ "observed_classification": {
+  "class": "text-only",
+  "error_code": null,
+  "has_native_text": true,
+  "reason": null,
+  "state": "ready",
+  "units": {}
+ },
  "report": "reports/peer-output--u0001.md.json",
  "report_exit": 0,
  "report_stderr": "ocr-report: decision=unknown high=0 low=0 coverage=none issues=1 -> <worktree>\\tests\\fixtures\\reports\\peer-output--u0001.md.json\n",

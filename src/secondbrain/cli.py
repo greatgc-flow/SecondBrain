@@ -65,7 +65,10 @@ def build_parser():
     llm_p = leaf(commands, "llm", "optional LLM summary tier")
     llm_actions = llm_p.add_subparsers(dest="action", required=True, metavar="action")
     leaf(llm_actions, "prepare", "write the summary prompt").add_argument("id")
-    leaf(llm_actions, "accept", "validate and record a peer summary").add_argument("id")
+    accept = leaf(llm_actions, "accept", "validate and record a peer summary")
+    accept.add_argument("id")
+    accept.add_argument("--peer", required=True, help="the peer that wrote the summary (recorded as given, not as self-reported)")
+    accept.add_argument("--model", required=True)
     return parser
 
 
@@ -170,7 +173,7 @@ def run_command(args, root):
         messages = ["The summary is the operator's judgment call: read it before you trust it.",
                     f"Next: follow {Path(done['prompt']).with_name('COMMANDS.txt')}"]
     else:  # llm accept
-        done = llm.accept(root, args.id)
+        done = llm.accept(root, args.id, args.peer, args.model)
     return {"items": [_row_for(root, done["id"], done["result"])], "warnings": [], "errors": [], "extra": {}, "messages": messages}
 
 

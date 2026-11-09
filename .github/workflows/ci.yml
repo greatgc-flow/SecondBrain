@@ -64,7 +64,7 @@ jobs:
           wheels = Path('work/release/wheelhouse').resolve()
           wheels.mkdir(parents=True)
           subprocess.run([sys.executable, '-m', 'pip', 'wheel', '--no-deps', '--wheel-dir', str(wheels), '.'], check=True)
-          wheel, = wheels.glob('secondbrain-1.0.0-*.whl')
+          wheel, = wheels.glob('secondbrain-1.0.1-*.whl')
           subprocess.run([sys.executable, '-m', 'pip', 'download', '--only-binary=:all:', '--dest', str(wheels), str(wheel)], check=True)
       - name: Install offline in a fresh venv and verify the installed console script
         shell: python {0}
@@ -85,15 +85,15 @@ jobs:
           empty.mkdir()
           env = dict(os.environ, PIP_NO_INDEX='1')
           env.pop('PYTHONPATH', None)
-          subprocess.run([str(python), '-I', '-m', 'pip', 'install', '--no-index', '--find-links', str(work / 'wheelhouse'), 'secondbrain==1.0.0'], cwd=empty, env=env, check=True)
+          subprocess.run([str(python), '-I', '-m', 'pip', 'install', '--no-index', '--find-links', str(work / 'wheelhouse'), 'secondbrain==1.0.1'], cwd=empty, env=env, check=True)
           check = (
               'from importlib.metadata import version; from importlib.util import find_spec; '
               'from pathlib import Path; import sys, secondbrain; '
-              'assert version("secondbrain") == secondbrain.__version__ == "1.0.0"; '
-              'assert version("markitdown-gc") == "0.3.5"; '
+              'assert version("secondbrain") == secondbrain.__version__ == "1.0.1"; '
+              'assert version("markitdown-gc") == "0.3.6"; '
               'assert Path(secondbrain.__file__).is_relative_to(Path(sys.prefix)); '
               'assert all(find_spec(name) is None for name in ("speech_recognition", "pydub")); '
-              'print("Installed metadata: secondbrain 1.0.0; markitdown-gc 0.3.5")'
+              'print("Installed metadata: secondbrain 1.0.1; markitdown-gc 0.3.6")'
           )
           subprocess.run([str(python), '-I', '-c', check], cwd=empty, env=env, check=True)
           done = subprocess.run([str(sb), '--root', str(empty), '--json', 'status'], cwd=empty, env=env, check=True, capture_output=True, encoding='utf-8')

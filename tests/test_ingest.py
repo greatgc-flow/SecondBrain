@@ -138,6 +138,69 @@ def test_at04_collision_is_flagged_and_never_resumed(root, tool, monkeypatch):
     assert (item.path / "meta.json").read_bytes() == before and not tool.convert
 
 
+def test_alias_is_validated_before_commit_and_recovery_keeps_source(root, tool, monkeypatch):
+    item = make_item(root)
+    before = (item.path / "meta.json").read_bytes()
+    original = (item.path / "src" / item.meta["filename"]).read_bytes()
+    drop(root, "alias.txt", original)
+    validate = ingest.validate_meta
+    def reject_alias(meta, directory):
+        assert meta["aliases"] == ["alias.txt"]
+        raise SbError("corrupt_meta", 1, "alias validation rejected")
+    monkeypatch.setattr(ingest, "validate_meta", reject_alias)
+    result = ingest.ingest(root)
+    assert [error["code"] for error in result["errors"]] == ["corrupt_meta"]
+    assert (item.path / "meta.json").read_bytes() == before
+    directory, = stages(root)
+    assert (directory / "src/alias.txt").read_bytes() == original
+    monkeypatch.setattr(ingest, "validate_meta", validate)
+    assert ingest.ingest(root)["items"] == [{"id": item.meta["id"], "result": "alias_added"}]
+    assert not stages(root) and not tool.convert
+
+
+@pytest.mark.parametrize("ext,body,expected", [
+    (".md", "# Note\nPlain prose and [a link](other.md).", "text-only"),
+    (".html", "<html><body><h1>Note</h1><p>Plain prose.</p></body></html>", "text-only"),
+    (".htm", "<p>Plain prose.</p>", "text-only"),
+    (".md", "---\n", "text-only"),
+    (".md", "![inline](photo.png)", "unknown"),
+    (".md", "![reference][img]\n[img]: photo.png", "unknown"),
+    (".md", "![short]\n[short]: photo.png", "unknown"),
+    (".md", "![broken](", "unknown"),
+    (".html", '<IMG src="photo.png">', "unknown"),
+    (".html", "<svg><text>123</text></svg>", "unknown"),
+    (".html", '<object data="scan.pdf"></object>', "unknown"),
+    (".html", '<iframe src="scan.pdf"></iframe>', "unknown"),
+    (".md", '<img src="photo.png">', "unknown"),
+    pytest.param(".html", '<embed src="scan.pdf">', "unknown", id="r2-embed"),
+    pytest.param(".md", '<video poster="scan.png"></video>', "unknown", id="r2-video"),
+    pytest.param(".html", '<audio src="recording.wav"></audio>', "unknown", id="r2-audio"),
+    pytest.param(".html", '<picture><source srcset="scan.png 1x"></picture>', "unknown", id="r2-picture"),
+    pytest.param(".html", '<source srcset="scan.png 1x">', "unknown", id="r2-source"),
+    pytest.param(".html", '<div SRCSET = "scan.png 1x">scan</div>', "unknown", id="r2-srcset"),
+    pytest.param(".html", '<input type=image>', "unknown", id="r2-input-unquoted"),
+    pytest.param(".html", '<INPUT name="scan" TYPE = "IMAGE">', "unknown", id="r2-input-double-quoted"),
+    pytest.param(".html", "<input\n type='image'>", "unknown", id="r2-input-single-quoted"),
+    pytest.param(".html", '<input type="text" value="prose">', "text-only", id="r2-input-text"),
+    pytest.param(".html", '<p>Prose mentioning video and embed.</p>', "text-only", id="r2-prose"),
+])
+def test_markup_without_media_is_ready_but_uninspected_media_stays_unknown(root, ext, body, expected, subprocess_spy):
+    # Real conversion matters: HTML conversion can remove objects/iframes entirely.
+    drop(root, "note" + ext, body.encode("utf-8"))
+    result = ingest.ingest(root)
+    assert not result["errors"]
+    item, = committed(root)
+    assert item.meta["class"] == expected
+    assert item.meta["state"] == ("ready" if expected == "text-only" else "awaiting-approval")
+    if expected == "text-only":
+        assert item.meta["triage"]["decision"] == "no_candidates"
+        assert item.meta["triage"]["coverage"]["state"] == "complete"
+        assert item.meta["triage"]["issues"] == []
+        assert subprocess_spy == []
+    else:
+        assert item.meta["reason"] == "media_not_inspected"
+
+
 @pytest.mark.parametrize("step", ["stage.json", "claim", "identity", "conversion_pending", "converted.md", "conversion", "triage", "meta.json", "commit"])
 def test_at26_all_durable_boundaries_recover_once(root, tool, fault_after, step):
     source = drop(root, "하위/보고서 v2.hwp")
@@ -561,7 +624,7 @@ def test_converter_version_is_checked_before_any_claim(root, tool, monkeypatch, 
 
 @pytest.mark.parametrize("group", ["text", "ocr", "mixed", "unknown", "unsupported", "characterize", "failed"])
 def test_real_fixture_ingest_matches_gate_and_retry(root, group):
-    """AT-08–13 at the ingest boundary, with real 0.3.5 conversion/report."""
+    """AT-08–13 at the ingest boundary, with real 0.3.6 conversion/report."""
     paths = sorted((FIXTURES / group).iterdir())
     for path in paths:
         fixture(root, f"{group}/{path.name}")
@@ -578,7 +641,7 @@ def test_real_fixture_ingest_matches_gate_and_retry(root, group):
     by_name = {i.meta["filename"]: i for i in committed(root)}
     for path in paths:
         probe = json.loads((FIXTURES / "reports" / f"{group}--{path.name}.probe.json").read_text(encoding="utf-8"))
-        expected = probe.get("design_row_class_state_reason_r9", probe["design_row_class_state_reason"])
+        expected = probe["design_row_class_state_reason"]
         item = by_name[path.name]
         assert [item.meta["class"], item.meta["state"], item.meta["reason"]] == expected[1:]
         assert len(item.meta["ocr"]["units"]) == len(probe["units"])

@@ -9,7 +9,8 @@
   "has_native_text": true,
   "sha256": "256d01e0587f2618e0e5fbbd442984022a4b9206511a663d5cbb49397b3e6da5"
  },
- "design_revision": "r8",
+ "converter_version": "0.3.6",
+ "design_revision": "v1.0.1",
  "design_row_class_state_reason": [
   11,
   "text-only",
@@ -18,6 +19,14 @@
  ],
  "fixture": "text/nfd-이름.txt",
  "media": [],
+ "observed_classification": {
+  "class": "text-only",
+  "error_code": null,
+  "has_native_text": true,
+  "reason": null,
+  "state": "ready",
+  "units": {}
+ },
  "report": "reports/text--nfd-이름.txt.json",
  "report_exit": 0,
  "report_stderr": "ocr-report: decision=no_candidates high=0 low=0 coverage=not_applicable issues=0 -> <worktree>\\tests\\fixtures\\reports\\text--nfd-이름.txt.json\n",

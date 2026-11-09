@@ -9,7 +9,8 @@
   "has_native_text": false,
   "sha256": "6a55d8d1a1fb1375b1a3da75e186e8c74b75174452942b07c0f16996c23c9419"
  },
- "design_revision": "r8",
+ "converter_version": "0.3.6",
+ "design_revision": "v1.0.1",
  "design_row_class_state_reason": [
   8,
   "ocr-required",
@@ -24,6 +25,19 @@
    "sha256": "9c4b0cd1370ef33ef6093b25e6534a3e26ed8605a0e9ef5e39ffe1535d20806f"
   }
  ],
+ "observed_classification": {
+  "class": "ocr-required",
+  "error_code": null,
+  "has_native_text": false,
+  "reason": null,
+  "state": "awaiting-approval",
+  "units": {
+   "u0001": {
+    "kind": "asset",
+    "source": "media/9c4b0cd1370e.png"
+   }
+  }
+ },
  "report": "reports/ocr--image-only.docx.json",
  "report_exit": 0,
  "report_stderr": "ocr-report: decision=ocr_recommended high=1 low=0 coverage=complete issues=0 -> <worktree>\\tests\\fixtures\\reports\\ocr--image-only.docx.json\n",

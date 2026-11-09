@@ -9,14 +9,9 @@
   "has_native_text": true,
   "sha256": "21aaf5d791c18e00f107fe1bceb6ccba7a3422c82f6e77e823d41aa7b87269a8"
  },
- "design_revision": "r8",
+ "converter_version": "0.3.6",
+ "design_revision": "v1.0.1",
  "design_row_class_state_reason": [
-  12,
-  "unknown",
-  "awaiting-approval",
-  "unsupported_format"
- ],
- "design_row_class_state_reason_r9": [
   11,
   "text-only",
   "ready",
@@ -24,6 +19,14 @@
  ],
  "fixture": "llm/missing-key.json",
  "media": [],
+ "observed_classification": {
+  "class": "text-only",
+  "error_code": null,
+  "has_native_text": true,
+  "reason": null,
+  "state": "ready",
+  "units": {}
+ },
  "report": "reports/llm--missing-key.json.json",
  "report_exit": 0,
  "report_stderr": "ocr-report: decision=unknown high=0 low=0 coverage=none issues=1 -> <worktree>\\tests\\fixtures\\reports\\llm--missing-key.json.json\n",

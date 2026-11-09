@@ -42,8 +42,10 @@ def test_at30_build_twice_identical_and_only_expected_files(root):
     raws_before = tree(root / "raws")
     result = wiki.build(root)
     first = tree(root / "wiki")
-    assert result["pages"] == len(items) + 1 and not result["errors"] and not result["warnings"]
-    assert sorted(first) == sorted(["index.md"] + [f"sources/{i.meta['id']}.md" for i in items.values()])
+    assert not result["errors"] and not result["warnings"]
+    tag_files = {f"tags/{t}.md" for i in items.values() for t in wiki.tags(i.meta)}
+    assert sorted(first) == sorted(["index.md"] + [f"sources/{i.meta['id']}.md" for i in items.values()] + sorted(tag_files))
+    assert result["pages"] == len(first)
     wiki.build(root)
     assert tree(root / "wiki") == first
     assert tree(root / "raws") == raws_before
@@ -57,14 +59,15 @@ def test_at30_corrupt_item_reported_and_skipped(root):
     (bad.path / "meta.json").write_text("{", encoding="utf-8")
     result = wiki.build(root)
     assert [e["code"] for e in result["errors"]] == ["corrupt_meta"] and result["errors"][0]["id"] == bad.meta["id"]
-    assert sorted(tree(root / "wiki")) == ["index.md", f"sources/{good.meta['id']}.md"]
+    assert sorted(tree(root / "wiki")) == ["index.md", f"sources/{good.meta['id']}.md", "tags/class-text-only.md",
+                                           "tags/collected-2026-11.md", "tags/ext-txt.md"]
 
 
 def test_at30_staging_and_hidden_dirs_ignored(root):
     helpers.make_item(root, filename="good.txt")
     (root / "raws" / ".staging" / "tmp-1").mkdir(parents=True)
     result = wiki.build(root)
-    assert result["pages"] == 2 and not result["errors"]
+    assert result["pages"] == 1 + 1 + 3 and not result["errors"]  # index, source, three tag pages
 
 
 def test_at30_empty_root_builds_index_only(root):
@@ -194,17 +197,27 @@ def test_at31_index_ocr_coverage_summary_columns(root):
     assert row["failed"][2:4] == ["-", "failed"] and row["failed"][5] == "none" and row["failed"][6] == "-"
 
 
-def test_at32_view_inside_five_backtick_fence_and_hostile_content(root):
-    hostile = ("<script>alert(1)</script>\n![x][r]\n\n[r]: http://evil.example/x.png\n"
-               "[a](javascript:alert(1))\n````\n# not a heading\n")
+def test_at32_transcript_is_markdown_but_inert(root):
+    hostile = ("# Title\n\n| a | b |\n|---|---|\n| 1 | 2 |\n\n<script>alert(1)</script>\n![x][r]\n![y](http://evil.example/y.png)\n\n"
+               "[r]: http://evil.example/x.png\n[a](javascript:alert(1))\n[b](&#106;avascript:alert(1))\n[c]( data:text/html,x)\n"
+               "[d](https://ok.example/a?b=1&c=2) [e](rel/page.md) [f](#top) [g](mailto:a@b.c)\n"
+               "[s]: JavaScript:alert(1)\n> [t]: vbscript:x\n> quote <b>\n\\![z](http://e/z.png)\n````\n# tail\n")
     item = helpers.make_item(root, filename="h.txt", text=hostile)
     item.meta["aliases"] = ["](x).txt"]  # aliases are filenames: no "/" or ":" on Windows
     helpers.save_meta(item)
     raws_before = tree(root / "raws")
     wiki.build(root)
     text = page(root, item)
-    assert "\n`````text\n" + hostile + "\n`````\n" in text
-    assert text.count("<script>") == 1 and text.count("[r]: http") == 1
+    body = text.split("## Transcript\n\n")[1]
+    assert body.startswith("# Title\n\n| a | b |\n|---|---|\n| 1 | 2 |\n\n")  # rendered, not fenced
+    assert "<" not in body and "&lt;script&gt;alert(1)&lt;/script&gt;" in body and "> quote &lt;b&gt;" in body
+    assert "![" not in body.replace("&#33;[", "") and body.count("&#33;[") == 3
+    for dead in ("javascript:", "JavaScript:", "vbscript:", "data:", "&#106;"):
+        assert dead not in body, dead
+    for live in ("(http://evil.example/y.png)", "[r]: http://evil.example/x.png", "(https://ok.example/a?b=1&c=2)",
+                 "(rel/page.md)", "(#top)"):
+        assert live in body
+    assert "mailto:" not in body and "[a](#)" in body and "[s]: #" in body and "> [t]: #" in body
     # the only occurrence of untrusted alias is inside the json fence
     head, _, rest = text.partition("## Transcript")
     assert head.count("](x).txt") == 1 and "](x).txt" not in rest
@@ -246,7 +259,80 @@ def test_source_page_structure_and_link(root):
     assert block["source_digest"] == hashlib.sha256(b"Synthetic text 123.").hexdigest()
     assert block["activities"]["convert"]["method"] == "convert" and block["activities"]["summary"]["method"] == "summary"
     assert text.index("## Summary") < text.index("## Transcript")
-    assert "\nSynthetic text 123.\n```\n" in text and text.endswith("```\n")
+    assert text.endswith("## Transcript\n\nSynthetic text 123.\n") and "\nSynthetic text 123.\n```" not in text
+
+
+def test_safety_pass_escapes_everywhere_including_code():
+    assert wiki.safe_markdown("`a < b`\n\n```c\nif (a<b && c>d) {}\n```\n") == "`a &lt; b`\n\n```c\nif (a&lt;b && c&gt;d) {}\n```\n"
+    assert wiki.safe_markdown("> quote <b>\n> > nested > x\n") == "> quote &lt;b&gt;\n> > nested &gt; x\n"
+    assert wiki.safe_markdown("a\r\nb\rc") == "a\nb\nc"
+
+
+# Untrusted text that must never become raw HTML or an image, however the renderer pairs backticks or fences.
+BYPASSES = [
+    "<script>alert(1)</script>", "<img src=x onerror=alert(1)>", "<svg onload=alert(1)>", "<svg/onload=alert(1)>",
+    "<!-- c --> <http://e/x> <div>\n\nx\n\n</div>", "![i](http://e/i.png) ![r][r]\n\n[r]: http://e/p.png", "[![i](http://e/i.png)](http://e/)",
+    "`x\n`<script>alert(1)</script>`",                          # the renderer pairs line 1 with the first backtick of line 2
+    "`x\n# h\n`<script>alert(1)</script>`",                     # (a) a heading, list item or blockquote splits the block
+    "`x\n- l\n`<img src=x onerror=alert(1)>`",
+    "`x\n> q\n`<svg onload=alert(1)>`",
+    "`x\n`![t](http://e/p.png)`", "x | `y\n`![t](http://e/p.png)`",
+    "- a\n  ```\n<img src=x onerror=alert(1)>\n  ```",           # (b) a column-0 line closes the indented fence of a list item
+    "  ```\n<script>alert(1)</script>\n```",
+    "> ```\n<img src=x onerror=alert(1)>\n> ```",
+    "```\nx\n  ```\n<script>alert(1)</script>\n```",
+    "```a`b\n<script>alert(1)</script>\n```", "``a`\n<script>alert(1)</script>\n`b``",
+    "```\r<script>alert(1)</script>\r```", "`x\r<script>alert(1)</script>\r`",
+    "~~~\n<script>alert(1)</script>\n~~~", "    <script>alert(1)</script>", "| a |\n|---|\n| `x|<script>alert(1)</script>` |",
+]
+
+
+@pytest.mark.parametrize("hostile", BYPASSES)
+def test_safety_pass_leaves_no_raw_html_or_images(hostile):
+    out = wiki.safe_markdown(hostile + "\n")
+    assert "<" not in out and "![" not in out
+
+
+def test_wiki_pages_render_without_html_or_image_tokens(root):
+    """Differential check against a real CommonMark parser (markdown-it-py, dev extra; html enabled)."""
+    if os.environ.get("CI"):
+        import markdown_it
+    else:
+        markdown_it = pytest.importorskip("markdown_it")
+    parser = markdown_it.MarkdownIt("commonmark", {"html": True})
+
+    def walk(tokens):
+        for token in tokens:
+            yield token
+            yield from walk(token.children or [])
+    assert {t.type for t in walk(parser.parse("<b>x</b>\n\n<p>y</p>\n\n![i](http://e/i.png)"))} >= {"html_inline", "html_block", "image"}  # the detector works
+    for n, hostile in enumerate(BYPASSES):
+        item = helpers.make_item(root, filename=f"h{n}.md", text=hostile + "\n")
+        wiki.build(root)
+        tokens = list(walk(parser.parse(page(root, item))))
+        bad = [t.type for t in tokens if t.type in ("html_block", "html_inline", "image")]
+        assert not bad, (hostile, bad)
+        for token in tokens:
+            if token.type == "link_open":
+                href = token.attrGet("href")
+                assert re.match(r"https?://", href, re.I) or not re.match(r"[a-z][a-z0-9+.-]*:", href, re.I), (hostile, href)
+
+
+def test_tags_pages_index_links_and_back_links(root):
+    a = helpers.make_item(root, filename="a.txt")
+    b = helpers.make_item(root, state="awaiting-approval", filename="b.pdf", statuses=["pending"])
+    weird = helpers.make_item(root, filename="w.txt")
+    weird.meta["ext"] = ".한글"  # not a plain ascii extension: bucketed, never a path
+    assert wiki.tags(a.meta) == ["class-text-only", "collected-2026-11", "ext-txt"]
+    assert wiki.tags(b.meta) == ["class-mixed", "collected-2026-11", "ext-pdf"]
+    assert wiki.tags(weird.meta)[2] == "ext-other"
+    wiki.build(root)
+    index = (root / "wiki" / "index.md").read_text(encoding="utf-8")
+    assert index.endswith("## Tags\n\n- [class-mixed](tags/class-mixed.md) (1)\n- [class-text-only](tags/class-text-only.md) (2)\n"
+                          "- [collected-2026-11](tags/collected-2026-11.md) (3)\n- [ext-pdf](tags/ext-pdf.md) (1)\n- [ext-txt](tags/ext-txt.md) (2)\n")
+    assert f"Tags: [class-text-only](../tags/class-text-only.md), [collected-2026-11](../tags/collected-2026-11.md), [ext-txt](../tags/ext-txt.md)" in page(root, a)
+    tag = (root / "wiki" / "tags" / "ext-txt.md").read_text(encoding="utf-8")
+    assert tag == f"# Tag: ext-txt\n\n[Index](../index.md)\n\n- [a.txt](../sources/{a.meta['id']}.md)\n- [w.txt](../sources/{weird.meta['id']}.md)\n"
 
 
 def test_at33_banners_per_row(root):

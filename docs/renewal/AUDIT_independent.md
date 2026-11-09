@@ -123,3 +123,59 @@ PR #67 CI (run 42546888957) was still pending at re-audit and is not scored, per
   then append SHA, versions, and the dpi/peer/model values from meta.json.
 - **7 −2** pyproject.toml:18 declares `"peerhub"` unpinned, and CI resolves it from PyPI, while the Actions are SHA-pinned. If the owner's
   peerhub is not that PyPI distribution, CI either fails to install or runs a foreign package. Fix: pin an exact version or a VCS URL@sha.
+
+## Round 3 (2026-11-09, branch `fix/indep-core` @ bc5e22c)
+
+Same auditor. Inputs: the diffs e96ec02..bc5e22c, the Round 2 entries in both RESPONSE files, LIVE_SMOKE_v1.0.1.md, and `gh pr checks 67`
+(run 42548113120). The local count (614 passed, 6 skipped) is the authors'; I was not permitted to run Python here. That means the two wiki
+bypasses below are derived from CommonMark block and inline rules (code-span pairing within a paragraph; a list item closing its fenced
+block). I did not execute them in a renderer. At audit time, CI showed the Ubuntu ×3 suites and both offline installs passing. Windows ×3
+was pending and is not scored. The Ubuntu jobs show that `peerhub==0.24.1` resolves.
+
+| # | Dimension | R1 | R2 | R3 |
+|---|---|---|---|---|
+| 1 | Goal fulfilment | 82 | 98 | 96 |
+| 2 | Vertical closure | 85 | 100 | 99 |
+| 3 | Horizontal consistency | 84 | 95 | 97 |
+| 4 | MECE | 91 | 98 | 100 |
+| 5 | Simplicity | 70 | 97 | 99 |
+| 6 | Test adequacy | 82 | 97 | 98 |
+| 7 | Release readiness | 75 | 92 | 97 |
+
+### Disposition of round-2 deductions
+| R2 deduction | Verdict | Basis |
+|---|---|---|
+| 1 −2 code escaped | NOT OK | Fidelity is fixed, but safety regressed. The masker's model of what counts as code disagrees with the renderer's, so verbatim restore lets raw HTML through (see below) |
+| 3 −3 USAGE stale | FIXED | USAGE.md:72,86,116,127-132,251-253 |
+| 3 −2 RUBRIC smoke pending | FIXED | RUBRIC.md:17-21 links the smoke and records date, SHA and versions |
+| 4 −2 media tags | FIXED | convert.py:55-57; 11 cases in test_ingest.py:175-185 |
+| 5 −3 two delete policies | FIXED (protections) / −1 design | `_clean` now runs `safe_delete`, and test_ocr.py:387 proves the reparse refusal and read-only removal. Park/restore is acceptable on the tested paths but is not the simpler design (below) |
+| 6 −3 missing regressions | FIXED | test_wiki.py:265, test_ingest.py:175-185 |
+| 7 −4 half smoke | FIXED | LIVE_SMOKE_v1.0.1.md:12-17 covers both halves, with SHA, versions and per-unit dpi/peer/model. The smoke ran on a prior revision (below) |
+| 7 −2 unpinned peerhub | FIXED | pyproject.toml:18; the contract test asserts the pin; CI installs it |
+
+### Remaining deductions (each with its fix)
+- **1 −4** Raw HTML and remote images reach the wiki again. Both cases come out of `safe_markdown` byte-identical.
+  (a) wiki.py:96: spans are paired one line at a time. In `` "`x\n`<script>alert(1)</script>`" `` the renderer pairs the backtick on line 1
+  with the first backtick on line 2. That leaves `<script>…</script>` as raw inline HTML, and `![t](http://e/p.png)` works the same way.
+  (b) wiki.py:48 accepts fences indented 0–3 spaces. In `"- a\n  ```\n<img src=x onerror=alert(1)>\n  ```"` the fence belongs to the list
+  item. The unindented `<img>` line ends the item and its fence, so it becomes an HTML block.
+  Fix: (a) pair backtick runs across each blank-line-delimited block, counting every line including `|` lines. If any run is unmatched,
+  mask nothing in that block. (b) Mask only column-0 fences: a column-0 fence can never sit inside a container.
+- **6 −2** test_wiki.py:265 checks the masker against its own model. Its multi-line case puts a heading between the lines, which hides (a).
+  Fix: add (a), (b) and `` "x | `y\n`![t](http://e/p.png)`" `` as negative cases asserting no raw `<` or `![` outside code. Better, add a
+  differential test that renders the output with markdown-it-py, where available.
+- **2 −1** DESIGN.md:244-246 still says `<`/`>` are escaped everywhere. The code-block/span exemption is not in the contract.
+  Fix: state the exemption and its conservative rule there.
+- **3 −2** OCR provenance is supplied by the operator and checked against the cx/cc peers (ocr.py:183). LLM provenance is whatever the peer
+  reports (llm.py:134). The live smoke shows the effect: the ask went to `cx`/gpt-6.1-sol, but meta records `codex`/`gpt-6`
+  (LIVE_SMOKE_v1.0.1.md:16). Fix: `sb llm accept ID --peer P --model M`, checked with `ocr._peer`, keeping the self-report as `params.reported`.
+- **3 −1** RUBRIC.md:9 says 612 passed; the head has 614. Fix: refresh the count (or record the CI per-suite counts once Windows finishes).
+- **5 −1** ocr.py:224-230: park/restore adds a crash window. A kill between the two `os.replace` calls strands `work/<id>.llm`.
+  `status` never reports it (cli.py:107-115), `safe_delete` refuses to remove it (fsutil.py:117), and a later park onto it fails on
+  Windows. No test covers this. Fix: `safe_delete(root, target, keep=())`. Keep the same pre-scan, then remove each top-level child not
+  in `keep` with the same `onerror`. `_clean` becomes `safe_delete(root, work, keep=("llm",))`, which removes the parking path and `import os`.
+- **7 −3** The smoke ran at e96ec02 (LIVE_SMOKE_v1.0.1.md:14). Since then, bc5e22c and 10f9419 changed every surface it checks
+  (`_clean`, `safe_markdown`, markup triage). DESIGN.md:341,349 require the exact candidate and a check of "summary scratch preservation",
+  but no verify-on-ready step after `llm prepare` is recorded. Fix: after the wiki fix, rerun the smoke on the final SHA, including
+  `sb ocr verify` on the ready item with `work/<id>/llm/` present, and record that SHA.

@@ -19,9 +19,7 @@ ITEM = {"id", "filename", "filename_nfc", "ext", "class", "state", "reason", "di
 STATES = ["ready", "awaiting-approval", "ocr-in-progress", "unsupported", "failed"]
 
 
-def tree(path):
-    path = Path(path)
-    return {p.relative_to(path).as_posix(): p.read_bytes() for p in sorted(path.rglob("*")) if p.is_file()}
+tree = helpers.tree
 
 
 def check_envelope(env, code):
@@ -109,6 +107,15 @@ def test_status_warnings_stale_work_and_staged_collision(root, capsys):
     code, env, _ = sb(capsys, root, "status")
     assert code == 0
     assert sorted((w["code"], w["id"]) for w in env["warnings"]) == sorted([("stale_work", failed.meta["id"]), ("staged_collision", "0123456789abcdef")])
+
+
+def test_status_reuses_the_wiki_scanner_and_counts(root, capsys):
+    from secondbrain import wiki
+    items = all_states(root)
+    assert wiki.unit_counts(items["ocr-in-progress"].meta) == {"total": 2, "approved": 2, "recorded": 1, "verified": 0}
+    code, env, _ = sb(capsys, root, "status")
+    row = next(i for i in env["items"] if i["id"] == items["ocr-in-progress"].meta["id"])
+    assert code == 0 and row["units"] == wiki.unit_counts(items["ocr-in-progress"].meta)
 
 
 def test_status_human_output(root, capsys):
@@ -266,6 +273,16 @@ def test_at34_warnings_and_exit_precedence(root, capsys):
     assert [i["result"] for i in env["items"]] == ["built"]
     code, env, _ = sb(capsys, root, "ocr", "approve", "ffffffffffffffff")
     assert code == 1 and env["errors"][0]["code"] == "corrupt_meta" and env["items"] == []
+
+
+def test_verify_lists_tolerate_spaces_around_keys(root, capsys):
+    item = helpers.make_item(root, state="ocr-in-progress", classification="mixed", filename="p.pdf",
+                             statuses=["recorded", "recorded", "recorded", "recorded"])
+    code, env, _ = sb(capsys, root, "ocr", "verify", item.meta["id"], "--peer", "cc", "--model", "m",
+                      "--ok", "u0001, u0002", "--ok", " u0003", "--mismatch", " u0004 ,")
+    assert code == 0 and env["items"][0]["units"] == {"total": 4, "approved": 4, "recorded": 3, "verified": 3}
+    units = load_item(item.path).meta["ocr"]["units"]
+    assert [u["status"] for u in units.values()] == ["verified", "verified", "verified", "approved"]
 
 
 def test_wiki_build_envelope_and_pages(root, capsys):

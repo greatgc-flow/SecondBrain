@@ -4,6 +4,7 @@
 then records and verifies what comes back. meta.json is always written last (commit).
 """
 import copy
+import functools
 import hashlib
 import os
 from pathlib import Path
@@ -58,9 +59,8 @@ def _dpi(value, work=None):
 
 
 def _keys(value):
-    if value is None:
-        return []
-    return [k.strip() for k in value.split(",") if k.strip()] if isinstance(value, str) else list(value)
+    """Unit keys as given by the caller (the CLI splits and strips comma lists)."""
+    return list(value or [])
 
 
 def _commit(item, meta):
@@ -77,12 +77,12 @@ def _write_bytes(path, data):
 
 
 def _io(function):
+    @functools.wraps(function)
     def wrapped(*args, **kwargs):
         try:
             return function(*args, **kwargs)
         except OSError as error:
             raise SbError(ErrorCode.IO_ERROR, 1, str(error)) from error
-    wrapped.__name__, wrapped.__doc__ = function.__name__, function.__doc__
     return wrapped
 
 

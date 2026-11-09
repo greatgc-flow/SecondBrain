@@ -85,3 +85,9 @@ def add_summary(item, text="Synthetic summary."):
                                  "source_digest": source_digest(item), "activity": provenance("summary", "cx")}]}
     save_meta(item)
     return item
+
+
+def tree(path):
+    """{relative posix path: bytes} for every file under path ({} when it does not exist)."""
+    path = Path(path)
+    return {p.relative_to(path).as_posix(): p.read_bytes() for p in sorted(path.rglob("*")) if p.is_file()} if path.exists() else {}

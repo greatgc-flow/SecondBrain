@@ -94,3 +94,29 @@ operator loop as sb’s security boundary. The independent audit stays unchanged
   wiki/LLM changes are not merged here yet, so final combined local evidence must be refreshed after that merge. CI counts remain
   orchestrator-owned; no combined/CI result is inferred from this run.
   No git commands used. Outside ocr.py's `_clean` and its now-unused import, no OCR runtime code was changed.
+
+## Round 4 — cx closeout
+
+- FIXED — R4 test adequacy −2 (cx dependency portion): dev extra now pins `markdown-it-py==4.2.0`, so CI's `.[dev]` install
+  supplies the real renderer used by the differential tests. The dependency assertion failed before the edit and passes afterward;
+  the existing renderer differential test also passes in this local environment. No test files were changed outside cx's assignment.
+- FIXED — R4 rendering contract: DESIGN §7 and USAGE now require all `<` and `>` in untrusted text to be escaped everywhere,
+  including code (displayed as entities), with no exemptions. Exact code display is deliberately sacrificed to avoid a partial
+  CommonMark masker disagreeing with the renderer and restoring raw HTML/images. cc owns the runtime and bypass regressions.
+- FIXED — R4 vertical −1 and horizontal −1 (USAGE): summary activity params contain only `prompt_rev`; JSON peer/model fields
+  are informational, not validated or retained as attribution. Only required CLI `--peer`/`--model` supplies recorded peer/model;
+  CLI peer canonicalization/validation is separate from summary-file checks. Removed the nonexistent reported-provenance field
+  and summary-JSON peer-regex promise from DESIGN/USAGE, matching llm.py and the ledger.
+- FIXED — R4 horizontal −1 (RUBRIC): cite the latest existing smoke at `22e3e85d3efd44c07d7c52a100e7d14c4e481112`, 02:12Z,
+  via [LIVE_SMOKE_v1.0.1.md](LIVE_SMOKE_v1.0.1.md), including verify-on-ready preserving LLM scratch and actual observed versions.
+  The orchestrator owns the Round 4 post-merge smoke rerun/new SHA, merged local count and CI counts; these are left explicit
+  rather than representing this documentation/dependency run as final merged evidence.
+- The initial required full-suite run reported **158 failed, 478 passed, 6 skipped**: the shared interpreter now has markitdown-gc
+  0.3.6, violating the project’s unchanged 0.3.5 pin. A representative CLI failure explicitly reports that version mismatch.
+  Retrieved the already-cached 0.3.5 wheel without network and extracted it under `work/r4-pinned`; set this workspace-only
+  PYTHONPATH for a repeat run, leaving the shared interpreter unchanged.
+- Repeat `python -m pytest -q -p no:cacheprovider` with cached markitdown-gc **0.3.5** and local markdown-it-py **4.2.0**:
+  **636 passed, 6 skipped in 117.86s**. The six installed-console e2e cases skip because `sb` is absent locally; the real renderer
+  differential and peerhub-help tests pass. This is cx verification, not the orchestrator’s final Round 4 merged count or smoke SHA.
+  No git commands used; no runtime/test source files were edited. A temporary `.pytest-r4-diagnose` directory remains because
+  automatic approval review rejected its cleanup with the stated reason `blocked by policy`.

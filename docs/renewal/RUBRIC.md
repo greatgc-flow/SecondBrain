@@ -6,19 +6,19 @@ The owner target is 100 in every area. Scores are not promoted until the integra
 ## Evidence
 
 - Local command: `python -m pytest -q -p no:cacheprovider`.
-- Combined Round 3 local result (reported by the orchestrator): **635 passed, 7 skipped**.
-  Both cx and cc Round 3 changes are merged. CI per-suite counts will be finalized by the orchestrator;
-  this local result does not replace CI or exact-candidate live-peer evidence.
+- Round 4 merged local count: to be set by the orchestrator after both implementations merge.
+  cx's requested local verification is recorded in [the cx response](RESPONSE_independent_cx.md#round-4--cx-closeout);
+  it is not substituted for a post-merge result or CI evidence.
 - Verified CI workflow installation: `.github/workflows/ci.yml` full-matrix runs `python -m pip install --disable-pip-version-check -q -e ".[dev]"`;
-  `pyproject.toml` pins `peerhub==0.24.1` in dev. `test_peerhub_contract.py` checks local help offline, never starts a peer, and fails if peerhub
+  `pyproject.toml` pins `peerhub==0.24.1` and `markdown-it-py==4.2.0` in dev. `test_peerhub_contract.py` checks local help offline, never starts a peer, and fails if peerhub
   is missing in CI (only local absence skips). Both responses withdraw the prior offline-breaking objection.
 - CI: the integrated v1.0.1 candidate must pass all eight jobs (six full suites and two offline clean installs).
   Record one consistent passed/skipped count per suite from that run; prior-revision counts are not release evidence.
-- Live peer smoke: **OCR and LLM halves passed**, recorded at **2026-11-09T01:41:05Z** in
-  [LIVE_SMOKE_v1.0.1.md](LIVE_SMOKE_v1.0.1.md), including the orchestrator's appended summary/accept, DPI and provenance evidence.
-  Observed source revision: `e96ec022242e3d4fcde72636905935af89f633c2`; Python **3.15.2**, peerhub **0.24.0**, markitdown-gc **0.3.5**.
-  This records the actual smoke environment; the new dev pin **0.24.1** is not represented as having been used in that smoke.
-  Exact-candidate release checks remain governed by DESIGN §12.
+- Latest recorded live smoke: **2026-11-09T02:12Z**, code commit **`22e3e85d3efd44c07d7c52a100e7d14c4e481112`**,
+  in [LIVE_SMOKE_v1.0.1.md](LIVE_SMOKE_v1.0.1.md). It covers OCR, CLI-attributed summary acceptance and verify-on-ready
+  preserving prepared LLM scratch. Observed versions: Python **3.15.2**, peerhub **0.24.0**, markitdown-gc **0.3.5**.
+  Round 4 changes wiki rendering, so the orchestrator will rerun the exact-candidate smoke after merge and set its new SHA/evidence.
+  The recorded prior smoke is not claimed to exercise Round 4 code or the newer dev pin.
 - Merge, main CI, tag `v1.0.1` and GitHub Release: release-operator actions, not established by local tests.
 
 ## Requirement evidence

@@ -16,6 +16,7 @@ dependencies = [
 dev = [
     "pytest>=9",
     "peerhub==0.24.1",
+    "markdown-it-py==4.2.0",
 ]
 
 [project.scripts]

@@ -26,7 +26,8 @@ You can instead install a downloaded release wheel with
 Install runtime dependencies ahead of offline use; a wheel alone does not bundle
 them. The dependency is `markitdown-gc==0.3.5` without optional extras. Peerhub
 is a separately configured operator tool, not a runtime dependency. Development
-installs (`.[dev]`) include `peerhub==0.24.1` for the offline CLI-help contract test.
+installs (`.[dev]`) include `peerhub==0.24.1` for the offline CLI-help contract test
+and `markdown-it-py==4.2.0` for renderer differential tests.
 There is no PyPI release of SecondBrain in this release process.
 
 Choose a data directory separate from the checkout. Create it and its `inbox/`,
@@ -130,8 +131,12 @@ summary prompts and outputs survive repeated verification.
 
 Source pages link class, extension and collected-month tags. `wiki/index.md`
 lists the tags; each `wiki/tags/<tag>.md` links every source carrying that tag
-and the index. Transcripts render safe Markdown headings, lists and tables;
-summary and metadata stay fenced. The source page's JSON block records
+and the index. Transcripts render safe Markdown headings, lists and tables.
+All `<` and `>` in untrusted text are escaped everywhere, including code
+(displayed as entities); no exemptions. Code may show literal `&lt;`/`&gt;`.
+This sacrifices exact code display to avoid a partial Markdown parser disagreeing
+with the renderer about where code ends and exposing raw HTML or images.
+Summary and metadata stay fenced. The source page's JSON block records
 authoritative provenance, even if source text imitates an OCR heading.
 
 With `--json`, stdout is exactly one object, including parser errors. Read
@@ -271,9 +276,10 @@ peerhub ask cx -p cx.effort -w "ABSOLUTE_ROOT/work/ID/llm" --writable --stream s
 
 `summary.md` must be UTF-8 and <=8000 characters. `summary.json` must be UTF-8,
 <=64 KiB, with exactly `kind`, `source_digest`, `peer`, `model`, `version`, and
-`date`. Use `kind="summary"`, copy the current digest from the prompt, use the
-actual peer/model, string-or-null version, and a UTC ISO timestamp ending in
-`Z`. Peer ids match `^[a-z][a-z0-9-]{0,31}$`.
+`date`. Use `kind="summary"`, copy the current digest from the prompt, use a
+string-or-null version and a UTC ISO timestamp ending in `Z`. The JSON peer/model
+fields are informational required keys; their values are not validated or retained
+as attribution. The required CLI peer is validated separately.
 
 Read the result and judge its faithfulness before accepting:
 
@@ -283,7 +289,8 @@ sb wiki build
 ```
 
 Supply the actual peer/model you used; acceptance records those operator-supplied
-values as provenance and retains peer self-reports as untrusted `params.reported`.
+values as peer/model provenance. Peer self-reports do not supply or override that
+attribution; activity params contain only `prompt_rev`.
 Acceptance validates outside the model. A different body appends
 `llm/summary.aN.md` with provenance; an identical current body returns
 `unchanged` with no writes. Old revisions remain. A stale transcript digest or

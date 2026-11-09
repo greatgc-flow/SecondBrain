@@ -1,0 +1,28 @@
+{
+ "aliases": [],
+ "class": null,
+ "conversion": null,
+ "error": {
+  "code": "SyntheticError",
+  "date": "2026-11-09T00:00:00Z",
+  "message": "synthetic failure"
+ },
+ "ext": ".txt",
+ "filename": "f.txt",
+ "filename_nfc": "f.txt",
+ "has_native_text": null,
+ "id": "56e536cb0d7036d7",
+ "ingested_at": "2026-11-09T00:00:00Z",
+ "llm": null,
+ "ocr": {
+  "disposition": "none",
+  "large_ack": false,
+  "units": {}
+ },
+ "reason": "SyntheticError",
+ "schema": 1,
+ "sha256": "56e536cb0d7036d7129fba641eb8c384e12ff927182ea4552e74413a86c6397f",
+ "size": 24,
+ "state": "failed",
+ "triage": null
+}

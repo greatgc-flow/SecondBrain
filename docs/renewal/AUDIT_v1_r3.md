@@ -37,4 +37,16 @@ Re-examined with the rule "name the point-costing gap or raise to 100". Residual
 
 These four edits are mechanical, touch no contract, and need no re-audit; with them every area is 100.
 
+## Final confirmation (after the round-3 score-gap commit; cx: 580 passed, 4 skipped)
+
+| Gap | Status | Evidence |
+|---|---|---|
+| AT-12 network assertion | FIXED | test_convert.py:568 takes `network_guard`; :582 snapshots the count before `classify_item`, :587 asserts it unchanged in both optional-backend scenarios. |
+| Orphan signature test | FIXED | `test_classification_has_no_ingest_path_precheck` and the `inspect` import are gone from test_convert.py. |
+| `report_error` naming | FIXED | convert.py:198 `step_error`; :220-221 single failure route; :280, :285 callers; test_convert.py:152-153, :166, :231-232 use the new name. Codes/messages/states unchanged. |
+| Shared OSError mapping | FIXED | fsutil.py:16 `io_errors` (wraps, exception chaining); ocr.py:13 imports it as `_io` (:123, :154, :164, :205); llm.py:49, :115 decorate `prepare`/`accept`, inline catches removed; test_fsutil.py:25 covers OSError→`io_error`/1 and identity-preserving propagation of SbError/ValueError. |
+
+Final scores: Vertical 100 · Horizontal 100 · MECE 100 · Simplicity 100 · Tests 100. No remaining gap in any area.
+Release gate stays orchestrator-owned (six-job run and both offline-install jobs on this head, RUBRIC rows to 100, tag, GitHub Release).
+
 VOTE: APPROVE RELEASE

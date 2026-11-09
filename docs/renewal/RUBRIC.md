@@ -3,8 +3,8 @@
 Release preparation, 2026-11-09. This records the validated release revision;
 v1.0.0 promotion, tag and GitHub Release remain orchestrator actions.
 
-**R1 — release evidence:** head `9a70783163447a61df2ec26c8e6b20c17854d374`
-(`9a70783`), [CI run 42541480772](https://github.com/greatgc-flow/SecondBrain/actions/runs/42541480772),
+**R1 — release evidence:** head `6113a8f0883f0ca2b51b9e556035ca3fe103a67e`
+(`6113a8f`), [CI run 42542262213](https://github.com/greatgc-flow/SecondBrain/actions/runs/42542262213),
 attempt 1: **all eight jobs passed**. The six full-suite logs each report
 **582 passed, 0 skipped**, including all four installed-console e2e cases.
 Both offline clean installs passed on that revision.
@@ -16,7 +16,7 @@ Both offline clean installs passed on that revision.
 | Offline clean install: ubuntu-latest / windows-latest | 3.13 | PASS on both OSes |
 
 **Current local result:** Windows, Python 3.15.2,
-`python -m pytest -q -p no:cacheprovider` -> **578 passed, 4 skipped in 86.02s**.
+`python -m pytest -q -p no:cacheprovider` -> **580 passed, 4 skipped in 86.02s**.
 The four local skips require the absent installed `sb`; they passed in CI.
 Local skips are not represented as CI passes.
 

@@ -7,7 +7,7 @@ import re
 import subprocess
 
 from .errors import (ALLOWED_EXTENSIONS, CONTAINER_EXTENSIONS, CONVERTER_VERSION, CONVERTIBLE_EXTENSIONS,
-                     MARKUP_EXTENSIONS, PLAIN_TEXT_EXTENSIONS, RASTER_EXTENSIONS, ErrorCode, SbError)
+                     PLAIN_TEXT_EXTENSIONS, RASTER_EXTENSIONS, ErrorCode, SbError)
 from .fsutil import checked_path, load_json_strict, require as _require, sha256_file, write_bytes_atomic, write_json_atomic
 from .ledger import activity, validate_stage
 from .transcript import has_native_text
@@ -170,7 +170,6 @@ def convert_document(directory, stage):
             data = _make_converter(source.suffix.lower()).convert(str(source), **options).text_content.encode("utf-8")
         except Exception as error:
             raise SbError(ErrorCode.CONVERSION_FAILED, 1, str(error)) from error
-        checked_path(directory, "converted.md.tmp")
         write_bytes_atomic(converted, data)
     stage["conversion"] = _conversion_record(directory, previous["activity"])
     write_json_atomic(directory / "stage.json", stage)

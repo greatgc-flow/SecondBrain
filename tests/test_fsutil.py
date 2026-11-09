@@ -98,6 +98,19 @@ def test_write_bytes_atomic_failed_fsync_keeps_previous_artifact(root, monkeypat
     assert target.read_bytes() == b"committed"
 
 
+def test_atomic_writer_refuses_a_reparse_temp_before_writing(root, monkeypatch):
+    target = root / "output.md"
+    temporary = root / "output.md.tmp"
+    target.write_bytes(b"committed")
+    temporary.write_bytes(b"preserve")
+    original = fsutil.is_reparse_point
+    monkeypatch.setattr(fsutil, "is_reparse_point", lambda path: Path(path) == temporary or original(path))
+    with pytest.raises(SbError) as error:
+        fsutil.write_bytes_atomic(target, b"new")
+    assert error.value.code == "io_error"
+    assert target.read_bytes() == b"committed" and temporary.read_bytes() == b"preserve"
+
+
 def test_fault_after_committed_meta_is_once(root, fault_after):
     target = root / "meta.json"
     fault_after("meta.json")

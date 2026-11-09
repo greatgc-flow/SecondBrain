@@ -46,7 +46,7 @@ def write_text(path, text):
 def write_bytes_atomic(path, data):
     """Preserve exact bytes; flush and fsync the sibling temp before replace."""
     path = Path(path)
-    temporary = path.with_name(path.name + ".tmp")
+    temporary = checked_path(path.parent, path.name + ".tmp")
     path.parent.mkdir(parents=True, exist_ok=True)
     with temporary.open("wb") as stream:
         stream.write(data)

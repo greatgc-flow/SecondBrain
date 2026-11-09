@@ -109,7 +109,7 @@ def test_status_warnings_stale_work_and_staged_collision(root, capsys):
     assert sorted((w["code"], w["id"]) for w in env["warnings"]) == sorted([("stale_work", failed.meta["id"]), ("staged_collision", "0123456789abcdef")])
 
 
-def test_status_reuses_the_wiki_scanner_and_counts(root, capsys):
+def test_status_reuses_ledger_scan_and_shared_unit_counts(root, capsys):
     from secondbrain import wiki
     items = all_states(root)
     assert wiki.unit_counts(items["ocr-in-progress"].meta) == {"total": 2, "approved": 2, "recorded": 1, "verified": 0}

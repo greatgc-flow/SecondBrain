@@ -1,4 +1,4 @@
-"""Stable v1 error and warning codes; independent of other package modules."""
+"""Shared v1 codes and contract constants; independent of other package modules."""
 from enum import StrEnum
 import re
 

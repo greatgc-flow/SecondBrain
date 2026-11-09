@@ -61,3 +61,12 @@ Static AST audit confirms one strict JSON parser, atomic byte writer, raws
 scanner, constraint helper, cumulative unit counter and tree helper; PEER,
 LARGE and raster sets are defined only in errors.py. All source/tests parse
 with Python 3.11 syntax. Combined validation: `python -m pytest -q -p no:cacheprovider` -> **581 passed, 4 skipped in 96.60s**. The four skips still require the locally absent installed `sb` console script.
+
+## Round 2 closeout
+
+- **N1 — FIXED.** Removed the duplicate AT-19 implementation and its subprocess/sys imports from test_ingest.py. The canonical test is tests/test_ocr.py::test_at19_real_containers_ingest_then_approve, covering all four real containers. Earlier child-spy evidence above describes the superseded first implementation.
+- **N2 — FIXED.** Removed the unused MARKUP_EXTENSIONS import and bare converted.md.tmp check from convert.py. The shared atomic writer now validates its derived temporary path itself, preserving reparse protection. test_atomic_writer_refuses_a_reparse_temp_before_writing failed first and then passed, requiring both existing target and temporary bytes to remain unchanged.
+- **N3 — FIXED.** USAGE now documents exact markitdown-gc 0.3.5 as an ingest precondition checked before recovery, retry or claim; missing/different versions are invalid_request/2 before writes.
+- **N4 — FIXED.** errors.py now describes its shared codes and contract constants; renamed the stale test to test_status_reuses_ledger_scan_and_shared_unit_counts without changing its assertions.
+
+Round 2 validation: `python -m pytest -q -p no:cacheprovider` -> **578 passed, 4 skipped in 89.21s**. Skips require the locally absent installed `sb` console script. No git commands.

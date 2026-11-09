@@ -263,3 +263,27 @@ Judgment on code showing `&lt;`: **acceptable**. It is documented (DESIGN.md:256
 - **7 −2** Commit f68dbf1 added a pytest basetemp directory, `.pytest-r4-diagnose/` (123 files: test roots, raws, wiki pages and
   `network-guard/sitecustomize.py` copies). RESPONSE_independent_cx.md:121 calls it temporary, and .gitignore:9-11 does not cover it.
   Fix: `git rm -r .pytest-r4-diagnose` and add `.pytest-*/` to .gitignore.
+
+## Round 6 (2026-11-09, branch `fix/indep-core` @ 2cceee7)
+
+Same auditor; confirmation round. Inputs: the diff eddf8e6..2cceee7, .gitignore, RUBRIC.md, LIVE_SMOKE_v1.0.1.md and `git ls-files`.
+I did not run Python. The CI run for 2cceee7 (8 jobs) was still in progress and is not scored.
+
+| # | Dimension | R5 | R6 |
+|---|---|---|---|
+| 1 | Goal fulfilment | 100 | 100 |
+| 2 | Vertical closure | 100 | 100 |
+| 3 | Horizontal consistency | 99 | 100 |
+| 4 | MECE | 100 | 100 |
+| 5 | Simplicity | 100 | 100 |
+| 6 | Test adequacy | 100 | 100 |
+| 7 | Release readiness | 98 | 100 |
+
+### Disposition of round-5 deductions
+| R5 deduction | Verdict | Basis |
+|---|---|---|
+| 3 −1 RUBRIC smoke ref | FIXED | RUBRIC.md:21-24 now records 02:55Z on `d7e4ae0` with markitdown-gc 0.3.6 and escape-all `<img onerror>` rendering. This matches LIVE_SMOKE_v1.0.1.md:1,3. The "requires a new smoke" and "not claimed to exercise" sentences are gone. `git diff d7e4ae0 HEAD -- src tests pyproject.toml .github` is empty, so the "later commits are docs only" claim holds |
+| 7 −2 stray `.pytest-r4-diagnose/` | FIXED | 2cceee7 deletes all of its files. `git ls-files` lists no `.pytest*` path. .gitignore:10 is `.pytest-*/`, and the local `.pytest-tmp/` now shows as ignored (`!!`) |
+
+### Remaining deductions
+None. Release still depends on the green 8-job CI and the operator actions in DESIGN §12, as RUBRIC.md:25 says.

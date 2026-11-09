@@ -1,15 +1,14 @@
 """DESIGN §4: inbox handoff, durable staging, commit and failed-item retry."""
 import codecs
 from datetime import datetime, timezone
-import json
 import os
 from pathlib import Path
 import unicodedata
 
 from . import convert
 from .errors import ErrorCode, SbError, WarningCode
-from .fsutil import check_path_length, checked_path, is_reparse_point, safe_delete, sha256_file, write_json_atomic
-from .ledger import load_item, load_stage
+from .fsutil import check_path_length, checked_path, is_reparse_point, load_json_strict, safe_delete, sha256_file, write_json_atomic
+from .ledger import load_item, load_stage, scan, validate_meta
 
 
 def _note(code, root, path, identity=None, message=None):
@@ -20,27 +19,6 @@ def _note(code, root, path, identity=None, message=None):
 def _error(result, root, path, error, identity=None):
     code = error.code if isinstance(error, SbError) else ErrorCode.IO_ERROR
     result["errors"].append(_note(code, root, path, identity, error))
-
-
-def _scan(root, result):
-    """The ledger scan is the index; corrupt items are reported and left alone."""
-    raws = checked_path(root, "raws")
-    items = []
-    if not raws.exists():
-        return items
-    for path in sorted(raws.iterdir()):
-        if path.name.startswith("."):
-            continue
-        if is_reparse_point(path):
-            result["warnings"].append(_note(WarningCode.SKIPPED_REPARSE, root, path, path.name))
-        elif path.is_dir():
-            try:
-                item = load_item(path)
-                items.append(item)
-                result["warnings"].extend(item.warnings)
-            except SbError as error:
-                _error(result, root, path, error, path.name)
-    return items
 
 
 def _snapshot(root, result):
@@ -73,16 +51,9 @@ def _meta(stage):
 
 
 def _read_meta(path):
-    def unique(pairs):
-        value = {}
-        for key, data in pairs:
-            if key in value:
-                raise ValueError("Duplicate meta key")
-            value[key] = data
-        return value
     try:
-        return json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=unique)
-    except (ValueError, UnicodeError) as error:
+        return load_json_strict(path)
+    except ValueError as error:
         raise SbError(ErrorCode.CORRUPT_META, 1, str(error)) from error
 
 
@@ -200,7 +171,9 @@ def _retry(root, item, charset, result):
         stage.pop("conversion", None)
     write_json_atomic(directory / "stage.json", stage)
     outcome = convert.classify_item(directory, stage)
-    write_json_atomic(directory / "meta.json", {**meta, **outcome})
+    merged = {**meta, **outcome}
+    validate_meta(merged, directory)
+    write_json_atomic(directory / "meta.json", merged)
     _finished(root, directory, result, "retried")
 
 
@@ -215,13 +188,16 @@ def ingest(root, *, retry=False, charset=None):
             codecs.lookup(charset)
         except (LookupError, TypeError) as error:
             raise SbError(ErrorCode.INVALID_REQUEST, 2, "Unknown charset") from error
+    convert.check_version()
     root = Path(os.path.abspath(root))
     inbox = checked_path(root, "inbox")
     if not inbox.is_dir():
         raise SbError(ErrorCode.IO_ERROR, 1, "ingest requires an existing inbox directory")
     result = {"items": [], "warnings": [], "errors": []}
     try:
-        items = _scan(root, result) if retry else []
+        items, warnings, errors = scan(root) if retry else ([], [], [])
+        result["warnings"].extend(warnings)
+        result["errors"].extend(errors)
         _recover(root, result)
         if retry:
             for item in items:

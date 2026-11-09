@@ -1,14 +1,46 @@
 from hashlib import sha256
 import json
 import os
+from pathlib import Path
 from types import SimpleNamespace
 import unicodedata
 
 import pytest
 
-from helpers import DATE, add_summary, make_item, provenance, save_meta
+from helpers import DATE, add_summary, make_item, provenance, save_meta, tree
 from secondbrain.errors import SbError
 from secondbrain.ledger import activity, load_item, load_stage, validate_meta, validate_stage
+
+
+def test_scan_collects_valid_corrupt_orphan_and_reparse_without_mutations(root, monkeypatch):
+    from secondbrain import ledger
+    ready = make_item(root)
+    broken = make_item(root, filename="broken.txt")
+    (broken.path / "meta.json").write_bytes(b"{")
+    extra = ready.path / "extra.md"
+    extra.write_bytes(b"orphan")
+    hidden = root / "raws/.staging/tmp-1"
+    hidden.mkdir(parents=True)
+    (hidden / "meta.json").write_bytes(b"{")
+    (root / "raws/not-a-directory").write_bytes(b"ignore")
+    link = root / "raws/reparse"
+    link.mkdir()
+    original = ledger.is_reparse_point
+    monkeypatch.setattr(ledger, "is_reparse_point", lambda path: Path(path) == link or original(path))
+    before = tree(root / "raws")
+    items, warnings, errors = ledger.scan(root)
+    assert [item.meta["id"] for item in items] == [ready.meta["id"]]
+    assert {note["code"] for note in warnings} == {"orphan", "skipped_reparse"}
+    assert len(errors) == 1 and errors[0]["code"] == "corrupt_meta" and errors[0]["id"] == broken.meta["id"]
+    assert errors[0]["path"] == "raws/" + broken.meta["id"]
+    assert before == tree(root / "raws")
+
+
+def test_scan_empty_root_creates_nothing(tmp_path):
+    from secondbrain import ledger
+    root = tmp_path / "missing"
+    assert ledger.scan(root) == ([], [], [])
+    assert not root.exists()
 
 
 @pytest.mark.parametrize("classification,state,text,filename", [

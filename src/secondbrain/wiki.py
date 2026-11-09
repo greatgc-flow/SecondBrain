@@ -5,9 +5,9 @@ from pathlib import Path
 import re
 import unicodedata
 
-from .errors import ErrorCode, SbError, WarningCode
-from .fsutil import checked_path, esc, is_reparse_point, percent_encode, safe_delete, write_text
-from .ledger import load_item
+from .errors import ErrorCode, SbError
+from .fsutil import checked_path, esc, percent_encode, safe_delete, write_text
+from .ledger import scan
 from .transcript import source_digest, view
 
 
@@ -42,42 +42,17 @@ def recover(root):
             os.rename(root / "wiki.old", root / "wiki")
 
 
-def _load(root):
-    items, warnings, errors = [], [], []
-    raws = Path(root) / "raws"
-    names = sorted(p.name for p in raws.iterdir()) if raws.is_dir() else []
-    for name in names:
-        path = raws / name
-        if name.startswith(".") or not path.is_dir():
-            continue
-        if is_reparse_point(path):
-            warnings.append({"code": str(WarningCode.SKIPPED_REPARSE), "id": name, "path": f"raws/{name}",
-                             "message": "Reparse point skipped"})
-            continue
-        try:
-            item = load_item(path)
-        except SbError as error:
-            errors.append({"code": error.code, "id": name, "path": f"raws/{name}", "message": str(error)})
-            continue
-        warnings.extend(item.warnings)
-        items.append(item)
-    items.sort(key=lambda i: (i.meta["filename_nfc"].casefold(), i.meta["id"]))
-    return items, warnings, errors
-
-
 def _summary(meta):
-    """Current summary revision, or None."""
-    revisions = (meta.get("llm") or {}).get("summary")
-    return revisions[-1] if revisions else None
+    """Current summary revision, or None (the validator guarantees a non-empty history when llm is set)."""
+    return meta["llm"]["summary"][-1] if meta["llm"] else None
 
 
-def _counts(meta):
-    units = meta["ocr"]["units"].values()
-    total = len(units)
-    approved = sum(u["status"] != "pending" for u in units)
-    recorded = sum(u["status"] in ("recorded", "verified") for u in units)
-    verified = sum(u["status"] == "verified" for u in units)
-    return total, approved, recorded, verified
+def unit_counts(meta):
+    """Cumulative unit counts: approved = not pending, recorded = recorded or verified."""
+    units = list(meta["ocr"]["units"].values())
+    return {"total": len(units), "approved": sum(u["status"] != "pending" for u in units),
+            "recorded": sum(u["status"] in ("recorded", "verified") for u in units),
+            "verified": sum(u["status"] == "verified" for u in units)}
 
 
 def _coverage(meta):
@@ -88,9 +63,9 @@ def _ocr_cell(meta):
     disposition = meta["ocr"]["disposition"]
     if disposition == "declined":
         return "declined"
-    total, approved, recorded, verified = _counts(meta)
+    counts = unit_counts(meta)
     if disposition == "approved":
-        return f"{approved}/{total} approved, {recorded} recorded, {verified} verified"
+        return f"{counts['approved']}/{counts['total']} approved, {counts['recorded']} recorded, {counts['verified']} verified"
     return "none"
 
 
@@ -102,21 +77,20 @@ def banner(meta):
     if state == "unsupported":
         return f"unsupported: {_line(reason)}"
     if state == "failed":
-        error = meta.get("error") or {}
-        return f"failed: {_line(error.get('code', reason or 'unknown'))}, {error.get('date', 'unknown')}"
+        return f"failed: {_line(meta['error']['code'])}, {meta['error']['date']}"
     if cls == "unknown":
-        text = f"not inspected: {_line(reason if reason else 'unknown')}"
-        return text + (", declined" if state == "ready" else "")
+        return f"not inspected: {_line(reason)}" + (", declined" if state == "ready" else "")
     if cls == "text-only":
         return "" if meta["has_native_text"] else "empty document"
-    total, approved, recorded, verified = _counts(meta)
+    counts = unit_counts(meta)
     if state == "awaiting-approval":
-        return f"OCR pending approval: {total} units, coverage {coverage if coverage else 'n/a'}"
+        return f"OCR pending approval: {counts['total']} units, coverage {coverage if coverage else 'n/a'}"
     if state == "ocr-in-progress":
-        return f"OCR in progress: {approved}/{total} approved, {recorded} recorded, {verified} verified"
+        return (f"OCR in progress: {counts['approved']}/{counts['total']} approved, "
+                f"{counts['recorded']} recorded, {counts['verified']} verified")
     if meta["ocr"]["disposition"] == "declined":
         return "OCR declined" + extra
-    return f"OCR verified: {total} units" + extra
+    return f"OCR verified: {counts['total']} units" + extra
 
 
 def _json_subset(item):
@@ -147,7 +121,7 @@ def source_page(item):
     if revision:
         body = (item.path / revision["file"]).read_bytes().decode("utf-8")
         parts += ["## Summary\n\n", fence(body), "\n"]
-    if meta["state"] != "unsupported" and (meta["state"] != "failed" or _exists(item.path / "converted.md")):
+    if meta["state"] != "unsupported" and (meta["state"] != "failed" or meta["conversion"] is not None):
         parts += ["## Transcript\n\n", fence(view(item))]
     return "".join(parts).rstrip("\n") + "\n"
 
@@ -170,7 +144,8 @@ def build(root):
     root = Path(root)
     try:
         recover(root)
-        items, warnings, errors = _load(root)
+        items, warnings, errors = scan(root)
+        items.sort(key=lambda i: (i.meta["filename_nfc"].casefold(), i.meta["id"]))
         tmp = root / "wiki.tmp"
         write_text(tmp / "index.md", index_page(items))
         for item in items:

@@ -1,18 +1,22 @@
 # Documentation map
 
-SecondBrain v1 starts from the approved renewal documents:
-
 | Document | Purpose |
 | --- | --- |
-| [Design r8](renewal/DESIGN.md) | Data contract, workflow, invariants, and acceptance tests. |
-| [Implementation plan](renewal/IMPL_PLAN.md) | Ordered slices, file boundaries, and review gates. |
+| [Usage](USAGE.md) | Installation, commands, operator prerequisites, OCR/LLM steps, recovery; for people and AI agents. |
+| [Design r9](renewal/DESIGN.md) | Approved data contract, security boundary, invariants, and acceptance tests. |
+| [Implementation plan](renewal/IMPL_PLAN.md) | Slice ownership and release gates. |
 | [Brief](renewal/BRIEF.md) | Owner requirements. |
-| [Rubric](renewal/RUBRIC.md) | Requirement and invariant scores, maintained by the orchestrator. |
+| [Rubric](renewal/RUBRIC.md) | Test evidence, local results, scores, and remaining release gates. |
+| [Characterization](../tests/fixtures/EXPECTED.md) | Real markitdown-gc 0.3.5 observations and design resolutions. |
+| [Converter guide](renewal/_mdgc_guide.txt) | Tool contract retained as a design input; SecondBrain's approved rules take precedence. |
 
-CI runs the full Ubuntu/Windows × Python 3.11/3.13/3.15 matrix on pushes to
-`main` and `renew/**`, on pull requests, and on manual dispatch. The old
-private-allowance policy (`ci-policy.md`) has been deleted.
+The remaining [renewal records](renewal/) preserve design votes, reviews, and
+responses. They are historical evidence; current instructions are in USAGE and
+DESIGN. The v0.1 status page was removed; history tags are listed in the
+[repository README](../README.md).
 
-Slice 0 provides the package and test bootstrap. Characterization and
-implementation follow in later slices. See the [repository README](../README.md)
-for development commands and the history note.
+CI runs Ubuntu/Windows × Python 3.11/3.13/3.15 tests, plus an offline clean-install
+job on both OSes with Python 3.13. Jobs run on pushes to `main` and `renew/**`,
+pull requests, and manual dispatch. Clean-install jobs build/download wheels
+online, then install with `--no-index` in a fresh venv and exercise the installed
+`sb` from an empty data directory. No peer or model is invoked by CI.

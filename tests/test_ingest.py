@@ -13,7 +13,7 @@ from secondbrain import convert, ingest
 from secondbrain.errors import SbError
 from secondbrain.fsutil import write_json_atomic
 from secondbrain.ledger import load_item, load_stage
-from helpers import DATE, make_item
+from helpers import DATE, make_item, tree
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -130,11 +130,11 @@ def test_at04_collision_is_flagged_and_never_resumed(root, tool, monkeypatch):
     directory, = stages(root)
     assert load_stage(directory)["collision"] is True
     assert (directory / "src/collision.txt").read_bytes() == b"different original" and not source.exists()
-    snapshot = {p.relative_to(directory).as_posix(): p.read_bytes() for p in directory.rglob("*") if p.is_file()}
+    snapshot = tree(directory)
     result = ingest.ingest(root)
     assert [w["code"] for w in result["warnings"]] == ["staged_collision"]
     assert not result["errors"] and not result["items"]
-    assert snapshot == {p.relative_to(directory).as_posix(): p.read_bytes() for p in directory.rglob("*") if p.is_file()}
+    assert snapshot == tree(directory)
     assert (item.path / "meta.json").read_bytes() == before and not tool.convert
 
 
@@ -522,6 +522,41 @@ def test_plain_ingest_does_not_scan_unrelated_committed_items(root, tool, monkey
     assert not result["errors"] and len(result["items"]) == 1
     assert result["items"][0]["result"] == "new"
     assert (item.path / "meta.json").read_bytes() == b"{"
+
+
+def test_retry_validates_outcome_before_committing_meta(root, tool, monkeypatch):
+    tool.error = ValueError("first attempt")
+    drop(root)
+    ingest.ingest(root)
+    item, = committed(root)
+    before = (item.path / "meta.json").read_bytes()
+    tool.error = None
+    classify = convert.classify_item
+    def invalid(directory, stage):
+        outcome = classify(directory, stage)
+        outcome["class"] = "unsupported"  # incompatible with ready
+        return outcome
+    monkeypatch.setattr(convert, "classify_item", invalid)
+    assert ingest.ingest(root, retry=True)["errors"][0]["code"] == "corrupt_meta"
+    assert (item.path / "meta.json").read_bytes() == before
+    monkeypatch.setattr(convert, "classify_item", classify)
+    assert not ingest.ingest(root, retry=True)["errors"]
+    assert load_item(item.path).meta["state"] == "ready" and len(tool.convert) == 2
+
+
+@pytest.mark.parametrize("installed", ["9.9.9", None])
+def test_converter_version_is_checked_before_any_claim(root, tool, monkeypatch, installed):
+    from importlib.metadata import PackageNotFoundError
+    source = drop(root)
+    def observed(name):
+        if installed is None:
+            raise PackageNotFoundError(name)
+        return installed
+    monkeypatch.setattr(convert, "version", observed)
+    with pytest.raises(SbError) as error:
+        ingest.ingest(root)
+    assert (error.value.code, error.value.exit) == ("invalid_request", 2)
+    assert source.exists() and not (root / "raws").exists() and not tool.convert
 
 
 @pytest.mark.parametrize("group", ["text", "ocr", "mixed", "unknown", "unsupported", "characterize", "failed"])

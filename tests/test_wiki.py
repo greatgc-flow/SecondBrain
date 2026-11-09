@@ -12,9 +12,7 @@ from secondbrain import fsutil, wiki
 from secondbrain.errors import SbError
 
 
-def tree(path):
-    path = Path(path)
-    return {p.relative_to(path).as_posix(): p.read_bytes() for p in sorted(path.rglob("*")) if p.is_file()}
+tree = helpers.tree
 
 
 def page(root, item):
@@ -314,21 +312,14 @@ def test_at33_declined_partial_coverage_and_raster_pending_banner(root):
     assert "```text\nOCR pending approval: 1 units, coverage n/a\n```" in page(root, raster)
 
 
-def test_malformed_optional_meta_does_not_crash_projection(root):
-    item = helpers.make_item(root, filename="s.txt")
-    item.meta["llm"] = {"summary": []}  # in-memory only; the ledger validator never admits it
-    assert "## Summary" not in wiki.source_page(item)
-    assert wiki.index_page([item]).splitlines()[-1].endswith("| no |")
-    failed = helpers.make_item(root, state="failed", filename="f.pdf")
-    failed.meta["error"] = None
-    assert wiki.banner(failed.meta).startswith("failed:")
-
-
-def test_transcript_gate_follows_converted_md_file(root):
-    item = helpers.make_item(root, state="failed", filename="g.pdf", text="Converted.")
-    (item.path / "converted.md").unlink()
-    item.meta["conversion"] = None
-    assert "## Transcript" not in wiki.source_page(item)
+def test_transcript_gate_follows_the_ledger_not_the_file_system(root):
+    # DESIGN §2 artifact rule: an unreferenced converted.md is an orphan and never enters the wiki.
+    orphan = helpers.make_item(root, state="failed", filename="g.pdf")
+    (orphan.path / "converted.md").write_bytes(b"unreferenced text")
+    referenced = helpers.make_item(root, state="failed", filename="h.pdf", text="Converted.")
+    wiki.build(root)
+    assert "## Transcript" not in page(root, orphan) and "unreferenced text" not in page(root, orphan)
+    assert "## Transcript" in page(root, referenced) and "Converted." in page(root, referenced)
 
 
 def test_index_has_no_extra_blank_line(root):
